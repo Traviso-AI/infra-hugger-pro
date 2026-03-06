@@ -63,7 +63,13 @@ async function callGeminiWithVision(
   }
   const mimeType = imgResp.headers.get("content-type") ?? "image/jpeg";
   const imageBuffer = await imgResp.arrayBuffer();
-  const base64Data = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+  const bytes = new Uint8Array(imageBuffer);
+  const CHUNK = 8192;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  const base64Data = btoa(binary);
   console.log(`[ai-travel-planner] Image fetched: ${mimeType}, ${imageBuffer.byteLength} bytes`);
 
   // --- Step 2: Find the last user message ---
