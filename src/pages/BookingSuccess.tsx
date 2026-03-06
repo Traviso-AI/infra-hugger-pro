@@ -52,15 +52,15 @@ export default function BookingSuccess() {
         return;
       }
 
-      // Fetch trip for commission calc and destination
-      const { data: trip } = await supabase
+      // Fetch current trip stats for increment
+      const { data: currentTrip } = await supabase
         .from("trips")
-        .select("commission_rate, destination")
+        .select("commission_rate, destination, total_bookings, total_revenue")
         .eq("id", tripId)
         .single();
 
-      if (trip) setDestination(trip.destination);
-      const commission = totalPrice * ((trip?.commission_rate || 10) / 100);
+      if (currentTrip) setDestination(currentTrip.destination);
+      const commission = totalPrice * ((currentTrip?.commission_rate || 10) / 100);
 
       const { error } = await supabase.from("bookings").insert({
         user_id: user.id,
