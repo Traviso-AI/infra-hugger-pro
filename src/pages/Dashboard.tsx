@@ -121,6 +121,11 @@ export default function Dashboard() {
                       <Badge variant={trip.is_published ? "default" : "secondary"}>
                         {trip.is_published ? "Published" : "Draft"}
                       </Badge>
+                      {!trip.is_published && (
+                        <Button size="sm" variant="outline" onClick={(e) => handlePublish(trip.id, e)}>
+                          <Send className="mr-1 h-3 w-3" /> Publish
+                        </Button>
+                      )}
                       {trip.price_estimate && (
                         <span className="text-sm font-medium">${trip.price_estimate}</span>
                       )}
