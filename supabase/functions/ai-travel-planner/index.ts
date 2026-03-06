@@ -53,29 +53,44 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // If an image URL was supplied, convert the last user message to vision format
+    // Build the final messages array, converting the last user message to
+    // multi-modal vision format when an image (base64 data URL) is supplied.
     let processedMessages: ChatMessage[] = messages.map((m) => ({ ...m }));
-    if (imageUrl) {
-      const lastUserIdx = [...processedMessages]
-        .map((m, i) => ({ m, i }))
-        .filter(({ m }) => m.role === "user")
-        .at(-1)?.i;
 
-      if (lastUserIdx !== undefined) {
+    if (imageUrl) {
+      console.log("[ai-travel-planner] Image attachment received, applying vision format");
+
+      // Find the index of the last user message
+      let lastUserIdx = -1;
+      for (let i = processedMessages.length - 1; i >= 0; i--) {
+        if (processedMessages[i].role === "user") {
+          lastUserIdx = i;
+          break;
+        }
+      }
+
+      if (lastUserIdx !== -1) {
         const original = processedMessages[lastUserIdx];
-        const textPart: TextContent = {
-          type: "text",
-          text: typeof original.content === "string" ? original.content : "",
-        };
-        const imagePart: ImageContent = {
-          type: "image_url",
-          image_url: { url: imageUrl },
-        };
+        const textContent = typeof original.content === "string" ? original.content : "";
+
+        // Build OpenAI-compatible vision content array.
+        // The image_url.url field accepts both https:// URLs and base64 data URLs.
+        const visionContent: Array<TextContent | ImageContent> = [
+          { type: "text", text: textContent },
+          { type: "image_url", image_url: { url: imageUrl } },
+        ];
+
         processedMessages[lastUserIdx] = {
           role: "user",
-          content: [textPart, imagePart],
+          content: visionContent,
         };
+
+        console.log(`[ai-travel-planner] Vision message built at index ${lastUserIdx}, text="${textContent.slice(0, 80)}..."`);
+      } else {
+        console.warn("[ai-travel-planner] imageUrl provided but no user message found to attach it to");
       }
+    } else {
+      console.log("[ai-travel-planner] Text-only request, no image processing needed");
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
