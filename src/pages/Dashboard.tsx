@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: myTrips } = useQuery({
     queryKey: ["my-trips", user?.id],
