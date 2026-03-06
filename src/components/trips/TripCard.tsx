@@ -18,12 +18,13 @@ interface TripCardProps {
   totalBookings?: number | null;
   creatorName?: string;
   creatorAvatar?: string | null;
+  creatorUsername?: string | null;
   tags?: string[] | null;
 }
 
 export function TripCard({
   id, title, destination, coverImage, durationDays, priceEstimate,
-  avgRating, totalBookings, creatorName, creatorAvatar, tags,
+  avgRating, totalBookings, creatorName, creatorAvatar, creatorUsername, tags,
 }: TripCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -108,12 +109,16 @@ export function TripCard({
           )}
           <div className="flex items-center justify-between">
             {creatorName && (
-              <div className="flex items-center gap-2">
+              <Link
+                to={creatorUsername ? `/profile/${creatorUsername}` : "#"}
+                className="flex items-center gap-2 hover:opacity-80"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium text-accent">
                   {creatorName[0]}
                 </div>
                 <span className="text-xs text-muted-foreground">{creatorName}</span>
-              </div>
+              </Link>
             )}
             {priceEstimate && (
               <span className="text-sm font-semibold">${priceEstimate.toLocaleString()}</span>

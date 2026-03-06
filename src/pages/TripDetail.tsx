@@ -206,15 +206,18 @@ export default function TripDetail() {
                 {creator && (
                   <div className="mt-6 border-t pt-4">
                     <p className="text-xs text-muted-foreground mb-2">Created by</p>
-                    <div className="flex items-center gap-3">
+                    <Link
+                      to={creator.username ? `/profile/${creator.username}` : "#"}
+                      className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                    >
                       <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center font-medium">
                         {creator.display_name?.[0] || "C"}
                       </div>
                       <div>
                         <p className="text-sm font-medium">{creator.display_name}</p>
-                        {creator.bio && <p className="text-xs text-muted-foreground line-clamp-1">{creator.bio}</p>}
+                        {creator.username && <p className="text-xs text-muted-foreground">@{creator.username}</p>}
                       </div>
-                    </div>
+                    </Link>
                   </div>
                 )}
               </CardContent>

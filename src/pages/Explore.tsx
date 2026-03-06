@@ -13,7 +13,7 @@ export default function Explore() {
     queryFn: async () => {
       let query = supabase
         .from("trips")
-        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url)")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
         .eq("is_published", true)
         .order("total_bookings", { ascending: false });
 
@@ -64,6 +64,7 @@ export default function Explore() {
               totalBookings={trip.total_bookings}
               creatorName={trip.profiles?.display_name}
               creatorAvatar={trip.profiles?.avatar_url}
+              creatorUsername={trip.profiles?.username}
               tags={trip.tags}
             />
           ))}
