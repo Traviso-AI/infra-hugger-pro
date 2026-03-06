@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import AiPlanner from "./pages/AiPlanner";
 import Leaderboard from "./pages/Leaderboard";
 import Booking from "./pages/Booking";
+import BookingSuccess from "./pages/BookingSuccess";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/create-trip" element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
               <Route path="/ai-planner" element={<ProtectedRoute><AiPlanner /></ProtectedRoute>} />
               <Route path="/booking/:tripId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
+              <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
