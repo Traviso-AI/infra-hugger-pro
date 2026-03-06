@@ -110,9 +110,24 @@ serve(async (req) => {
 
     const tripData = JSON.parse(toolCall.function.arguments);
 
-    // Generate Unsplash cover image URL based on destination
-    const destinationQuery = tripData.destination.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, ',');
-    const coverImageUrl = `https://source.unsplash.com/1600x900/?${destinationQuery},travel`;
+    // Assign cover image based on destination
+    const destLower = tripData.destination.toLowerCase();
+    const pexelsMap: Record<string, string> = {
+      tokyo: 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg',
+      seoul: 'https://images.pexels.com/photos/237211/pexels-photo-237211.jpeg',
+      bali: 'https://images.pexels.com/photos/1537640/pexels-photo-1537640.jpeg',
+      paris: 'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg',
+      miami: 'https://images.pexels.com/photos/1802255/pexels-photo-1802255.jpeg',
+      barcelona: 'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg',
+      'new york': 'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg',
+      nyc: 'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg',
+      maldives: 'https://images.pexels.com/photos/1483053/pexels-photo-1483053.jpeg',
+      cabo: 'https://images.pexels.com/photos/1430677/pexels-photo-1430677.jpeg',
+      'los angeles': 'https://images.pexels.com/photos/1616773/pexels-photo-1616773.jpeg',
+      la: 'https://images.pexels.com/photos/1616773/pexels-photo-1616773.jpeg',
+    };
+    const coverImageUrl = Object.entries(pexelsMap).find(([key]) => destLower.includes(key))?.[1]
+      || 'https://images.pexels.com/photos/1051073/pexels-photo-1051073.jpeg';
 
     // Create trip in DB
     const { data: trip, error: tripError } = await supabase
