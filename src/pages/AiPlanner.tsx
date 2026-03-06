@@ -262,14 +262,14 @@ export default function AiPlanner() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="border-b bg-card px-4 py-3">
-        <div className="container flex items-center justify-between">
+        <div className="mx-auto max-w-5xl flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-accent" />
             <h1 className="font-display text-lg font-bold">AI Trip Planner</h1>
           </div>
           {messages.length > 0 && (
-            <Button size="sm" onClick={handleSaveTrip} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <Save className="mr-1 h-4 w-4" /> Save as Trip
+            <Button onClick={handleSaveTrip} className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold px-5">
+              <Save className="mr-2 h-4 w-4" /> Save as Trip
             </Button>
           )}
         </div>
