@@ -328,6 +328,19 @@ export default function AiPlanner() {
               </div>
             </div>
           )}
+          {/* Save as Trip inline button */}
+          {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
+            <div className="flex justify-start">
+              <Button
+                size="sm"
+                onClick={handleSaveTrip}
+                className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-4"
+              >
+                <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Trip
+              </Button>
+            </div>
+          )}
+
           <div ref={scrollRef} />
         </div>
       </div>
@@ -335,12 +348,6 @@ export default function AiPlanner() {
       {/* Input */}
       <div className="border-t bg-card px-4 py-3">
         <div className="container max-w-3xl space-y-2">
-          {/* Save as Trip button */}
-          {messages.length > 0 && (
-            <Button onClick={handleSaveTrip} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-              <Save className="mr-2 h-4 w-4" /> Save as Trip
-            </Button>
-          )}
 
           {/* File preview chip */}
           {selectedFile && (
