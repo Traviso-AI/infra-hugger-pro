@@ -267,9 +267,9 @@ export default function AiPlanner() {
             <Sparkles className="h-5 w-5 text-accent" />
             <h1 className="font-display text-lg font-bold">AI Trip Planner</h1>
           </div>
-          {messages.length > 2 && (
-            <Button size="sm" variant="outline" onClick={handleSaveTrip}>
-              <Save className="mr-1 h-3 w-3" /> Save as Trip
+          {messages.length > 0 && (
+            <Button size="sm" onClick={handleSaveTrip} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Save className="mr-1 h-4 w-4" /> Save as Trip
             </Button>
           )}
         </div>
