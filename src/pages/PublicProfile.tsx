@@ -22,12 +22,20 @@ export default function PublicProfile() {
   const { data: profile, isLoading } = useQuery({
     queryKey: ["public-profile", username],
     queryFn: async () => {
+      // Try by username first, then by user_id as fallback
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("username", username)
-        .single();
-      return data;
+        .eq("username", username!)
+        .maybeSingle();
+      if (data) return data;
+      // Fallback: try as user_id
+      const { data: byId } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", username!)
+        .maybeSingle();
+      return byId;
     },
     enabled: !!username,
   });
