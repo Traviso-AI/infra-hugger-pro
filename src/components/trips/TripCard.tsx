@@ -93,8 +93,10 @@ export function TripCard({
             {avgRating && avgRating > 0 && (
               <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-sunset text-sunset" /> {avgRating.toFixed(1)}</span>
             )}
-            {totalBookings && totalBookings > 0 && (
+            {totalBookings && totalBookings > 0 ? (
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {totalBookings} booked</span>
+            ) : (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">New</Badge>
             )}
           </div>
           {tags && tags.length > 0 && (
