@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Star, Users, Clock, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function TripCard({
 }: TripCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: isFavorited } = useQuery({
     queryKey: ["favorite", id, user?.id],
@@ -64,7 +65,7 @@ export function TripCard({
   };
 
   return (
-    <Link to={`/trip/${id}`} className="group block">
+    <div onClick={() => navigate(`/trip/${id}`)} className="group block cursor-pointer">
       <div className="overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg hover:-translate-y-1">
         <div className="aspect-[4/3] overflow-hidden bg-muted relative">
           {coverImage ? (
@@ -126,6 +127,6 @@ export function TripCard({
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
