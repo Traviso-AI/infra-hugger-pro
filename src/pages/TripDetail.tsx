@@ -23,7 +23,7 @@ export default function TripDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trips")
-        .select("*, profiles!trips_creator_id_fkey(display_name, avatar_url, username, bio)")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username, bio)")
         .eq("id", id)
         .single();
       return data;
@@ -49,7 +49,7 @@ export default function TripDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("reviews")
-        .select("*, profiles!reviews_user_id_fkey(display_name, avatar_url)")
+        .select("*, profiles!reviews_user_id_profiles_fkey(display_name, avatar_url)")
         .eq("trip_id", id!)
         .order("created_at", { ascending: false });
       return data || [];

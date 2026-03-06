@@ -5,7 +5,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart } from "lucide-react";
+import { TripCard } from "@/components/trips/TripCard";
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
@@ -29,6 +30,19 @@ export default function Dashboard() {
       const { data } = await supabase
         .from("bookings")
         .select("*, trips(title, destination)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: myFavorites } = useQuery({
+    queryKey: ["my-favorites", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("favorites")
+        .select("*, trips(*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url))")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       return data || [];
@@ -142,6 +156,43 @@ export default function Dashboard() {
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
               No bookings yet. Explore trips to get started!
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Saved Trips */}
+      <div>
+        <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+          <Heart className="h-5 w-5 text-red-500" /> Saved Trips
+        </h2>
+        {myFavorites && myFavorites.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {myFavorites.map((fav: any) => {
+              const trip = fav.trips;
+              if (!trip) return null;
+              return (
+                <TripCard
+                  key={fav.id}
+                  id={trip.id}
+                  title={trip.title}
+                  destination={trip.destination}
+                  coverImage={trip.cover_image_url}
+                  durationDays={trip.duration_days}
+                  priceEstimate={trip.price_estimate}
+                  avgRating={trip.avg_rating}
+                  totalBookings={trip.total_bookings}
+                  creatorName={trip.profiles?.display_name}
+                  creatorAvatar={trip.profiles?.avatar_url}
+                  tags={trip.tags}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              No saved trips yet. Browse the marketplace and save trips you love!
             </CardContent>
           </Card>
         )}

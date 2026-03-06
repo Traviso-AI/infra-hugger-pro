@@ -77,6 +77,42 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       hotel_inventory: {
         Row: {
           amenities: string[] | null
@@ -233,6 +269,13 @@ export type Database = {
             referencedRelation: "trips"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reviews_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       trip_activities: {
@@ -346,6 +389,7 @@ export type Database = {
           tags: string[] | null
           title: string
           total_bookings: number | null
+          total_favorites: number | null
           total_revenue: number | null
           updated_at: string
         }
@@ -365,6 +409,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           total_bookings?: number | null
+          total_favorites?: number | null
           total_revenue?: number | null
           updated_at?: string
         }
@@ -384,10 +429,19 @@ export type Database = {
           tags?: string[] | null
           title?: string
           total_bookings?: number | null
+          total_favorites?: number | null
           total_revenue?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trips_creator_id_profiles_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -197,7 +197,7 @@ export default function Booking() {
               {loading ? "Processing..." : "Confirm Booking"}
             </Button>
             <p className="text-xs text-muted-foreground text-center mt-2">
-              This is a simulated booking for MVP purposes
+              You won't be charged until payment integration is live
             </p>
           </CardContent>
         </Card>
