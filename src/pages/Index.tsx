@@ -117,6 +117,7 @@ export default function Index() {
                   creatorName={trip.profiles?.display_name}
                   creatorAvatar={trip.profiles?.avatar_url}
                   creatorUsername={trip.profiles?.username}
+                  creatorId={trip.creator_id}
                   tags={trip.tags}
                 />
               ))}
