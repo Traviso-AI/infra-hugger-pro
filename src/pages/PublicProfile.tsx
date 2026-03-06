@@ -63,8 +63,17 @@ export default function PublicProfile() {
         .from("bookings")
         .select("*, trips(*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username))")
         .eq("user_id", profile!.user_id)
-        .eq("status", "confirmed");
-      return data || [];
+        .eq("status", "confirmed")
+        .order("created_at", { ascending: false });
+      if (!data) return [];
+      // Deduplicate by trip_id, keeping most recent booking
+      const seen = new Map<string, typeof data[0]>();
+      for (const booking of data) {
+        if (booking.trip_id && !seen.has(booking.trip_id)) {
+          seen.set(booking.trip_id, booking);
+        }
+      }
+      return Array.from(seen.values());
     },
     enabled: !!profile,
   });
