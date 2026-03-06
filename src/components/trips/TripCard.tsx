@@ -127,6 +127,6 @@ export function TripCard({
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
