@@ -112,22 +112,22 @@ serve(async (req) => {
 
     // Assign cover image based on destination
     const destLower = tripData.destination.toLowerCase();
-    const pexelsMap: Record<string, string> = {
-      tokyo: 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg',
-      seoul: 'https://images.pexels.com/photos/237211/pexels-photo-237211.jpeg',
-      bali: 'https://images.pexels.com/photos/1537640/pexels-photo-1537640.jpeg',
-      paris: 'https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg',
-      miami: 'https://images.pexels.com/photos/1802255/pexels-photo-1802255.jpeg',
-      barcelona: 'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg',
-      'new york': 'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg',
-      nyc: 'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg',
-      maldives: 'https://images.pexels.com/photos/1483053/pexels-photo-1483053.jpeg',
-      cabo: 'https://images.pexels.com/photos/1430677/pexels-photo-1430677.jpeg',
-      'los angeles': 'https://images.pexels.com/photos/1616773/pexels-photo-1616773.jpeg',
-      la: 'https://images.pexels.com/photos/1616773/pexels-photo-1616773.jpeg',
+    const unsplashMap: Record<string, string> = {
+      tokyo: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80',
+      seoul: 'https://images.unsplash.com/photo-1601621915196-2621bfb0cd6e?w=800&q=80',
+      bali: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80',
+      paris: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+      miami: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+      barcelona: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800&q=80',
+      'new york': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80',
+      nyc: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80',
+      maldives: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80',
+      cabo: 'https://images.unsplash.com/photo-1510097467424-192d713fd8b2?w=800&q=80',
+      'los angeles': 'https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=800&q=80',
+      la: 'https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=800&q=80',
     };
-    const coverImageUrl = Object.entries(pexelsMap).find(([key]) => destLower.includes(key))?.[1]
-      || 'https://images.pexels.com/photos/1051073/pexels-photo-1051073.jpeg';
+    const coverImageUrl = Object.entries(unsplashMap).find(([key]) => destLower.includes(key))?.[1]
+      || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80';
 
     // Create trip in DB
     const { data: trip, error: tripError } = await supabase
