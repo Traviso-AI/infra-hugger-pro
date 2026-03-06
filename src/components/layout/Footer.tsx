@@ -33,9 +33,10 @@ export function Footer() {
           <div>
             <h4 className="font-sans text-sm font-semibold mb-3">Company</h4>
             <div className="flex flex-col gap-2">
-              <span className="text-sm text-muted-foreground">About</span>
-              <span className="text-sm text-muted-foreground">Privacy</span>
-              <span className="text-sm text-muted-foreground">Terms</span>
+              <Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link>
+              <a href="mailto:hello@traviso.ai" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
+              <Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</Link>
+              <Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</Link>
             </div>
           </div>
         </div>

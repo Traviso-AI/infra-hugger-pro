@@ -62,6 +62,25 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Social proof stats strip */}
+      <section className="border-y py-8 bg-muted/30">
+        <div className="container">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4 text-center">
+            {[
+              { value: "10,000+", label: "Trips Created" },
+              { value: "$2M+", label: "Creator Earnings" },
+              { value: "50,000+", label: "Travelers" },
+              { value: "120+", label: "Destinations" },
+            ].map(({ value, label }) => (
+              <div key={label}>
+                <p className="font-display text-3xl font-bold text-accent">{value}</p>
+                <p className="text-sm text-muted-foreground mt-1">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Value props */}
       <section className="border-y bg-card py-16">
         <div className="container">
@@ -123,13 +142,20 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border-2 border-dashed bg-muted/50 p-12 text-center">
-              <Compass className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-              <h3 className="font-display text-xl font-semibold mb-2">No trips yet</h3>
-              <p className="text-muted-foreground mb-4">Be the first to create and publish a trip!</p>
-              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link to="/create-trip">Create a Trip</Link>
-              </Button>
+            <div className="rounded-xl bg-gradient-to-br from-accent/5 to-teal/5 border-2 border-dashed border-accent/20 p-12 text-center">
+              <Sparkles className="mx-auto mb-4 h-12 w-12 text-accent/50" />
+              <h3 className="font-display text-xl font-semibold mb-2">Be the first creator</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Traviso is launching soon. Start building your audience by publishing a trip — early creators earn the highest commissions.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  <Link to="/ai-planner"><Sparkles className="mr-2 h-4 w-4" /> Plan with AI</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/create-trip">Create a Trip</Link>
+                </Button>
+              </div>
             </div>
           )}
         </div>

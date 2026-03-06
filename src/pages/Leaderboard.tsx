@@ -167,21 +167,29 @@ export default function Leaderboard() {
         <TabsContent value="creators">
           <div className="space-y-3">
             {topCreators?.map((creator: any, i: number) => (
-              <Card key={creator.id}>
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-lg font-bold text-accent">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium">{creator.display_name}</h3>
-                    {creator.bio && <p className="text-sm text-muted-foreground truncate">{creator.bio}</p>}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">${(creator.total_earnings || 0).toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">earned</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <Link key={creator.id} to={creator.username ? `/profile/${creator.username}` : "#"} className="block">
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-lg font-bold text-accent">
+                      {i + 1}
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center font-medium shrink-0">
+                      {creator.display_name?.[0] || "C"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium">{creator.display_name}</h3>
+                      {creator.username && <p className="text-xs text-muted-foreground">@{creator.username}</p>}
+                      {creator.bio && <p className="text-sm text-muted-foreground truncate">{creator.bio}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold flex items-center gap-1 justify-end">
+                        <TrendingUp className="h-4 w-4 text-accent" /> ${(creator.total_earnings || 0).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">earned</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
             {(!topCreators || topCreators.length === 0) && (
               <Card><CardContent className="p-8 text-center text-muted-foreground">No creators yet</CardContent></Card>

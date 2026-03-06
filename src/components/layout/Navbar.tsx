@@ -67,11 +67,11 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                   <User className="mr-2 h-4 w-4" /> Dashboard
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <User className="mr-2 h-4 w-4" /> Profile
+                <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
+                  <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin")}>
-                  <BarChart3 className="mr-2 h-4 w-4" /> Admin
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="mr-2 h-4 w-4" /> Edit Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>

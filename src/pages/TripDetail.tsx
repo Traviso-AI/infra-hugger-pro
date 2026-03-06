@@ -92,8 +92,44 @@ export default function TripDetail() {
 
       <div className="container -mt-16 relative pb-16">
         <div className="grid gap-8 lg:grid-cols-3">
+          {/* Booking sidebar — shown first on mobile, right column on desktop */}
+          <div className="space-y-6 order-first lg:order-last">
+            <Card className="lg:sticky lg:top-24">
+              <CardContent className="p-6">
+                {trip.price_estimate && (
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold">${trip.price_estimate.toLocaleString()}</span>
+                    <span className="text-muted-foreground"> / person</span>
+                  </div>
+                )}
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook}>
+                  Book This Trip
+                </Button>
+
+                {creator && (
+                  <div className="mt-6 border-t pt-4">
+                    <p className="text-xs text-muted-foreground mb-2">Created by</p>
+                    <Link
+                      to={creator.username ? `/profile/${creator.username}` : "#"}
+                      className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center font-medium">
+                        {creator.display_name?.[0] || "C"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{creator.display_name}</p>
+                        {creator.username && <p className="text-xs text-muted-foreground">@{creator.username}</p>}
+                      </div>
+                    </Link>
+                    {creator.bio && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{creator.bio}</p>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Main content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-8 order-last lg:order-first">
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
                 {trip.tags?.map((tag: string) => (
@@ -187,41 +223,6 @@ export default function TripDetail() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="sticky top-24">
-              <CardContent className="p-6">
-                {trip.price_estimate && (
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold">${trip.price_estimate.toLocaleString()}</span>
-                    <span className="text-muted-foreground"> / person</span>
-                  </div>
-                )}
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook}>
-                  Book This Trip
-                </Button>
-
-                {creator && (
-                  <div className="mt-6 border-t pt-4">
-                    <p className="text-xs text-muted-foreground mb-2">Created by</p>
-                    <Link
-                      to={creator.username ? `/profile/${creator.username}` : "#"}
-                      className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center font-medium">
-                        {creator.display_name?.[0] || "C"}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{creator.display_name}</p>
-                        {creator.username && <p className="text-xs text-muted-foreground">@{creator.username}</p>}
-                      </div>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

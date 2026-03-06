@@ -148,7 +148,7 @@ export default function Dashboard() {
       </div>
 
       {/* My Bookings */}
-      <div>
+      <div className="mb-8">
         <h2 className="font-display text-xl font-bold mb-4">My Bookings</h2>
         {myBookings && myBookings.length > 0 ? (
           <div className="space-y-3">
@@ -175,15 +175,18 @@ export default function Dashboard() {
           </div>
         ) : (
           <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              No bookings yet. Explore trips to get started!
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground mb-4">No bookings yet — explore trips and book your next adventure!</p>
+              <Button asChild variant="outline">
+                <Link to="/explore">Browse Trips</Link>
+              </Button>
             </CardContent>
           </Card>
         )}
       </div>
 
       {/* Saved Trips */}
-      <div>
+      <div className="mb-8">
         <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
           <Heart className="h-5 w-5 text-red-500" /> Saved Trips
         </h2>
@@ -212,8 +215,11 @@ export default function Dashboard() {
           </div>
         ) : (
           <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              No saved trips yet. Browse the marketplace and save trips you love!
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
+              <Button asChild variant="outline">
+                <Link to="/explore">Explore Trips</Link>
+              </Button>
             </CardContent>
           </Card>
         )}
