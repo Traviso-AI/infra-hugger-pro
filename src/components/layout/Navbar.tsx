@@ -70,6 +70,9 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/admin")}>
+                  <BarChart3 className="mr-2 h-4 w-4" /> Admin
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out

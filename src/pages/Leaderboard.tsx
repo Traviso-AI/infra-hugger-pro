@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Star, Users, TrendingUp, MapPin } from "lucide-react";
+import { Trophy, Star, Users, TrendingUp, MapPin, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Leaderboard() {
@@ -11,7 +11,7 @@ export default function Leaderboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trips")
-        .select("*, profiles!trips_creator_id_fkey(display_name)")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name)")
         .eq("is_published", true)
         .order("total_bookings", { ascending: false })
         .limit(20);
@@ -37,9 +37,22 @@ export default function Leaderboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trips")
-        .select("*, profiles!trips_creator_id_fkey(display_name)")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name)")
         .eq("is_published", true)
         .order("avg_rating", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+  });
+
+  const { data: topSaved } = useQuery({
+    queryKey: ["leaderboard-saved"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("trips")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name)")
+        .eq("is_published", true)
+        .order("total_favorites", { ascending: false })
         .limit(20);
       return data || [];
     },
@@ -59,6 +72,7 @@ export default function Leaderboard() {
         <TabsList className="mb-6">
           <TabsTrigger value="bookings">Most Booked</TabsTrigger>
           <TabsTrigger value="rated">Top Rated</TabsTrigger>
+          <TabsTrigger value="saved">Most Saved</TabsTrigger>
           <TabsTrigger value="creators">Top Creators</TabsTrigger>
         </TabsList>
 
@@ -117,6 +131,35 @@ export default function Leaderboard() {
             ))}
             {(!topRated || topRated.length === 0) && (
               <Card><CardContent className="p-8 text-center text-muted-foreground">No rated trips yet</CardContent></Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="saved">
+          <div className="space-y-3">
+            {topSaved?.map((trip: any, i: number) => (
+              <Link key={trip.id} to={`/trip/${trip.id}`}>
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 font-display text-lg font-bold text-red-500">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{trip.title}</h3>
+                      <p className="text-sm text-muted-foreground">{trip.destination} · by {trip.profiles?.display_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold flex items-center gap-1">
+                        <Heart className="h-4 w-4 fill-red-500 text-red-500" /> {trip.total_favorites || 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">saves</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+            {(!topSaved || topSaved.length === 0) && (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No saved trips yet</CardContent></Card>
             )}
           </div>
         </TabsContent>
