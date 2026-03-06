@@ -65,7 +65,7 @@ export function TripCard({
   };
 
   return (
-    <Link to={`/trip/${id}`} className="group block">
+    <div onClick={() => navigate(`/trip/${id}`)} className="group block cursor-pointer">
       <div className="overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg hover:-translate-y-1">
         <div className="aspect-[4/3] overflow-hidden bg-muted relative">
           {coverImage ? (
