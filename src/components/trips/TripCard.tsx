@@ -28,6 +28,7 @@ export function TripCard({
 }: TripCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: isFavorited } = useQuery({
     queryKey: ["favorite", id, user?.id],
