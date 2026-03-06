@@ -56,6 +56,20 @@ export default function Dashboard() {
   const totalBookings = myTrips?.reduce((sum, t) => sum + (t.total_bookings || 0), 0) || 0;
   const totalRevenue = myTrips?.reduce((sum, t) => sum + (t.total_revenue || 0), 0) || 0;
 
+  const handlePublish = async (tripId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { error } = await supabase
+      .from("trips")
+      .update({ is_published: true })
+      .eq("id", tripId);
+    if (error) {
+      toast.error("Failed to publish trip");
+    } else {
+      toast.success("Trip published!");
+      queryClient.invalidateQueries({ queryKey: ["my-trips"] });
+    }
+  };
   return (
     <div className="container py-8 md:py-12">
       <div className="flex items-center justify-between mb-8">
