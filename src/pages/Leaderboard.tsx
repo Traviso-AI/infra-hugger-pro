@@ -1,0 +1,151 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Trophy, Star, Users, TrendingUp, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
+
+export default function Leaderboard() {
+  const { data: topTrips } = useQuery({
+    queryKey: ["leaderboard-trips"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("trips")
+        .select("*, profiles!trips_creator_id_fkey(display_name)")
+        .eq("is_published", true)
+        .order("total_bookings", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+  });
+
+  const { data: topCreators } = useQuery({
+    queryKey: ["leaderboard-creators"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("is_creator", true)
+        .order("total_earnings", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+  });
+
+  const { data: topRated } = useQuery({
+    queryKey: ["leaderboard-rated"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("trips")
+        .select("*, profiles!trips_creator_id_fkey(display_name)")
+        .eq("is_published", true)
+        .order("avg_rating", { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+  });
+
+  return (
+    <div className="container py-8 md:py-12">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Trophy className="h-8 w-8 text-sunset" />
+          <h1 className="font-display text-4xl font-bold">Leaderboard</h1>
+        </div>
+        <p className="text-muted-foreground">Top trips and creators on Traviso</p>
+      </div>
+
+      <Tabs defaultValue="bookings">
+        <TabsList className="mb-6">
+          <TabsTrigger value="bookings">Most Booked</TabsTrigger>
+          <TabsTrigger value="rated">Top Rated</TabsTrigger>
+          <TabsTrigger value="creators">Top Creators</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="bookings">
+          <div className="space-y-3">
+            {topTrips?.map((trip: any, i: number) => (
+              <Link key={trip.id} to={`/trip/${trip.id}`}>
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-lg font-bold text-accent">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{trip.title}</h3>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> {trip.destination} · by {trip.profiles?.display_name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold flex items-center gap-1">
+                        <Users className="h-4 w-4" /> {trip.total_bookings || 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">bookings</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+            {(!topTrips || topTrips.length === 0) && (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No trips yet</CardContent></Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="rated">
+          <div className="space-y-3">
+            {topRated?.map((trip: any, i: number) => (
+              <Link key={trip.id} to={`/trip/${trip.id}`}>
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sunset/10 font-display text-lg font-bold text-sunset">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{trip.title}</h3>
+                      <p className="text-sm text-muted-foreground">{trip.destination}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-sunset text-sunset" /> {trip.avg_rating?.toFixed(1) || "—"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+            {(!topRated || topRated.length === 0) && (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No rated trips yet</CardContent></Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="creators">
+          <div className="space-y-3">
+            {topCreators?.map((creator: any, i: number) => (
+              <Card key={creator.id}>
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-lg font-bold text-accent">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium">{creator.display_name}</h3>
+                    {creator.bio && <p className="text-sm text-muted-foreground truncate">{creator.bio}</p>}
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">${(creator.total_earnings || 0).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">earned</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {(!topCreators || topCreators.length === 0) && (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No creators yet</CardContent></Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
