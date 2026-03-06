@@ -69,23 +69,16 @@ export default function AiPlanner() {
     setFilePreview(null);
   };
 
-  /** Convert a File to a base64 data URL so it can be sent inline to the AI. */
-  const toBase64DataUrl = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Failed to read image"));
-      reader.readAsDataURL(file);
-    });
-
-  /** Upload image to Supabase storage for persistence (fire-and-forget). */
-  const uploadImageToStorage = async (file: File) => {
+  /** Upload image to Supabase storage and return its public URL for the OpenAI vision API. */
+  const uploadImageToStorage = async (file: File): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${user?.id ?? "anon"}/${crypto.randomUUID()}.${ext}`;
-    await supabase.storage
+    const { error } = await supabase.storage
       .from("trip-images")
       .upload(path, file, { contentType: file.type, upsert: false });
-    // Errors are swallowed — storage upload is best-effort; AI still gets the image via base64.
+    if (error) throw error;
+    const { data } = supabase.storage.from("trip-images").getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const readTextFile = (file: File): Promise<string> =>
@@ -105,17 +98,15 @@ export default function AiPlanner() {
     setUploadLoading(hasFile);
 
     let userText = input.trim();
-    let imageUrl: string | undefined; // will be a base64 data URL for images
+    let imageUrl: string | undefined;
 
     // Handle the attached file
     if (selectedFile) {
       try {
         if (selectedFile.type.startsWith("image/")) {
-          // Convert to base64 data URL — this is sent inline so the AI gateway
-          // can read the image directly without needing to fetch an external URL.
-          imageUrl = await toBase64DataUrl(selectedFile);
-          // Also upload to storage for persistence (non-blocking, best-effort).
-          uploadImageToStorage(selectedFile);
+          // Upload to Supabase storage and get the public URL.
+          // OpenAI (gpt-4o) will fetch this URL directly for vision processing.
+          imageUrl = await uploadImageToStorage(selectedFile);
           userText = userText
             ? `${userText}\n\n📎 [Attached image: ${selectedFile.name}]`
             : `📎 [Attached image: ${selectedFile.name}] — please read this screenshot and build a trip itinerary from the group chat conversation shown.`;
