@@ -32,6 +32,26 @@ export default function BookingSuccess() {
         return;
       }
 
+      // Check for existing booking with same stripe_payment_id to prevent duplicates
+      const { data: existingBooking } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("stripe_payment_id", sessionId)
+        .maybeSingle();
+
+      if (existingBooking) {
+        // Already saved — fetch destination for display
+        const { data: trip } = await supabase
+          .from("trips")
+          .select("destination")
+          .eq("id", tripId)
+          .single();
+        if (trip) setDestination(trip.destination);
+        setSaved(true);
+        setSaving(false);
+        return;
+      }
+
       // Fetch trip for commission calc and destination
       const { data: trip } = await supabase
         .from("trips")
@@ -59,6 +79,15 @@ export default function BookingSuccess() {
         console.error("Booking save error:", error);
         toast.error("Payment succeeded but booking save failed. Please contact support.");
       } else {
+        // Update trip stats: increment total_bookings and total_revenue
+        await supabase
+          .from("trips")
+          .update({
+            total_bookings: (trip?.total_bookings ?? 0) + 1,
+            total_revenue: (trip?.total_revenue ?? 0) + totalPrice,
+          } as any)
+          .eq("id", tripId);
+
         setSaved(true);
         toast.success("Booking confirmed!");
       }

@@ -1,12 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
