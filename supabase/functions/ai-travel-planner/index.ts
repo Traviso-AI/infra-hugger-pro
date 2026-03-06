@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const SYSTEM_PROMPT = `You are Traviso AI, an expert travel planning assistant. You help users plan complete, detailed travel itineraries.
 
-When a user describes a trip idea, you should:
+When a user describes a trip idea (or shares a group chat screenshot or conversation), you should:
 1. Extract: destination, approximate dates, budget level, group size, interests
 2. Generate a structured daily itinerary including:
    - Flight suggestions (airlines, approximate times)
@@ -17,6 +17,8 @@ When a user describes a trip idea, you should:
    - Local events happening during travel dates
    - Transportation tips between locations
    - Estimated costs
+
+If the user shares a screenshot or text of a group chat conversation, read it carefully to identify where the group wants to go, what activities they're interested in, their budget hints, and any dates mentioned.
 
 Format your response with clear markdown:
 - Use ## for day headers (e.g., "## Day 1: Arrival in Tokyo")
@@ -28,15 +30,53 @@ Format your response with clear markdown:
 When users ask to modify the trip, adjust the itinerary accordingly.
 Keep responses detailed but scannable. Be enthusiastic and knowledgeable about travel.`;
 
+type TextContent = { type: "text"; text: string };
+type ImageContent = { type: "image_url"; image_url: { url: string } };
+type MessageContent = string | Array<TextContent | ImageContent>;
+
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: MessageContent;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, imageUrl } = await req.json() as {
+      messages: ChatMessage[];
+      imageUrl?: string;
+    };
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // If an image URL was supplied, convert the last user message to vision format
+    let processedMessages: ChatMessage[] = messages.map((m) => ({ ...m }));
+    if (imageUrl) {
+      const lastUserIdx = [...processedMessages]
+        .map((m, i) => ({ m, i }))
+        .filter(({ m }) => m.role === "user")
+        .at(-1)?.i;
+
+      if (lastUserIdx !== undefined) {
+        const original = processedMessages[lastUserIdx];
+        const textPart: TextContent = {
+          type: "text",
+          text: typeof original.content === "string" ? original.content : "",
+        };
+        const imagePart: ImageContent = {
+          type: "image_url",
+          image_url: { url: imageUrl },
+        };
+        processedMessages[lastUserIdx] = {
+          role: "user",
+          content: [textPart, imagePart],
+        };
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -48,7 +88,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          ...messages,
+          ...processedMessages,
         ],
         stream: true,
       }),
