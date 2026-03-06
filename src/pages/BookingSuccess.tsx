@@ -83,9 +83,9 @@ export default function BookingSuccess() {
         await supabase
           .from("trips")
           .update({
-            total_bookings: (trip?.total_bookings ?? 0) + 1,
-            total_revenue: (trip?.total_revenue ?? 0) + totalPrice,
-          } as any)
+            total_bookings: (currentTrip?.total_bookings ?? 0) + 1,
+            total_revenue: (currentTrip?.total_revenue ?? 0) + totalPrice,
+          })
           .eq("id", tripId);
 
         setSaved(true);
