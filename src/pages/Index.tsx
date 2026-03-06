@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Compass, Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { Sparkles, TrendingUp, Users, ArrowRight, Globe, BookOpen, UserCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Index() {
@@ -62,24 +62,8 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Social proof stats strip */}
-      <section className="border-y py-8 bg-muted/30">
-        <div className="container">
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-4 text-center">
-            {[
-              { value: "10,000+", label: "Trips Created" },
-              { value: "$2M+", label: "Creator Earnings" },
-              { value: "50,000+", label: "Travelers" },
-              { value: "120+", label: "Destinations" },
-            ].map(({ value, label }) => (
-              <div key={label}>
-                <p className="font-display text-3xl font-bold text-accent">{value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Live stats */}
+      <LiveStats />
 
       {/* Value props */}
       <section className="border-y bg-card py-16">
