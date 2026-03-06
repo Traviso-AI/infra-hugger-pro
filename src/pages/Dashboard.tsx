@@ -1,15 +1,17 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: myTrips } = useQuery({
     queryKey: ["my-trips", user?.id],
@@ -54,6 +56,20 @@ export default function Dashboard() {
   const totalBookings = myTrips?.reduce((sum, t) => sum + (t.total_bookings || 0), 0) || 0;
   const totalRevenue = myTrips?.reduce((sum, t) => sum + (t.total_revenue || 0), 0) || 0;
 
+  const handlePublish = async (tripId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { error } = await supabase
+      .from("trips")
+      .update({ is_published: true })
+      .eq("id", tripId);
+    if (error) {
+      toast.error("Failed to publish trip");
+    } else {
+      toast.success("Trip published!");
+      queryClient.invalidateQueries({ queryKey: ["my-trips"] });
+    }
+  };
   return (
     <div className="container py-8 md:py-12">
       <div className="flex items-center justify-between mb-8">
@@ -105,6 +121,11 @@ export default function Dashboard() {
                       <Badge variant={trip.is_published ? "default" : "secondary"}>
                         {trip.is_published ? "Published" : "Draft"}
                       </Badge>
+                      {!trip.is_published && (
+                        <Button size="sm" variant="outline" onClick={(e) => handlePublish(trip.id, e)}>
+                          <Send className="mr-1 h-3 w-3" /> Publish
+                        </Button>
+                      )}
                       {trip.price_estimate && (
                         <span className="text-sm font-medium">${trip.price_estimate}</span>
                       )}
