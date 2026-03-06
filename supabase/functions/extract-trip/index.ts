@@ -110,6 +110,10 @@ serve(async (req) => {
 
     const tripData = JSON.parse(toolCall.function.arguments);
 
+    // Generate Unsplash cover image URL based on destination
+    const destinationQuery = encodeURIComponent(tripData.destination.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim());
+    const coverImageUrl = `https://source.unsplash.com/1600x900/?${destinationQuery},travel`;
+
     // Create trip in DB
     const { data: trip, error: tripError } = await supabase
       .from("trips")
@@ -122,6 +126,7 @@ serve(async (req) => {
         price_estimate: tripData.price_estimate || null,
         tags: tripData.tags || [],
         is_published: false,
+        cover_image_url: coverImageUrl,
       })
       .select()
       .single();
