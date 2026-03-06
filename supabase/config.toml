@@ -1,0 +1,7 @@
+project_id = "hmogswuliehwbmcyzfie"
+
+[functions.ai-travel-planner]
+verify_jwt = false
+
+[functions.extract-trip]
+verify_jwt = false
