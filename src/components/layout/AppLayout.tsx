@@ -13,3 +13,14 @@ export function AppLayout() {
     </div>
   );
 }
+
+export function AppLayoutNoFooter() {
+  return (
+    <div className="flex h-[100dvh] flex-col overflow-hidden">
+      <Navbar />
+      <main className="flex-1 overflow-hidden">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
