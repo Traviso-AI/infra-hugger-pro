@@ -27,16 +27,22 @@ serve(async (req) => {
       .single();
     if (tripErr || !trip) throw new Error("Trip not found");
 
-    // Check if already has days
+    // Check if already fully backfilled
     const { data: existingDays } = await supabase
       .from("trip_days")
       .select("id")
-      .eq("trip_id", trip_id)
-      .limit(1);
-    if (existingDays && existingDays.length > 0) {
-      return new Response(JSON.stringify({ message: "Trip already has days", skipped: true }), {
+      .eq("trip_id", trip_id);
+    if (existingDays && existingDays.length >= trip.duration_days) {
+      return new Response(JSON.stringify({ message: "Trip already fully backfilled", skipped: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+    // Delete partial data
+    if (existingDays && existingDays.length > 0) {
+      for (const day of existingDays) {
+        await supabase.from("trip_activities").delete().eq("trip_day_id", day.id);
+      }
+      await supabase.from("trip_days").delete().eq("trip_id", trip_id);
     }
 
     const prompt = `Create a detailed ${trip.duration_days}-day travel itinerary for ${trip.destination}. Return ONLY valid JSON (no markdown). Format: {"days":[{"title":"Day title","description":"Day description","activities":[{"type":"activity|restaurant|hotel|flight|experience|transport","title":"Activity title","description":"What to do","location":"Where"}]}]}`;
