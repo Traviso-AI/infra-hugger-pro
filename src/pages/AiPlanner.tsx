@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,44 +8,15 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import nalaAvatar from "@/assets/nala-avatar.png";
+import { NalaAvatar } from "@/components/ai-planner/NalaAvatar";
+import { TypingDots } from "@/components/ai-planner/TypingDots";
+import { ChatHistoryDrawer } from "@/components/ai-planner/ChatHistoryDrawer";
+import { useConversations } from "@/hooks/useConversations";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
 
 type Message = { role: "user" | "assistant"; content: string };
-
-function TypingDots() {
-  return (
-    <div className="flex items-center gap-1 py-1 px-1">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="block h-2 w-2 rounded-full bg-accent/60"
-          animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.1, 0.85] }}
-          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function NalaAvatar({ size = "sm", showOnline = false }: { size?: "sm" | "lg"; showOnline?: boolean }) {
-  const sizeClasses = size === "lg" ? "h-16 w-16" : "h-7 w-7";
-  return (
-    <div className="relative shrink-0">
-      <div className={`${sizeClasses} rounded-full bg-accent/10 border-2 border-accent/20 overflow-hidden flex items-center justify-center`}>
-        <img src={nalaAvatar} alt="Nala" className="h-full w-full object-cover" />
-      </div>
-      {showOnline && (
-        <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-          <span className="relative inline-flex rounded-full h-4 w-4 bg-accent border-2 border-background" />
-        </span>
-      )}
-    </div>
-  );
-}
 
 export default function AiPlanner() {
   const { user } = useAuth();
@@ -53,8 +24,20 @@ export default function AiPlanner() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [conversationId] = useState(() => crypto.randomUUID());
+  const [conversationId, setConversationId] = useState(() => crypto.randomUUID());
+  const [conversationCreated, setConversationCreated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const {
+    conversations,
+    loading: convsLoading,
+    createConversation,
+    updateTitle,
+    deleteConversation,
+    touchConversation,
+    refetch,
+  } = useConversations();
 
   // File upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +54,45 @@ export default function AiPlanner() {
       if (filePreview) URL.revokeObjectURL(filePreview);
     };
   }, [filePreview]);
+
+  const loadConversation = useCallback(
+    async (id: string) => {
+      if (!user) return;
+      setConversationId(id);
+      setConversationCreated(true);
+      const { data } = await supabase
+        .from("messages")
+        .select("role, content")
+        .eq("conversation_id", id)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      setMessages(
+        (data as Message[])?.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })) ?? []
+      );
+    },
+    [user]
+  );
+
+  const handleNewChat = useCallback(() => {
+    const newId = crypto.randomUUID();
+    setConversationId(newId);
+    setConversationCreated(false);
+    setMessages([]);
+    setInput("");
+  }, []);
+
+  const handleDeleteConversation = useCallback(
+    async (id: string) => {
+      await deleteConversation(id);
+      if (id === conversationId) handleNewChat();
+    },
+    [deleteConversation, conversationId, handleNewChat]
+  );
+
+  const generateTitle = (text: string) => {
+    const clean = text.replace(/📎.*?\n/g, "").trim();
+    return clean.length > 40 ? clean.slice(0, 40) + "…" : clean || "New Chat";
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,6 +174,14 @@ export default function AiPlanner() {
 
     setUploadLoading(false);
     clearFile();
+
+    // Create conversation record on first message
+    if (!conversationCreated && user) {
+      await createConversation(conversationId, generateTitle(userText));
+      setConversationCreated(true);
+    } else if (conversationCreated) {
+      touchConversation(conversationId);
+    }
 
     const userMsg: Message = { role: "user", content: userText };
     const newMessages = [...messages, userMsg];
@@ -237,10 +267,16 @@ export default function AiPlanner() {
           content: assistantContent,
         });
       }
+
+      // Auto-update title if it was the first message
+      if (messages.length === 0 && userText) {
+        updateTitle(conversationId, generateTitle(userText));
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to get AI response");
     } finally {
       setLoading(false);
+      refetch();
     }
   };
 
@@ -430,6 +466,16 @@ export default function AiPlanner() {
           </AnimatePresence>
 
           <div className="flex gap-2 items-center">
+            <ChatHistoryDrawer
+              conversations={conversations}
+              activeId={conversationId}
+              loading={convsLoading}
+              onSelect={loadConversation}
+              onNew={handleNewChat}
+              onDelete={handleDeleteConversation}
+              open={drawerOpen}
+              onOpenChange={setDrawerOpen}
+            />
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,text/plain" className="hidden" onChange={handleFileSelect} />
             <Button variant="outline" size="icon" className="shrink-0 h-10 w-10" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
               {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
