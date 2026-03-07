@@ -80,7 +80,7 @@ export default function Leaderboard() {
           <div className="space-y-3">
             {topTrips?.map((trip: any, i: number) => (
               <Link key={trip.id} to={`/trip/${trip.id}`}>
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:border-l-4 hover:border-l-accent">
                   <CardContent className="flex items-center gap-4 p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-lg font-bold text-accent">
                       {i + 1}
@@ -111,7 +111,7 @@ export default function Leaderboard() {
           <div className="space-y-3">
             {topRated?.map((trip: any, i: number) => (
               <Link key={trip.id} to={`/trip/${trip.id}`}>
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:border-l-4 hover:border-l-accent">
                   <CardContent className="flex items-center gap-4 p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sunset/10 font-display text-lg font-bold text-sunset">
                       {i + 1}
@@ -139,7 +139,7 @@ export default function Leaderboard() {
           <div className="space-y-3">
             {topSaved?.map((trip: any, i: number) => (
               <Link key={trip.id} to={`/trip/${trip.id}`}>
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:border-l-4 hover:border-l-accent">
                   <CardContent className="flex items-center gap-4 p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 font-display text-lg font-bold text-red-500">
                       {i + 1}
@@ -168,7 +168,7 @@ export default function Leaderboard() {
           <div className="space-y-3">
             {topCreators?.map((creator: any, i: number) => (
               <Link key={creator.id} to={creator.username ? `/profile/${creator.username}` : "#"} className="block">
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:border-l-4 hover:border-l-accent">
                   <CardContent className="flex items-center gap-4 p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 font-display text-lg font-bold text-accent">
                       {i + 1}
