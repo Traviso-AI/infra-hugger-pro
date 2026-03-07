@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -12,8 +12,8 @@ serve(async (req) => {
     const { destination, durationDays } = await req.json();
     if (!destination) throw new Error("Missing destination");
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const numDays = parseInt(durationDays) || 3;
 
@@ -37,26 +37,30 @@ serve(async (req) => {
 
 Valid types: Activity, Restaurant, Hotel, Flight, Experience, Transport. Include 3-5 activities per day.`;
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-        }),
-      }
-    );
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "You are a travel itinerary generator. Return only valid JSON." },
+          { role: "user", content: prompt },
+        ],
+        stream: false,
+      }),
+    });
 
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error("Gemini error:", resp.status, errText);
-      throw new Error(`Gemini API error ${resp.status}`);
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Lovable gateway error:", response.status, errText);
+      throw new Error(`Lovable gateway error ${response.status}`);
     }
 
-    const data = await resp.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content ?? "";
 
     // Clean and parse JSON
     const cleaned = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
@@ -72,7 +76,7 @@ Valid types: Activity, Restaurant, Hotel, Flight, Experience, Transport. Include
     console.error("generate-itinerary error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
