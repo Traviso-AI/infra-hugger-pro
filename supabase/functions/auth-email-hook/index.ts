@@ -35,7 +35,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "traviso"
+const SITE_NAME = "Traviso"
 const SENDER_DOMAIN = "notify.traviso.ai"
 const ROOT_DOMAIN = "traviso.ai"
 const FROM_DOMAIN = "traviso.ai" // Domain shown in From address (may be root or sender subdomain)
