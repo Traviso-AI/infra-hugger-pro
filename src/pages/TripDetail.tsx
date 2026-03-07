@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music } from "lucide-react";
-import { getDestinationCover, getDestinationCoverFallback } from "@/lib/destination-covers";
+import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
 
 const typeIcons: Record<string, any> = {
@@ -86,7 +86,7 @@ export default function TripDetail() {
       {/* Hero */}
       <div className="relative h-64 md:h-96 bg-muted">
         <img
-          src={trip.cover_image_url || getDestinationCover(trip.destination, 1200, 600)}
+          src={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? getDestinationCover(trip.destination, 1200, 600) : trip.cover_image_url}
           alt={trip.title}
           className="h-full w-full object-cover"
           onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(trip.destination); }}
