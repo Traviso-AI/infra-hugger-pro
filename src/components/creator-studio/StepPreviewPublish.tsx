@@ -121,7 +121,7 @@ export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
                               {act.description && <p className="text-[11px] text-muted-foreground">{act.description}</p>}
                               <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                                 {act.location && <span>{act.location}</span>}
-                                {act.priceEstimate && <span className="font-medium text-foreground">${act.priceEstimate}</span>}
+                                
                               </div>
                             </div>
                           </div>
