@@ -73,58 +73,19 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
     }
     setGenerating(true);
     try {
-      const numDays = parseInt(durationDays) || 3;
-      const prompt = `Create a ${numDays} day itinerary for ${destination}. Return a day-by-day breakdown with activities, restaurants, and experiences for each day.
-
-IMPORTANT: You MUST respond with ONLY a valid JSON object, no markdown, no explanation, no code fences. Use this exact structure:
-{"days":[{"title":"Day 1: Arrival","description":"Brief overview","activities":[{"type":"activity","title":"Visit Temple","location":"Asakusa, Tokyo","description":"Historic temple"}]}]}
-
-Valid types: activity, restaurant, hotel, flight, experience, transport. Include 3-5 activities per day.`;
-
-      const resp = await supabase.functions.invoke("ai-travel-planner", {
-        body: { messages: [{ role: "user", content: prompt }] },
+      const resp = await supabase.functions.invoke("generate-itinerary", {
+        body: { destination, durationDays },
       });
 
       if (resp.error) throw resp.error;
+      if (resp.data?.error) throw new Error(resp.data.error);
 
-      // Collect full text from SSE stream or direct response
-      let fullText = "";
-      if (typeof resp.data === "string") {
-        const lines = resp.data.split("\n");
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("data: ") && trimmed.slice(6).trim() !== "[DONE]") {
-            try {
-              const parsed = JSON.parse(trimmed.slice(6));
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) fullText += content;
-            } catch {}
-          }
-        }
-      } else if (resp.data && typeof resp.data === "object") {
-        // Check if it's an error response
-        if (resp.data.error) throw new Error(resp.data.error);
-        fullText = JSON.stringify(resp.data);
-      }
-
-      console.log("AI raw response length:", fullText.length);
-
-      // Strip markdown code fences if present
-      fullText = fullText.replace(/```json\s*/g, "").replace(/```\s*/g, "");
-
-      // Extract JSON object
-      const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        console.error("Could not find JSON in response:", fullText.substring(0, 500));
-        throw new Error("Could not parse AI response");
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = resp.data;
       const aiDays: DayForm[] = (parsed.days || []).map((d: any) => ({
         title: d.title || "",
         description: d.description || "",
         activities: (d.activities || []).map((a: any) => ({
-          type: ACTIVITY_TYPES.includes(a.type) ? a.type : "activity",
+          type: ACTIVITY_TYPES.includes(a.type?.toLowerCase()) ? a.type.toLowerCase() : "activity",
           title: a.title || "",
           description: a.description || "",
           location: a.location || "",
