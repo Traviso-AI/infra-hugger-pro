@@ -248,9 +248,7 @@ export default function AiPlanner() {
     <div className="relative flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
       {/* Aurora / gradient background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
-        {/* Subtle aurora blobs */}
         <div
           className="absolute -top-1/4 -left-1/4 w-[80vw] h-[80vh] rounded-full opacity-[0.07] blur-[120px]"
           style={{ background: "radial-gradient(circle, hsl(174 60% 45%), transparent 70%)" }}
@@ -263,6 +261,14 @@ export default function AiPlanner() {
           className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[50vw] h-[40vh] rounded-full opacity-[0.04] blur-[80px] animate-float"
           style={{ background: "radial-gradient(circle, hsl(174 60% 50%), transparent 70%)" }}
         />
+      </div>
+
+      {/* Header */}
+      <div className="border-b border-border/40 bg-card/60 backdrop-blur-xl px-4 py-3">
+        <div className="mx-auto max-w-3xl flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-accent" />
+          <h2 className="font-display text-lg font-bold">AI Trip Planner</h2>
+        </div>
       </div>
 
       {/* Chat area */}
