@@ -25,6 +25,14 @@ const unsplashMap: Record<string, string> = {
   rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80",
 };
 
+function toTitleCase(str: string): string {
+  const minor = new Set(["a","an","the","and","but","or","for","nor","on","at","to","by","in","of","up","as","is","it"]);
+  return str.replace(/\w\S*/g, (word, index) => {
+    if (index !== 0 && minor.has(word.toLowerCase())) return word.toLowerCase();
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+}
+
 function getUnsplashFallback(destination: string): string {
   const lower = destination.toLowerCase();
   const match = Object.entries(unsplashMap).find(([key]) => lower.includes(key));
@@ -87,7 +95,7 @@ export default function CreateTrip() {
         .from("trips")
         .insert({
           creator_id: user.id,
-          title: basics.title,
+          title: toTitleCase(basics.title),
           description: basics.description,
           destination: basics.destination,
           duration_days: days.length,

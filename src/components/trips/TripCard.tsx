@@ -122,9 +122,9 @@ export function TripCard({
                 <span className="text-xs text-muted-foreground hover:underline">{creatorName}</span>
               </Link>
             )}
-            {priceEstimate && (
-              <span className="text-sm font-semibold">${priceEstimate.toLocaleString()}</span>
-            )}
+            <span className="text-sm font-semibold">
+              {priceEstimate ? `$${priceEstimate.toLocaleString()}` : "Price TBD"}
+            </span>
           </div>
         </div>
       </div>
