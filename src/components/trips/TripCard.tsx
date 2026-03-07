@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Star, Users, Clock, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getDestinationCover } from "@/lib/destination-covers";
+import { getDestinationCover, getDestinationCoverFallback } from "@/lib/destination-covers";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +75,7 @@ export function TripCard({
             alt={title}
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
             loading="lazy"
+            onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(destination); }}
           />
           <Button
             variant="ghost"

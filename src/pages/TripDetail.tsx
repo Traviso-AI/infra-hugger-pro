@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music } from "lucide-react";
-import { getDestinationCover } from "@/lib/destination-covers";
+import { getDestinationCover, getDestinationCoverFallback } from "@/lib/destination-covers";
 import { toast } from "sonner";
 
 const typeIcons: Record<string, any> = {
@@ -89,6 +89,7 @@ export default function TripDetail() {
           src={trip.cover_image_url || getDestinationCover(trip.destination, 1200, 600)}
           alt={trip.title}
           className="h-full w-full object-cover"
+          onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(trip.destination); }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
       </div>
