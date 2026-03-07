@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CoverImageUpload } from "./CoverImageUpload";
 import { TagSelector } from "./TagSelector";
+import { DestinationAutocomplete } from "./DestinationAutocomplete";
 import { Info } from "lucide-react";
 
 export interface TripBasicsData {
@@ -47,10 +48,9 @@ export function StepTripBasics({ data, onChange }: StepTripBasicsProps) {
 
         <div className="space-y-2 sm:col-span-2">
           <Label>Destination</Label>
-          <Input
-            placeholder="Tokyo, Japan"
+          <DestinationAutocomplete
             value={data.destination}
-            onChange={(e) => update("destination", e.target.value)}
+            onChange={(v) => update("destination", v)}
           />
         </div>
 
