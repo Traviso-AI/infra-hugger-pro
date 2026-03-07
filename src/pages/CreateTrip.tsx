@@ -20,11 +20,6 @@ function toTitleCase(str: string): string {
   });
 }
 
-function getUnsplashFallback(destination: string): string {
-  const lower = destination.toLowerCase();
-  const match = Object.entries(unsplashMap).find(([key]) => lower.includes(key));
-  return match?.[1] || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
-}
 
 function validateBasics(basics: TripBasicsData): TripBasicsErrors {
   const errors: TripBasicsErrors = {};
