@@ -111,7 +111,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {myTrips.map((trip) => (
               <Link key={trip.id} to={`/trip/${trip.id}`}>
-                <Card className="hover:shadow-md transition-shadow">
+                <Card className="transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:border-l-4 hover:border-l-accent">
                   <CardContent className="flex items-center justify-between p-4">
                     <div>
                       <h3 className="font-medium">{trip.title}</h3>
