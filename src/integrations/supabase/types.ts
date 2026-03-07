@@ -473,6 +473,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      to_title_case: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
