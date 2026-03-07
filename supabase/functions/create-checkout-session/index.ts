@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -25,14 +24,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
+    const token = authHeader.replace("Bearer ", "");
+
+    // Use service role to validate the user token server-side
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       console.error("Auth error:", authError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -40,6 +40,13 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Create a client scoped to the user for RLS queries
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
 
     const { trip_id, hotel_id, check_in, check_out, guests, total_price } = await req.json();
 
@@ -50,7 +57,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch trip details for line item description
     const { data: trip } = await supabase
       .from("trips")
       .select("title, destination")
@@ -63,7 +69,6 @@ Deno.serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Check if customer exists for this email
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string;
     if (customers.data.length > 0) {
