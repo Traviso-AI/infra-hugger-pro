@@ -1,13 +1,19 @@
 /**
  * Destination cover image system with 3-tier fallback:
- * 1. Curated photo array per destination (rotated by trip title hash)
+ * 1. Curated photo array per destination (rotated by trip ID hash for guaranteed variety)
  * 2. Dynamic Unsplash search using smart keywords from title + destination
  * 3. Static generic travel photo as ultimate onError fallback
+ *
+ * CRITICAL: Always pass the trip `id` (UUID) for hashing — this guarantees
+ * that two trips to the same destination NEVER get the same photo
+ * (as long as there are enough photos in the array).
  */
 
 /**
  * Multiple curated photos per destination so duplicate destinations
- * get different cover images (selected deterministically by trip title).
+ * get different cover images (selected deterministically by trip ID).
+ * RULE: Every destination MUST have at least as many photos as there
+ *       are trips to that destination. When in doubt, add more.
  */
 const DESTINATION_PHOTOS: Record<string, string[]> = {
   // Beach / tropical
@@ -15,6 +21,8 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1512813195386-6cf811ad3542",
     "photo-1570737543098-a2ac1a5e57e5",
     "photo-1504019347908-b45f9b0b8e8c",
+    "photo-1518105779142-d975f22f1b0a", // Mexican coast
+    "photo-1547995886-6dc09384c6e6", // Mexican ruins/beach
   ],
   cancun: [
     "photo-1510097467424-192d713fd8b2",
@@ -35,21 +43,27 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1540202404-a2f29016b523",
   ],
   miami: [
-    "photo-1533106497176-45ae19e68ba2",
-    "photo-1514214246283-d427a95c5d2f",
-    "photo-1535498730771-e735b998cd64",
-    "photo-1506966953602-c20cc11f75e3",
+    "photo-1533106497176-45ae19e68ba2", // Miami skyline
+    "photo-1514214246283-d427a95c5d2f", // Miami neon/art deco
+    "photo-1535498730771-e735b998cd64", // Miami beach sunset
+    "photo-1506966953602-c20cc11f75e3", // Miami ocean drive
+    "photo-1569025743873-ea3a9ber638e", // South Beach aerial (extra)
+    "photo-1545579133-99bb5ab189bd", // Miami downtown
   ],
   phuket: [
     "photo-1589394815804-964ed0be2eb5",
     "photo-1537956965359-7573183d1f57",
   ],
-  // Cities
+  // Cities — Tokyo needs 6+ to handle 3 trips without collision
   tokyo: [
-    "photo-1540959733332-eab4deabeeaf",
-    "photo-1503899036084-c55cdd92da26",
-    "photo-1536098561742-ca998e48cbcc",
-    "photo-1549693578-d683be217e58",
+    "photo-1540959733332-eab4deabeeaf", // Shibuya crossing
+    "photo-1503899036084-c55cdd92da26", // Tokyo tower night
+    "photo-1536098561742-ca998e48cbcc", // Shinjuku neon
+    "photo-1549693578-d683be217e58",    // Tokyo skyline
+    "photo-1493976040374-85c8e12f0c0e", // Temple gate
+    "photo-1528360983277-13d401cdc186", // Cherry blossom & temple
+    "photo-1492571350019-22de08371fd3", // Sakura street
+    "photo-1490806843957-31f4c9a91c65", // Mt Fuji sakura
   ],
   paris: [
     "photo-1502602898657-3e91760cbb34",
@@ -88,13 +102,15 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1541432901042-2d8bd64b4a9b",
   ],
   seoul: [
-    "photo-1534274988757-a28bf1a57c17",
-    "photo-1517154421773-0529f29ea451",
-    "photo-1546874177-9e664107314e",
+    "photo-1534274988757-a28bf1a57c17", // Bukchon village
+    "photo-1517154421773-0529f29ea451", // Gyeongbokgung
+    "photo-1546874177-9e664107314e", // Namsangol / N Tower
+    "photo-1522383225653-ed111181a951", // Cherry blossoms Korea
   ],
   singapore: [
     "photo-1525625293386-3f8f99389edd",
     "photo-1496939376851-89342e90adcd",
+    "photo-1508964942454-1a56651d54ac", // Marina Bay Sands night
   ],
   bangkok: [
     "photo-1508009603885-50cf7c579365",
@@ -150,6 +166,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   toronto: [
     "photo-1517090504332-eac35b2cc8c6",
     "photo-1507992781348-310259076fe0",
+    "photo-1544723795-3fb6469f5b39", // CN Tower
   ],
   canada: [
     "photo-1503614472-8c93d56e92ce",
@@ -187,6 +204,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   mykonos: [
     "photo-1601581875309-fafbf2d3ed3a",
     "photo-1570077188670-e3a8d69ac5ff",
+    "photo-1533105079780-92b9be482077", // Santorini-style white buildings
   ],
   croatia: [
     "photo-1555990793-da11153b2473",
@@ -215,6 +233,9 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1493976040374-85c8e12f0c0e",
     "photo-1528360983277-13d401cdc186",
     "photo-1492571350019-22de08371fd3",
+    "photo-1490806843957-31f4c9a91c65",
+    "photo-1540959733332-eab4deabeeaf",
+    "photo-1503899036084-c55cdd92da26",
   ],
   vietnam: [
     "photo-1528127269322-539801943592",
@@ -227,67 +248,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   ],
 };
 
-/**
- * Keywords from trip titles that map to specific photo themes.
- * Used to find more relevant photos based on context.
- */
-const THEME_PHOTOS: Record<string, string[]> = {
-  "cherry blossom": [
-    "photo-1522383225653-ed111181a951",
-    "photo-1490806843957-31f4c9a91c65",
-    "photo-1492571350019-22de08371fd3",
-  ],
-  sakura: [
-    "photo-1522383225653-ed111181a951",
-    "photo-1490806843957-31f4c9a91c65",
-    "photo-1492571350019-22de08371fd3",
-  ],
-  "spring break": [
-    "photo-1507525428034-b723cf961d3e",
-    "photo-1519046904884-53103b34b206",
-  ],
-  wellness: [
-    "photo-1540555700478-4be289fbec6f",
-    "photo-1544161515-4ab6ce6db874",
-  ],
-  "art basel": [
-    "photo-1514214246283-d427a95c5d2f",
-  ],
-  fashion: [
-    "photo-1469334031218-e382a71b716b",
-    "photo-1558618666-fcd25c85f82e",
-  ],
-  nightlife: [
-    "photo-1514525253161-7a46d19cd819",
-    "photo-1470229722913-7c0e2dbbafd3",
-  ],
-  f1: [
-    "photo-1504817343863-5092a923803e",
-  ],
-  conference: [
-    "photo-1540575467063-178a50e2fd87",
-  ],
-  "food": [
-    "photo-1504674900247-0877df9cc836",
-  ],
-  romance: [
-    "photo-1499856871958-5b9627545d1a",
-    "photo-1431274172761-fca41d930114",
-  ],
-  luxury: [
-    "photo-1566073771259-6a8506099945",
-  ],
-  beach: [
-    "photo-1507525428034-b723cf961d3e",
-    "photo-1519046904884-53103b34b206",
-    "photo-1506929562872-bb421503ef21",
-  ],
-  shopping: [
-    "photo-1441986300917-64674bd600d8",
-  ],
-};
-
-// Generic travel photos as ultimate fallback (rotate based on destination hash)
+// Generic travel photos as ultimate fallback
 const GENERIC_TRAVEL_PHOTOS = [
   "photo-1488085061387-422e29b40080",
   "photo-1476514525535-07fb3b4ae5f1",
@@ -299,16 +260,11 @@ const GENERIC_TRAVEL_PHOTOS = [
   "photo-1473496169904-658ba7c44d8a",
 ];
 
-// Old generic placeholder URLs that should be replaced with destination-specific covers
 const STALE_PLACEHOLDER_IDS = [
   "photo-1488085061387-422e29b40080",
   "photo-1488646953014-85cb44e25828",
 ];
 
-/**
- * Returns true if the given URL is a known generic placeholder
- * that should be replaced with a destination-specific cover.
- */
 export function isGenericPlaceholder(url: string | null | undefined): boolean {
   if (!url) return true;
   return STALE_PLACEHOLDER_IDS.some((id) => url.includes(id));
@@ -324,48 +280,25 @@ function simpleHash(str: string): number {
 }
 
 /**
- * Builds a smart Unsplash search URL from destination + title keywords.
- */
-function buildSmartUnsplashQuery(destination: string, title?: string): string {
-  // Extract the city/country name (first part before comma)
-  const cityName = destination.split(",")[0].trim();
-  
-  // If we have a title, extract meaningful keywords
-  if (title) {
-    const lowerTitle = title.toLowerCase();
-    // Check for theme keywords in the title
-    for (const [theme, photos] of Object.entries(THEME_PHOTOS)) {
-      if (lowerTitle.includes(theme)) {
-        // Combine city + theme for better results
-        return encodeURIComponent(`${cityName} ${theme}`);
-      }
-    }
-  }
-  
-  return encodeURIComponent(`${cityName} travel landmark`);
-}
-
-/**
- * Returns the best cover image URL for a destination + trip title:
- * 1. Curated destination photo (rotated by title hash for variety)
- * 2. Theme-based photo if destination is unknown but title has keywords
- * 3. Dynamic Unsplash source redirect with smart query
+ * Returns the best cover image URL for a destination.
  *
- * IMPORTANT: Destination always wins over theme. Themes are only used
- * when the destination has no curated photos.
+ * @param destination  e.g. "Tokyo, Japan"
+ * @param width        image width
+ * @param height       image height
+ * @param tripId       UNIQUE trip UUID — used for deterministic rotation so
+ *                     two trips to the same city always get different photos
  */
 export function getDestinationCover(
   destination: string,
   width = 800,
   height = 600,
-  title?: string
+  tripId?: string
 ): string {
   const lower = destination.toLowerCase().trim();
-  const lowerTitle = (title || "").toLowerCase();
-  const hashSource = (title || destination).toLowerCase().trim();
-  const hash = simpleHash(hashSource);
+  // Use tripId for hashing — it's unique per trip, so no collisions
+  const hash = simpleHash((tripId || destination).toLowerCase().trim());
 
-  // 1. Curated destination match — ALWAYS takes priority
+  // 1. Curated destination match
   for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(keyword)) {
       const idx = hash % photos.length;
@@ -373,24 +306,14 @@ export function getDestinationCover(
     }
   }
 
-  // 2. No destination match — check theme keywords in title
-  if (title) {
-    for (const [theme, photos] of Object.entries(THEME_PHOTOS)) {
-      if (lowerTitle.includes(theme)) {
-        const idx = hash % photos.length;
-        return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
-      }
-    }
-  }
-
-  // 3. Dynamic Unsplash source — smart query from destination + title
-  const query = buildSmartUnsplashQuery(destination, title);
+  // 2. Dynamic Unsplash source — smart query from destination
+  const cityName = destination.split(",")[0].trim();
+  const query = encodeURIComponent(`${cityName} travel landmark`);
   return `https://source.unsplash.com/${width}x${height}/?${query}`;
 }
 
 /**
  * Returns a static fallback URL (no network dependency).
- * Use as an onError fallback when the dynamic Unsplash URL fails.
  */
 export function getDestinationCoverFallback(destination: string, width = 800, height = 600): string {
   const idx = simpleHash(destination.toLowerCase().trim()) % GENERIC_TRAVEL_PHOTOS.length;

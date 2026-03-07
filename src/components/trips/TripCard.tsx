@@ -71,7 +71,7 @@ export function TripCard({
       <div className="overflow-hidden rounded-xl border bg-card transition-all hover:shadow-lg hover:-translate-y-1">
         <div className="aspect-[4/3] overflow-hidden bg-muted relative">
           <img
-            src={(!coverImage || isGenericPlaceholder(coverImage)) ? getDestinationCover(destination, 800, 600, title) : coverImage}
+            src={(!coverImage || isGenericPlaceholder(coverImage)) ? getDestinationCover(destination, 800, 600, id) : coverImage}
             alt={title}
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
             loading="lazy"
