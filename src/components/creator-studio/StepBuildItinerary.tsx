@@ -8,13 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DestinationAutocomplete } from "./DestinationAutocomplete";
 
 export interface ActivityForm {
   type: string;
   title: string;
   description: string;
   location: string;
-  priceEstimate: string;
 }
 
 export interface DayForm {
@@ -31,8 +31,10 @@ interface StepBuildItineraryProps {
 }
 
 const emptyActivity = (): ActivityForm => ({
-  type: "activity", title: "", description: "", location: "", priceEstimate: "",
+  type: "activity", title: "", description: "", location: "",
 });
+
+const ACTIVITY_TYPES = ["activity", "restaurant", "hotel", "flight", "experience", "transport"];
 
 export function StepBuildItinerary({ days, onChange, destination, durationDays }: StepBuildItineraryProps) {
   const [generating, setGenerating] = useState(false);
@@ -72,7 +74,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
     setGenerating(true);
     try {
       const numDays = parseInt(durationDays) || 3;
-      const prompt = `Generate a detailed ${numDays}-day travel itinerary for ${destination}. For each day, provide a title and 3-5 activities with type (activity/restaurant/hotel/flight/transport), title, location, estimated price, and brief description. Return as JSON with this exact structure: { "days": [{ "title": "Day title", "description": "Brief description", "activities": [{ "type": "activity", "title": "Activity name", "location": "Location", "priceEstimate": "50", "description": "Brief description" }] }] }. Return ONLY the JSON, no markdown.`;
+      const prompt = `Generate a detailed ${numDays}-day travel itinerary for ${destination}. For each day, provide a title and 3-5 activities with type (activity/restaurant/hotel/flight/experience/transport), title, location, and brief description. Return as JSON with this exact structure: { "days": [{ "title": "Day title", "description": "Brief description", "activities": [{ "type": "activity", "title": "Activity name", "location": "Location", "description": "Brief description" }] }] }. Return ONLY the JSON, no markdown.`;
 
       const resp = await supabase.functions.invoke("ai-travel-planner", {
         body: { messages: [{ role: "user", content: prompt }] },
@@ -80,7 +82,6 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
 
       if (resp.error) throw resp.error;
 
-      // Parse SSE response
       let fullText = "";
       if (typeof resp.data === "string") {
         const lines = resp.data.split("\n");
@@ -97,7 +98,6 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
         fullText = JSON.stringify(resp.data);
       }
 
-      // Extract JSON from response
       const jsonMatch = fullText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Could not parse AI response");
 
@@ -110,7 +110,6 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
           title: a.title || "",
           description: a.description || "",
           location: a.location || "",
-          priceEstimate: String(a.priceEstimate || a.price_estimate || ""),
         })),
       }));
 
@@ -131,15 +130,14 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
   return (
     <div className="space-y-5">
       <Button
-        variant="outline"
-        className="w-full border-accent/30 hover:bg-accent/5 hover:border-accent text-accent"
+        className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base py-6"
         onClick={generateWithAI}
         disabled={generating}
       >
         {generating ? (
-          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating itinerary...</>
+          <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating itinerary...</>
         ) : (
-          <><Sparkles className="mr-2 h-4 w-4" /> ✨ Generate itinerary with AI</>
+          <><Sparkles className="mr-2 h-5 w-5" /> Generate itinerary with AI</>
         )}
       </Button>
 
@@ -158,7 +156,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
               <div className="space-y-1">
                 <Label className="text-xs">Day Title</Label>
                 <Input
-                  placeholder="Arrival & Exploration"
+                  placeholder="e.g. Morning in Shibuya"
                   value={day.title}
                   onChange={(e) => updateDay(dayIdx, "title", e.target.value)}
                   className="h-9 text-sm"
@@ -167,7 +165,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
               <div className="space-y-1">
                 <Label className="text-xs">Description</Label>
                 <Input
-                  placeholder="Brief description"
+                  placeholder="e.g. Explore the city center"
                   value={day.description}
                   onChange={(e) => updateDay(dayIdx, "description", e.target.value)}
                   className="h-9 text-sm"
@@ -192,7 +190,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
                       <Select value={act.type} onValueChange={(v) => updateActivity(dayIdx, actIdx, "type", v)}>
                         <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {["activity", "restaurant", "hotel", "flight", "transport", "event"].map((t) => (
+                          {ACTIVITY_TYPES.map((t) => (
                             <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
                           ))}
                         </SelectContent>
@@ -200,20 +198,19 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Title</Label>
-                      <Input placeholder="Visit Senso-ji" value={act.title} onChange={(e) => updateActivity(dayIdx, actIdx, "title", e.target.value)} className="h-8 text-xs" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Location</Label>
-                      <Input placeholder="Asakusa, Tokyo" value={act.location} onChange={(e) => updateActivity(dayIdx, actIdx, "location", e.target.value)} className="h-8 text-xs" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Price ($)</Label>
-                      <Input type="number" placeholder="0" value={act.priceEstimate} onChange={(e) => updateActivity(dayIdx, actIdx, "priceEstimate", e.target.value)} className="h-8 text-xs" />
+                      <Input placeholder="e.g. Visit Senso-ji Temple" value={act.title} onChange={(e) => updateActivity(dayIdx, actIdx, "title", e.target.value)} className="h-8 text-xs" />
                     </div>
                   </div>
                   <div className="space-y-1">
+                    <Label className="text-xs">Location</Label>
+                    <DestinationAutocomplete
+                      value={act.location}
+                      onChange={(v) => updateActivity(dayIdx, actIdx, "location", v)}
+                    />
+                  </div>
+                  <div className="space-y-1">
                     <Label className="text-xs">Description</Label>
-                    <Input placeholder="Brief description" value={act.description} onChange={(e) => updateActivity(dayIdx, actIdx, "description", e.target.value)} className="h-8 text-xs" />
+                    <Input placeholder="e.g. Iconic Buddhist temple in Asakusa" value={act.description} onChange={(e) => updateActivity(dayIdx, actIdx, "description", e.target.value)} className="h-8 text-xs" />
                   </div>
                 </div>
               ))}
