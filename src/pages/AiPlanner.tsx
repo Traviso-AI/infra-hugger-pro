@@ -429,20 +429,20 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          <div className="flex gap-2 items-end">
+          <div className="flex gap-2 items-center">
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,text/plain" className="hidden" onChange={handleFileSelect} />
-            <Button variant="outline" size="icon" className="shrink-0 self-end" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
               {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
             </Button>
             <Textarea
-              placeholder="Describe your dream trip, or attach a group chat screenshot..."
+              placeholder="Describe your dream trip..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              className="min-h-[44px] max-h-32 resize-none"
+              className="min-h-[40px] max-h-32 resize-none text-sm py-2.5 leading-5"
               rows={1}
             />
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 self-end" size="icon" onClick={sendMessage} disabled={!canSend}>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-10 w-10" size="icon" onClick={sendMessage} disabled={!canSend}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
