@@ -7,12 +7,37 @@ import { Send, Loader2, Save, Paperclip, X, FileText, Image } from "lucide-react
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
-import nalaAvatar from "@/assets/nala-avatar.jpg";
+import { motion, AnimatePresence } from "framer-motion";
+import nalaAvatar from "@/assets/nala-avatar.png";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
 
 type Message = { role: "user" | "assistant"; content: string };
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1 py-1 px-1">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="block h-2 w-2 rounded-full bg-accent/60"
+          animate={{ opacity: [0.3, 1, 0.3], scale: [0.85, 1.1, 0.85] }}
+          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function NalaAvatar({ size = "sm" }: { size?: "sm" | "lg" }) {
+  const sizeClasses = size === "lg" ? "h-16 w-16" : "h-7 w-7";
+  return (
+    <div className={`${sizeClasses} rounded-full bg-accent/10 border-2 border-accent/20 overflow-hidden shrink-0 flex items-center justify-center`}>
+      <img src={nalaAvatar} alt="Nala" className="h-full w-full object-cover" />
+    </div>
+  );
+}
 
 export default function AiPlanner() {
   const { user } = useAuth();
@@ -33,7 +58,6 @@ export default function AiPlanner() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Cleanup preview URL on unmount or file change
   useEffect(() => {
     return () => {
       if (filePreview) URL.revokeObjectURL(filePreview);
@@ -43,7 +67,6 @@ export default function AiPlanner() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!ACCEPTED_TYPES.includes(file.type)) {
       toast.error("Only JPG, PNG, or TXT files are supported.");
       e.target.value = "";
@@ -54,7 +77,6 @@ export default function AiPlanner() {
       e.target.value = "";
       return;
     }
-
     setSelectedFile(file);
     if (file.type.startsWith("image/")) {
       setFilePreview(URL.createObjectURL(file));
@@ -70,7 +92,6 @@ export default function AiPlanner() {
     setFilePreview(null);
   };
 
-  /** Upload image to Supabase storage and return its public URL for the OpenAI vision API. */
   const uploadImageToStorage = async (file: File): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${user?.id ?? "anon"}/${crypto.randomUUID()}.${ext}`;
@@ -101,18 +122,14 @@ export default function AiPlanner() {
     let userText = input.trim();
     let imageUrl: string | undefined;
 
-    // Handle the attached file
     if (selectedFile) {
       try {
         if (selectedFile.type.startsWith("image/")) {
-          // Upload to Supabase storage and get the public URL.
-          // OpenAI (gpt-4o) will fetch this URL directly for vision processing.
           imageUrl = await uploadImageToStorage(selectedFile);
           userText = userText
             ? `${userText}\n\n📎 [Attached image: ${selectedFile.name}]`
             : `📎 [Attached image: ${selectedFile.name}] — please read this screenshot and build a trip itinerary from the group chat conversation shown.`;
         } else {
-          // Text file: read and inject inline
           const text = await readTextFile(selectedFile);
           const prefix = `📎 [Shared conversation from "${selectedFile.name}"]:\n\`\`\`\n${text}\n\`\`\`\n\n`;
           userText = userText ? `${prefix}${userText}` : `${prefix}Please read this group chat conversation and create a detailed trip itinerary based on what the group is planning.`;
@@ -133,7 +150,6 @@ export default function AiPlanner() {
     setMessages(newMessages);
     setInput("");
 
-    // Save user message
     if (user) {
       await supabase.from("messages").insert({
         user_id: user.id,
@@ -157,16 +173,8 @@ export default function AiPlanner() {
       );
 
       if (!resp.ok) {
-        if (resp.status === 429) {
-          toast.error("Rate limit exceeded, please try again later");
-          setLoading(false);
-          return;
-        }
-        if (resp.status === 402) {
-          toast.error("AI credits exhausted, please add funds");
-          setLoading(false);
-          return;
-        }
+        if (resp.status === 429) { toast.error("Rate limit exceeded, please try again later"); setLoading(false); return; }
+        if (resp.status === 402) { toast.error("AI credits exhausted, please add funds"); setLoading(false); return; }
         throw new Error("AI request failed");
       }
 
@@ -213,7 +221,6 @@ export default function AiPlanner() {
         }
       }
 
-      // Save assistant message
       if (user && assistantContent) {
         await supabase.from("messages").insert({
           user_id: user.id,
@@ -236,13 +243,9 @@ export default function AiPlanner() {
       return;
     }
     try {
-      const resp = await supabase.functions.invoke("extract-trip", {
-        body: { messages },
-      });
-
+      const resp = await supabase.functions.invoke("extract-trip", { body: { messages } });
       if (resp.error) throw resp.error;
       const tripData = resp.data;
-
       if (tripData?.trip_id) {
         toast.success("Trip saved! Redirecting...");
         navigate(`/trip/${tripData.trip_id}`);
@@ -264,9 +267,12 @@ export default function AiPlanner() {
       {/* Header */}
       <div className="border-b bg-card px-4 py-3">
         <div className="mx-auto max-w-5xl flex items-center justify-between w-full">
-          <div className="flex items-center gap-2">
-            <img src={nalaAvatar} alt="Nala" className="h-7 w-7 rounded-full object-cover" />
-            <h1 className="font-display text-lg font-bold">Nala — AI Trip Planner</h1>
+          <div className="flex items-center gap-2.5">
+            <NalaAvatar />
+            <div>
+              <h1 className="font-display text-lg font-bold leading-tight">Nala</h1>
+              <p className="text-[11px] text-muted-foreground leading-none">AI Trip Planner</p>
+            </div>
           </div>
         </div>
       </div>
@@ -274,39 +280,65 @@ export default function AiPlanner() {
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="container max-w-3xl space-y-4">
-          {messages.length === 0 && (
-            <div className="text-center py-16">
-              <img src={nalaAvatar} alt="Nala" className="mx-auto mb-4 h-16 w-16 rounded-full object-cover shadow-lg" />
-              <h2 className="font-display text-2xl font-bold mb-2">Meet Nala 🐾</h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {[
-                  "3 days in Tokyo with friends, cherry blossoms and nightlife",
-                  "Weekend in Barcelona, food and architecture",
-                  "Miami beach party weekend for 4 people",
-                  "5-day wellness retreat in Bali",
-                ].map((suggestion) => (
-                  <Button
-                    key={suggestion}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setInput(suggestion)}
-                  >
-                    {suggestion}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {messages.length === 0 && (
+              <motion.div
+                key="welcome"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="text-center py-16"
+              >
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+                >
+                  <NalaAvatar size="lg" />
+                </motion.div>
+                <div className="flex justify-center mb-4" />
+                <h2 className="font-display text-2xl font-bold mb-2">Meet Nala 🐾</h2>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[
+                    "3 days in Tokyo with friends, cherry blossoms and nightlife",
+                    "Weekend in Barcelona, food and architecture",
+                    "Miami beach party weekend for 4 people",
+                    "5-day wellness retreat in Bali",
+                  ].map((suggestion, i) => (
+                    <motion.div
+                      key={suggestion}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setInput(suggestion)}
+                      >
+                        {suggestion}
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}>
-              {msg.role === "assistant" && (
-                <img src={nalaAvatar} alt="Nala" className="h-7 w-7 rounded-full object-cover shrink-0 mt-1" />
-              )}
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}
+            >
+              {msg.role === "assistant" && <NalaAvatar />}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.role === "user"
@@ -322,20 +354,30 @@ export default function AiPlanner() {
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))}
 
           {loading && (
-            <div className="flex justify-start gap-2">
-              <img src={nalaAvatar} alt="Nala" className="h-7 w-7 rounded-full object-cover shrink-0 mt-1" />
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="flex justify-start gap-2"
+            >
+              <NalaAvatar />
               <div className="rounded-2xl bg-card border px-4 py-3">
-                <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                <TypingDots />
               </div>
-            </div>
+            </motion.div>
           )}
-          {/* Save as Trip inline button */}
+
           {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
-            <div className="flex justify-start">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25, delay: 0.15 }}
+              className="flex justify-start pl-9"
+            >
               <Button
                 size="sm"
                 onClick={handleSaveTrip}
@@ -343,7 +385,7 @@ export default function AiPlanner() {
               >
                 <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Trip
               </Button>
-            </div>
+            </motion.div>
           )}
 
           <div ref={scrollRef} />
@@ -353,82 +395,47 @@ export default function AiPlanner() {
       {/* Input */}
       <div className="border-t bg-card px-4 py-3">
         <div className="container max-w-3xl space-y-2">
-
-          {/* File preview chip */}
-          {selectedFile && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-xl w-fit max-w-full">
-              {isImage && filePreview ? (
-                <img
-                  src={filePreview}
-                  alt="preview"
-                  className="h-8 w-8 rounded object-cover shrink-0"
-                />
-              ) : (
-                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-              )}
-              <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                {selectedFile.name}
-              </span>
-              {uploadLoading ? (
-                <Loader2 className="h-3 w-3 animate-spin text-accent shrink-0" />
-              ) : (
-                <button
-                  onClick={clearFile}
-                  className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                  aria-label="Remove attachment"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          )}
+          <AnimatePresence>
+            {selectedFile && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-xl w-fit max-w-full">
+                  {isImage && filePreview ? (
+                    <img src={filePreview} alt="preview" className="h-8 w-8 rounded object-cover shrink-0" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">{selectedFile.name}</span>
+                  {uploadLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-accent shrink-0" />
+                  ) : (
+                    <button onClick={clearFile} className="text-muted-foreground hover:text-foreground transition-colors shrink-0" aria-label="Remove attachment">
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex gap-2 items-end">
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,text/plain"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-
-            {/* Paperclip button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 self-end"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              title="Attach image or text file"
-            >
-              {isImage ? (
-                <Image className="h-4 w-4" />
-              ) : (
-                <Paperclip className="h-4 w-4" />
-              )}
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,text/plain" className="hidden" onChange={handleFileSelect} />
+            <Button variant="outline" size="icon" className="shrink-0 self-end" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
+              {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
             </Button>
-
             <Textarea
               placeholder="Describe your dream trip, or attach a group chat screenshot..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendMessage();
-                }
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               className="min-h-[44px] max-h-32 resize-none"
               rows={1}
             />
-
-            <Button
-              className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 self-end"
-              size="icon"
-              onClick={sendMessage}
-              disabled={!canSend}
-            >
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 self-end" size="icon" onClick={sendMessage} disabled={!canSend}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
