@@ -90,7 +90,7 @@ export function TripCard({
             <MapPin className="h-3.5 w-3.5 text-accent" />
             <span className="text-xs font-medium text-muted-foreground">{destination}</span>
           </div>
-          <h3 className="font-display text-lg font-semibold leading-tight mb-2 line-clamp-2">{title}</h3>
+          <h3 className="font-display text-lg font-semibold leading-tight mb-2 line-clamp-1">{title}</h3>
           <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {durationDays} day{durationDays > 1 ? "s" : ""}</span>
             {avgRating != null && avgRating > 0 && (
