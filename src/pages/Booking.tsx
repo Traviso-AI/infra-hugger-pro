@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { MapPin, Calendar, Users as UsersIcon } from "lucide-react";
 
@@ -90,8 +91,8 @@ export default function Booking() {
 
   return (
     <div className="container max-w-2xl py-8 md:py-12">
-      <h1 className="font-display text-3xl font-bold mb-2">Book Your Trip</h1>
-      <p className="text-muted-foreground mb-8">{trip.title} · {trip.destination}</p>
+      <h1 className="font-display text-3xl font-bold mb-2">Check Availability</h1>
+      <p className="text-muted-foreground mb-8">Select your travel dates and number of guests to see live pricing for flights, hotels, and experiences.</p>
 
       <div className="space-y-6">
         <Card>
@@ -153,35 +154,53 @@ export default function Booking() {
 
         <Card>
           <CardContent className="p-6">
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm">
-                <span>Trip package</span>
-                <span>${(trip.price_estimate || 0).toLocaleString()}</span>
+            {trip.price_estimate && trip.price_estimate > 0 ? (
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span>Trip package</span>
+                  <span>${trip.price_estimate.toLocaleString()}</span>
+                </div>
+                {selectedHotel && checkIn && checkOut && (() => {
+                  const hotel = hotels?.find((h) => h.id === selectedHotel);
+                  const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
+                  return hotel ? (
+                    <div className="flex justify-between text-sm">
+                      <span>{hotel.name} ({nights} nights)</span>
+                      <span>${(hotel.price_per_night * nights).toLocaleString()}</span>
+                    </div>
+                  ) : null;
+                })()}
+                <div className="flex justify-between font-bold border-t pt-2">
+                  <span>Total</span>
+                  <span>
+                    ${(() => {
+                      const hotel = hotels?.find((h) => h.id === selectedHotel);
+                      const nights = checkIn && checkOut ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                      return (trip.price_estimate! + (hotel ? hotel.price_per_night * nights : 0)).toLocaleString();
+                    })()}
+                  </span>
+                </div>
               </div>
-              {selectedHotel && checkIn && checkOut && (() => {
-                const hotel = hotels?.find((h) => h.id === selectedHotel);
-                const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
-                return hotel ? (
-                  <div className="flex justify-between text-sm">
-                    <span>{hotel.name} ({nights} nights)</span>
-                    <span>${(hotel.price_per_night * nights).toLocaleString()}</span>
-                  </div>
-                ) : null;
-              })()}
-              <div className="flex justify-between font-bold border-t pt-2">
-                <span>Total</span>
-                <span>
-                  ${(() => {
-                    const hotel = hotels?.find((h) => h.id === selectedHotel);
-                    const nights = checkIn && checkOut ? Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)) : 0;
-                    return ((trip.price_estimate || 0) + (hotel ? hotel.price_per_night * nights : 0)).toLocaleString();
-                  })()}
-                </span>
-              </div>
+            ) : null}
+            <div className="flex gap-3">
+              <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook} disabled={loading}>
+                {loading ? "Processing..." : "Confirm Booking"}
+              </Button>
+              {(!trip.price_estimate || trip.price_estimate === 0) && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="lg" disabled className="opacity-50">
+                        Calculate Price
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Live pricing coming soon</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook} disabled={loading}>
-              {loading ? "Processing..." : "Confirm Booking"}
-            </Button>
           </CardContent>
         </Card>
       </div>

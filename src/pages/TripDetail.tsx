@@ -103,7 +103,7 @@ export default function TripDetail() {
                   </div>
                 )}
                 <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook}>
-                  Book This Trip
+                  Check Availability →
                 </Button>
 
                 {creator && (
