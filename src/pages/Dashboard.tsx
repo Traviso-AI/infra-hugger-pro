@@ -153,7 +153,7 @@ export default function Dashboard() {
         {myBookings && myBookings.length > 0 ? (
           <div className="space-y-3">
             {myBookings.map((booking: any) => (
-              <Card key={booking.id}>
+              <Card key={booking.id} className="transition-all duration-200 ease-in-out hover:shadow-lg hover:scale-[1.02] hover:border-l-4 hover:border-l-accent">
                 <CardContent className="flex items-center justify-between p-4">
                   <div>
                     <h3 className="font-medium">{booking.trips?.title || "Trip"}</h3>
