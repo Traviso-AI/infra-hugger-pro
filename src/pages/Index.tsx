@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
+import { Sparkles, TrendingUp, Users, ArrowRight, MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 
@@ -24,41 +24,89 @@ export default function Index() {
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden py-24 md:py-36">
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-background to-sunset/5" />
-        <div className="container relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mx-auto max-w-3xl text-center"
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 text-sm font-medium shadow-sm">
-              <Sparkles className="h-4 w-4 text-accent" />
-              AI-powered travel planning
-            </div>
-            <h1 className="font-display text-5xl font-bold leading-tight tracking-tight md:text-7xl">
-              The trip finally made it{" "}
-              <span className="bg-gradient-to-r from-accent to-teal bg-clip-text text-transparent">
-                out of the group chat.
-              </span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-              Plan it, book it, and get paid when others follow your lead.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-base px-8">
-                <Link to="/ai-planner">
-                  <Sparkles className="mr-2 h-4 w-4" /> Plan with AI
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-base px-8">
-                <Link to="/explore">
-                  Explore Trips <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </motion.div>
+      <section className="relative overflow-hidden py-28 md:py-40 min-h-[600px] flex items-center">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img
+            src="/images/hero-travel.jpg"
+            alt="Beautiful tropical beach destination"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+        </div>
+
+        <div className="container relative z-10">
+          <div className="grid items-center gap-12 lg:grid-cols-5">
+            {/* Text content */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-3 text-center lg:text-left"
+            >
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-white/90 shadow-lg">
+                <Sparkles className="h-4 w-4 text-accent" />
+                AI-powered travel planning
+              </div>
+              <h1 className="font-display text-5xl font-bold leading-tight tracking-tight text-white md:text-7xl">
+                The trip finally made it{" "}
+                <span className="bg-gradient-to-r from-accent to-teal bg-clip-text text-transparent">
+                  out of the group chat.
+                </span>
+              </h1>
+              <p className="mt-6 text-lg text-white/80 md:text-xl max-w-2xl lg:max-w-none">
+                Plan it, book it, and get paid when others follow your lead.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start sm:justify-center">
+                <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-base px-8 shadow-[0_0_24px_hsl(var(--accent)/0.4)] hover:shadow-[0_0_32px_hsl(var(--accent)/0.6)] transition-shadow">
+                  <Link to="/ai-planner">
+                    <Sparkles className="mr-2 h-4 w-4" /> Plan with AI
+                  </Link>
+                </Button>
+                <Button asChild size="lg" className="border-white/30 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 text-base px-8">
+                  <Link to="/explore">
+                    Explore Trips <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Floating trip card thumbnails */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="hidden lg:flex lg:col-span-2 flex-col gap-4 items-end"
+            >
+              {[
+                { img: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&q=80", title: "Bali Adventure", dest: "Bali, Indonesia", rating: 4.9, price: "$1,200" },
+                { img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&q=80", title: "Paris Getaway", dest: "Paris, France", rating: 4.8, price: "$2,400" },
+                { img: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=300&q=80", title: "Tokyo Explorer", dest: "Tokyo, Japan", rating: 4.7, price: "$1,800" },
+              ].map((card, i) => (
+                <div
+                  key={card.title}
+                  className={`flex items-center gap-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 p-2.5 pr-5 shadow-2xl w-72 ${
+                    i === 0 ? "animate-float" : i === 1 ? "animate-float-delayed mr-8" : "animate-float"
+                  }`}
+                  style={i === 2 ? { animationDelay: "2s" } : undefined}
+                >
+                  <img src={card.img} alt={card.title} className="h-14 w-14 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white truncate">{card.title}</p>
+                    <div className="flex items-center gap-1 text-xs text-white/60">
+                      <MapPin className="h-3 w-3" /> {card.dest}
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="flex items-center gap-0.5 text-xs text-amber-300">
+                        <Star className="h-3 w-3 fill-current" /> {card.rating}
+                      </span>
+                      <span className="text-xs font-medium text-accent">{card.price}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
 
