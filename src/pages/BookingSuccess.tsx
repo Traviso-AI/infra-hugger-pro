@@ -62,18 +62,21 @@ export default function BookingSuccess() {
       if (currentTrip) setDestination(currentTrip.destination);
       const commission = totalPrice * ((currentTrip?.commission_rate || 10) / 100);
 
-      const { error } = await supabase.from("bookings").insert({
-        user_id: user.id,
-        trip_id: tripId,
-        hotel_id: hotelId || null,
-        check_in: checkIn,
-        check_out: checkOut,
-        guests,
-        total_price: totalPrice,
-        commission_amount: commission,
-        status: "confirmed",
-        stripe_payment_id: sessionId,
-      });
+      const { error } = await supabase.from("bookings").upsert(
+        {
+          user_id: user.id,
+          trip_id: tripId,
+          hotel_id: hotelId || null,
+          check_in: checkIn,
+          check_out: checkOut,
+          guests,
+          total_price: totalPrice,
+          commission_amount: commission,
+          status: "confirmed",
+          stripe_payment_id: sessionId,
+        },
+        { onConflict: "stripe_payment_id" }
+      );
 
       if (error) {
         console.error("Booking save error:", error);
