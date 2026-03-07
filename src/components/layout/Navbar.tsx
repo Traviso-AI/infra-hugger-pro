@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass } from "lucide-react";
 import { useState } from "react";
 import {
   DropdownMenu,
