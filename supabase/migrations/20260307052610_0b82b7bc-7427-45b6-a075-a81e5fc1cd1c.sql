@@ -1,0 +1,1 @@
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_stripe_payment_id_unique UNIQUE (stripe_payment_id);
