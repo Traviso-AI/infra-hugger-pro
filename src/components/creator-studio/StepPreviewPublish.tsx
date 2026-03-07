@@ -1,4 +1,4 @@
-import { Check, X, MapPin, Clock, Star, Users } from "lucide-react";
+import { Check, X, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TripBasicsData } from "./StepTripBasics";
@@ -27,16 +27,32 @@ function ChecklistItem({ label, ok }: { label: string; ok: boolean }) {
           <X className="h-3 w-3 text-destructive" />
         </div>
       )}
-      <span className={ok ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+      <span className={ok ? "text-foreground" : "text-destructive"}>{label}</span>
     </div>
   );
 }
 
+export function validatePublishReady(basics: TripBasicsData, days: DayForm[]) {
+  const duration = parseInt(basics.durationDays) || 0;
+  const checks = {
+    title: basics.title.trim().length >= 3,
+    destination: basics.destination.trim().length > 0,
+    description: basics.description.trim().length >= 20,
+    duration: duration >= 1 && duration <= 30,
+    tags: basics.tags.length >= 1,
+    itinerary: days.some((d) => d.activities.some((a) => a.title.trim())),
+    activitiesValid: days.every((d) =>
+      d.activities.filter((a) => a.title.trim()).every((a) => a.type)
+    ),
+  };
+  return {
+    checks,
+    ready: Object.values(checks).every(Boolean),
+  };
+}
+
 export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
-  const hasImage = !!basics.coverImageUrl;
-  const hasTitle = !!basics.title.trim();
-  const hasPrice = !!basics.priceEstimate;
-  const hasItinerary = days.some((d) => d.activities.some((a) => a.title.trim()));
+  const { checks } = validatePublishReady(basics, days);
   const durationDays = parseInt(basics.durationDays) || days.length;
   const price = parseFloat(basics.priceEstimate) || null;
 
@@ -47,10 +63,13 @@ export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
         <CardContent className="p-4">
           <h3 className="font-display text-sm font-semibold mb-3">Publish Checklist</h3>
           <div className="space-y-2">
-            <ChecklistItem label="Cover image" ok={hasImage} />
-            <ChecklistItem label="Title" ok={hasTitle} />
-            <ChecklistItem label="Price" ok={hasPrice} />
-            <ChecklistItem label="At least 1 day of itinerary" ok={hasItinerary} />
+            <ChecklistItem label="Title (min 3 characters)" ok={checks.title} />
+            <ChecklistItem label="Destination selected" ok={checks.destination} />
+            <ChecklistItem label="Description (min 20 characters)" ok={checks.description} />
+            <ChecklistItem label="Duration (1–30 days)" ok={checks.duration} />
+            <ChecklistItem label="At least 1 tag selected" ok={checks.tags} />
+            <ChecklistItem label="At least 1 day with activities" ok={checks.itinerary} />
+            <ChecklistItem label="All activities have title & type" ok={checks.activitiesValid} />
           </div>
         </CardContent>
       </Card>
@@ -86,7 +105,9 @@ export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
                   ))}
                 </div>
               )}
-              {price && <span className="text-sm font-semibold">${price.toLocaleString()}</span>}
+              <span className="text-sm font-semibold">
+                {price ? `$${price.toLocaleString()}` : "Price TBD"}
+              </span>
             </div>
           </div>
         </div>
@@ -121,7 +142,6 @@ export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
                               {act.description && <p className="text-[11px] text-muted-foreground">{act.description}</p>}
                               <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                                 {act.location && <span>{act.location}</span>}
-                                
                               </div>
                             </div>
                           </div>
