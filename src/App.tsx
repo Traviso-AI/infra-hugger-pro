@@ -9,6 +9,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Explore from "./pages/Explore";
 import TripDetail from "./pages/TripDetail";
 import CreateTrip from "./pages/CreateTrip";
@@ -36,6 +38,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/trip/:id" element={<TripDetail />} />
