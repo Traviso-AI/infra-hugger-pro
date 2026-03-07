@@ -5,7 +5,6 @@ import { CoverImageUpload } from "./CoverImageUpload";
 import { TagSelector } from "./TagSelector";
 import { DestinationAutocomplete } from "./DestinationAutocomplete";
 import { Info } from "lucide-react";
-import { Info } from "lucide-react";
 
 export interface TripBasicsData {
   title: string;
