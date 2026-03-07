@@ -143,8 +143,10 @@ export default function TripDetail() {
                 {trip.avg_rating && trip.avg_rating > 0 && (
                   <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-sunset text-sunset" /> {trip.avg_rating}</span>
                 )}
-                {trip.total_bookings && trip.total_bookings > 0 && (
+                {trip.total_bookings != null && trip.total_bookings > 0 ? (
                   <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {trip.total_bookings} booked</span>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">New</Badge>
                 )}
               </div>
               {trip.description && <p className="mt-4 text-muted-foreground leading-relaxed">{trip.description}</p>}
@@ -159,7 +161,7 @@ export default function TripDetail() {
                     <Card key={day.id}>
                       <CardContent className="p-5">
                         <h3 className="font-display text-lg font-semibold mb-1">
-                          Day {day.day_number}{day.title ? `: ${day.title}` : ""}
+                          Day {day.day_number}{day.title ? `: ${day.title.replace(/^Day\s*\d+\s*:\s*/i, "")}` : ""}
                         </h3>
                         {day.description && <p className="text-sm text-muted-foreground mb-3">{day.description}</p>}
                         {day.trip_activities && day.trip_activities.length > 0 && (
