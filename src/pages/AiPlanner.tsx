@@ -405,6 +405,7 @@ export default function AiPlanner() {
 
           <div ref={scrollRef} />
         </div>
+        </div>
       </div>
 
       {/* Input */}
