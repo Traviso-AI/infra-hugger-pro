@@ -4,14 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StepProgressBar } from "@/components/creator-studio/StepProgressBar";
-import { StepTripBasics, TripBasicsData } from "@/components/creator-studio/StepTripBasics";
-import { StepBuildItinerary, DayForm } from "@/components/creator-studio/StepBuildItinerary";
-import { StepPreviewPublish } from "@/components/creator-studio/StepPreviewPublish";
+import { StepTripBasics, TripBasicsData, TripBasicsErrors } from "@/components/creator-studio/StepTripBasics";
+import { StepBuildItinerary, DayForm, ItineraryErrors } from "@/components/creator-studio/StepBuildItinerary";
+import { StepPreviewPublish, validatePublishReady } from "@/components/creator-studio/StepPreviewPublish";
 import { SuccessScreen } from "@/components/creator-studio/SuccessScreen";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 
-// Unsplash fallback map (same as extract-trip function)
 const unsplashMap: Record<string, string> = {
   tokyo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
   seoul: "https://images.unsplash.com/photo-1601621915196-2621bfb0cd6e?w=800&q=80",
@@ -39,12 +38,47 @@ function getUnsplashFallback(destination: string): string {
   return match?.[1] || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
 }
 
+function validateBasics(basics: TripBasicsData): TripBasicsErrors {
+  const errors: TripBasicsErrors = {};
+  if (basics.title.trim().length < 3) errors.title = "Title must be at least 3 characters";
+  if (!basics.destination.trim()) errors.destination = "Please select a destination";
+  if (basics.description.trim().length < 20) errors.description = `Description must be at least 20 characters (${basics.description.trim().length} now)`;
+  const dur = parseInt(basics.durationDays) || 0;
+  if (dur < 1 || dur > 30) errors.durationDays = "Duration must be between 1 and 30 days";
+  if (basics.tags.length < 1) errors.tags = "Select at least 1 tag";
+  return errors;
+}
+
+function validateItinerary(days: DayForm[]): ItineraryErrors {
+  const dayErrors: Record<number, string> = {};
+  const activityErrors: Record<string, string> = {};
+
+  days.forEach((day, dayIdx) => {
+    const hasActivity = day.activities.some((a) => a.title.trim());
+    if (!hasActivity) {
+      dayErrors[dayIdx] = "Each day must have at least 1 activity with a title";
+    }
+    day.activities.forEach((act, actIdx) => {
+      if (act.title.trim() && !act.type) {
+        activityErrors[`${dayIdx}-${actIdx}`] = "Activity type is required";
+      }
+      if (!act.title.trim() && day.activities.length === 1) {
+        activityErrors[`${dayIdx}-${actIdx}`] = "Activity title is required";
+      }
+    });
+  });
+
+  return { dayErrors, activityErrors };
+}
+
 export default function CreateTrip() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [publishedTripId, setPublishedTripId] = useState<string | null>(null);
+  const [basicsErrors, setBasicsErrors] = useState<TripBasicsErrors>({});
+  const [itineraryErrors, setItineraryErrors] = useState<ItineraryErrors>({ dayErrors: {}, activityErrors: {} });
 
   const [basics, setBasics] = useState<TripBasicsData>({
     title: "", destination: "", description: "", durationDays: "3",
@@ -55,10 +89,27 @@ export default function CreateTrip() {
     { title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "" }] },
   ]);
 
+  const handleBasicsChange = (data: TripBasicsData) => {
+    setBasics(data);
+    // Clear errors for fields as they're updated
+    if (Object.keys(basicsErrors).length > 0) {
+      setBasicsErrors(validateBasics(data));
+    }
+  };
+
+  const handleDaysChange = (newDays: DayForm[]) => {
+    setDays(newDays);
+    if (Object.keys(itineraryErrors.dayErrors).length > 0 || Object.keys(itineraryErrors.activityErrors).length > 0) {
+      setItineraryErrors(validateItinerary(newDays));
+    }
+  };
+
   const goNext = () => {
     if (step === 1) {
-      if (!basics.title || !basics.destination) {
-        toast.error("Title and destination are required");
+      const errors = validateBasics(basics);
+      setBasicsErrors(errors);
+      if (Object.keys(errors).length > 0) {
+        toast.error("Please fix the errors before continuing");
         return;
       }
       // Sync days count with duration
@@ -72,9 +123,10 @@ export default function CreateTrip() {
       }
     }
     if (step === 2) {
-      const emptyDays = days.filter((d) => !d.activities.some((a) => a.title.trim()));
-      if (emptyDays.length > 0) {
-        toast.error("Each day must have at least one activity with a title");
+      const errors = validateItinerary(days);
+      setItineraryErrors(errors);
+      if (Object.keys(errors.dayErrors).length > 0 || Object.keys(errors.activityErrors).length > 0) {
+        toast.error("Each day needs at least 1 activity with a title");
         return;
       }
     }
@@ -87,11 +139,26 @@ export default function CreateTrip() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const { ready: publishReady } = validatePublishReady(basics, days);
+
   const handleSubmit = async (publish: boolean) => {
     if (!user) return;
-    if (!basics.title || !basics.destination) {
-      toast.error("Title and destination are required");
-      return;
+
+    if (publish) {
+      // Re-validate everything
+      const bErrors = validateBasics(basics);
+      setBasicsErrors(bErrors);
+      const iErrors = validateItinerary(days);
+      setItineraryErrors(iErrors);
+      if (Object.keys(bErrors).length > 0 || Object.keys(iErrors.dayErrors).length > 0 || Object.keys(iErrors.activityErrors).length > 0) {
+        toast.error("Please fix all errors before publishing");
+        return;
+      }
+    } else {
+      if (!basics.title || !basics.destination) {
+        toast.error("Title and destination are required to save");
+        return;
+      }
     }
 
     setLoading(true);
@@ -162,7 +229,6 @@ export default function CreateTrip() {
     }
   };
 
-  // Success screen after publishing
   if (publishedTripId) {
     return (
       <div className="container max-w-3xl py-8 md:py-12 pb-24">
@@ -173,21 +239,18 @@ export default function CreateTrip() {
 
   return (
     <div className="container max-w-3xl py-8 md:py-12">
-      {/* Header */}
       <div className="text-center mb-8">
         <h1 className="font-display text-3xl font-bold">Creator Studio</h1>
         <p className="text-muted-foreground mt-1">Build a trip. Earn when others book it.</p>
       </div>
 
-      {/* Progress */}
       <div className="mb-8">
         <StepProgressBar currentStep={step} />
       </div>
 
-      {/* Steps */}
       {step === 1 && (
         <>
-          <StepTripBasics data={basics} onChange={setBasics} />
+          <StepTripBasics data={basics} onChange={handleBasicsChange} errors={basicsErrors} />
           <div className="border-t border-border mt-6" />
           <div className="flex items-center justify-between py-8">
             <span className="text-sm text-muted-foreground">Step 1 of 3</span>
@@ -201,9 +264,10 @@ export default function CreateTrip() {
         <>
           <StepBuildItinerary
             days={days}
-            onChange={setDays}
+            onChange={handleDaysChange}
             destination={basics.destination}
             durationDays={basics.durationDays}
+            errors={itineraryErrors}
           />
           <div className="mt-6 flex justify-between">
             <Button variant="ghost" onClick={goBack}>
@@ -226,7 +290,11 @@ export default function CreateTrip() {
               <Button variant="outline" onClick={() => handleSubmit(false)} disabled={loading}>
                 <Save className="mr-1 h-4 w-4" /> Save Draft
               </Button>
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => handleSubmit(true)} disabled={loading}>
+              <Button
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                onClick={() => handleSubmit(true)}
+                disabled={loading || !publishReady}
+              >
                 {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Publishing...</> : "Publish Trip"}
               </Button>
             </div>

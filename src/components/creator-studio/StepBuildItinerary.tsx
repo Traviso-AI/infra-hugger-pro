@@ -23,11 +23,17 @@ export interface DayForm {
   activities: ActivityForm[];
 }
 
+export interface ItineraryErrors {
+  dayErrors: Record<number, string>;
+  activityErrors: Record<string, string>; // key: "dayIdx-actIdx"
+}
+
 interface StepBuildItineraryProps {
   days: DayForm[];
   onChange: (days: DayForm[]) => void;
   destination: string;
   durationDays: string;
+  errors?: ItineraryErrors;
 }
 
 const emptyActivity = (): ActivityForm => ({
@@ -36,7 +42,12 @@ const emptyActivity = (): ActivityForm => ({
 
 const ACTIVITY_TYPES = ["activity", "restaurant", "hotel", "flight", "experience", "transport"];
 
-export function StepBuildItinerary({ days, onChange, destination, durationDays }: StepBuildItineraryProps) {
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-xs text-destructive mt-1">{message}</p>;
+}
+
+export function StepBuildItinerary({ days, onChange, destination, durationDays, errors }: StepBuildItineraryProps) {
   const [generating, setGenerating] = useState(false);
 
   const addDay = () => onChange([...days, { title: "", description: "", activities: [emptyActivity()] }]);
@@ -122,7 +133,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
       </Button>
 
       {days.map((day, dayIdx) => (
-        <Card key={dayIdx} className="overflow-hidden">
+        <Card key={dayIdx} className={`overflow-hidden ${errors?.dayErrors[dayIdx] ? "border-destructive" : ""}`}>
           <div className="flex items-center justify-between bg-muted/50 px-4 py-3 border-b">
             <span className="font-display text-sm font-semibold">Day {dayIdx + 1}</span>
             {days.length > 1 && (
@@ -132,6 +143,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
             )}
           </div>
           <CardContent className="p-4 space-y-4">
+            <FieldError message={errors?.dayErrors[dayIdx]} />
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Day Title</Label>
@@ -154,46 +166,50 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
             </div>
 
             <div className="space-y-2">
-              {day.activities.map((act, actIdx) => (
-                <div key={actIdx} className="rounded-lg border bg-background p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="text-xs">Activity {actIdx + 1}</Badge>
-                    {day.activities.length > 1 && (
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeActivity(dayIdx, actIdx)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Type</Label>
-                      <Select value={act.type} onValueChange={(v) => updateActivity(dayIdx, actIdx, "type", v)}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {ACTIVITY_TYPES.map((t) => (
-                            <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              {day.activities.map((act, actIdx) => {
+                const actError = errors?.activityErrors[`${dayIdx}-${actIdx}`];
+                return (
+                  <div key={actIdx} className={`rounded-lg border bg-background p-3 space-y-2 ${actError ? "border-destructive" : ""}`}>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">Activity {actIdx + 1}</Badge>
+                      {day.activities.length > 1 && (
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeActivity(dayIdx, actIdx)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <FieldError message={actError} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Type *</Label>
+                        <Select value={act.type} onValueChange={(v) => updateActivity(dayIdx, actIdx, "type", v)}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {ACTIVITY_TYPES.map((t) => (
+                              <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Title *</Label>
+                        <Input placeholder="e.g. Visit Senso-ji Temple" value={act.title} onChange={(e) => updateActivity(dayIdx, actIdx, "title", e.target.value)} className="h-8 text-xs" />
+                      </div>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Title</Label>
-                      <Input placeholder="e.g. Visit Senso-ji Temple" value={act.title} onChange={(e) => updateActivity(dayIdx, actIdx, "title", e.target.value)} className="h-8 text-xs" />
+                      <Label className="text-xs">Location</Label>
+                      <DestinationAutocomplete
+                        value={act.location}
+                        onChange={(v) => updateActivity(dayIdx, actIdx, "location", v)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Description</Label>
+                      <Input placeholder="e.g. Iconic Buddhist temple in Asakusa" value={act.description} onChange={(e) => updateActivity(dayIdx, actIdx, "description", e.target.value)} className="h-8 text-xs" />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Location</Label>
-                    <DestinationAutocomplete
-                      value={act.location}
-                      onChange={(v) => updateActivity(dayIdx, actIdx, "location", v)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Description</Label>
-                    <Input placeholder="e.g. Iconic Buddhist temple in Asakusa" value={act.description} onChange={(e) => updateActivity(dayIdx, actIdx, "description", e.target.value)} className="h-8 text-xs" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <Button variant="ghost" size="sm" className="text-xs text-accent" onClick={() => addActivity(dayIdx)}>
                 <Plus className="mr-1 h-3 w-3" /> Add Activity
               </Button>
