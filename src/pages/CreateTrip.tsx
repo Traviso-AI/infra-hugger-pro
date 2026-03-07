@@ -72,7 +72,7 @@ function validateItinerary(days: DayForm[]): ItineraryErrors {
 }
 
 export default function CreateTrip() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -237,8 +237,17 @@ export default function CreateTrip() {
     );
   }
 
+  // Wait for profile to load before checking creator status
+  if (authLoading || !profile) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
   // Gate: require Creator Mode before entering the studio
-  if (!profile?.is_creator) {
+  if (!profile.is_creator) {
     return (
       <div className="container max-w-lg py-16 md:py-24 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
