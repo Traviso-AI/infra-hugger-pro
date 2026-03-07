@@ -9,9 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plane, Hotel, Utensils, Activity, Package, Check, Loader2 } from "lucide-react";
+import { Plane, Hotel, Utensils, Activity, Package, Check, Loader2, Music, Bus } from "lucide-react";
 
 type LoadingStep = { label: string; icon: React.ElementType };
+
+const typeIcon: Record<string, React.ElementType> = {
+  flight: Plane, hotel: Hotel, restaurant: Utensils,
+  activity: Activity, event: Music, transport: Bus,
+};
 
 export default function Booking() {
   const { tripId } = useParams();
@@ -20,7 +25,6 @@ export default function Booking() {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("1");
-  const [selectedHotel, setSelectedHotel] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -35,28 +39,53 @@ export default function Booking() {
     enabled: !!tripId,
   });
 
-  const { data: activities } = useQuery({
-    queryKey: ["booking-activities", tripId],
+  // Fetch all activities with their details for price breakdown
+  const { data: allActivities } = useQuery({
+    queryKey: ["booking-all-activities", tripId],
     queryFn: async () => {
       const { data } = await supabase
         .from("trip_days")
-        .select("trip_activities(type)")
-        .eq("trip_id", tripId!);
-      const types = new Set<string>();
-      data?.forEach((day: any) =>
-        day.trip_activities?.forEach((act: any) => types.add(act.type?.toLowerCase()))
-      );
-      return types;
+        .select("day_number, title, trip_activities(id, title, type, price_estimate, location)")
+        .eq("trip_id", tripId!)
+        .order("day_number");
+      return data || [];
     },
     enabled: !!tripId,
   });
 
-  const hasFlights = activities?.has("flight") ?? false;
-  const hasHotels = activities?.has("hotel") ?? false;
+  const activityTypes = useMemo(() => {
+    const types = new Set<string>();
+    allActivities?.forEach((day: any) =>
+      day.trip_activities?.forEach((act: any) => types.add(act.type?.toLowerCase()))
+    );
+    return types;
+  }, [allActivities]);
+
+  const flatActivities = useMemo(() => {
+    const items: { title: string; type: string; price: number }[] = [];
+    allActivities?.forEach((day: any) =>
+      day.trip_activities?.forEach((act: any) => {
+        // Generate a mock price if none exists, based on type
+        let price = act.price_estimate;
+        if (!price || price <= 0) {
+          const t = act.type?.toLowerCase();
+          if (t === "flight") price = 280 + Math.floor(Math.random() * 200);
+          else if (t === "hotel") price = 120 + Math.floor(Math.random() * 150);
+          else if (t === "restaurant") price = 25 + Math.floor(Math.random() * 50);
+          else if (t === "transport") price = 15 + Math.floor(Math.random() * 30);
+          else price = 40 + Math.floor(Math.random() * 80);
+        }
+        items.push({ title: act.title, type: act.type?.toLowerCase() || "activity", price });
+      })
+    );
+    return items;
+  }, [allActivities]);
+
+  const hasFlights = activityTypes.has("flight");
+  const hasHotels = activityTypes.has("hotel");
   const hasExperiences = useMemo(() => {
-    if (!activities) return false;
-    return activities.has("activity") || activities.has("restaurant") || activities.has("experience") || activities.has("event");
-  }, [activities]);
+    return activityTypes.has("activity") || activityTypes.has("restaurant") || activityTypes.has("experience") || activityTypes.has("event");
+  }, [activityTypes]);
 
   const loadingSteps = useMemo(() => {
     const steps: LoadingStep[] = [];
@@ -78,20 +107,6 @@ export default function Booking() {
     return () => clearTimeout(timer);
   }, [calculating, currentStep, loadingSteps.length]);
 
-  const { data: hotels } = useQuery({
-    queryKey: ["hotels", trip?.destination],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("hotel_inventory")
-        .select("*")
-        .ilike("destination", `%${trip!.destination}%`)
-        .eq("available", true)
-        .order("price_per_night");
-      return data || [];
-    },
-    enabled: !!trip?.destination,
-  });
-
   const handleCalculatePrice = () => {
     if (!checkIn || !checkOut) {
       toast.error("Please select travel dates first");
@@ -99,25 +114,33 @@ export default function Booking() {
     }
     setCurrentStep(0);
     setCalculating(true);
+    setPriceCalculated(false);
   };
+
+  const totalPrice = useMemo(() => {
+    const numGuests = parseInt(guests);
+    return flatActivities.reduce((sum, a) => sum + a.price, 0) * numGuests;
+  }, [flatActivities, guests]);
+
+  // Group activities by type for the breakdown
+  const groupedByType = useMemo(() => {
+    const groups: Record<string, { items: typeof flatActivities; total: number }> = {};
+    flatActivities.forEach((a) => {
+      if (!groups[a.type]) groups[a.type] = { items: [], total: 0 };
+      groups[a.type].items.push(a);
+      groups[a.type].total += a.price;
+    });
+    return groups;
+  }, [flatActivities]);
 
   const handleBook = async () => {
     if (!user || !trip) return;
-    if (!checkIn || !checkOut) {
-      toast.error("Please select check-in and check-out dates");
-      return;
-    }
     setLoading(true);
     try {
-      const hotel = hotels?.find((h) => h.id === selectedHotel);
-      const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
-      const hotelCost = hotel ? hotel.price_per_night * nights : 0;
-      const totalPrice = hotelCost;
-
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           trip_id: trip.id,
-          hotel_id: selectedHotel || null,
+          hotel_id: null,
           check_in: checkIn,
           check_out: checkOut,
           guests: parseInt(guests),
@@ -141,20 +164,22 @@ export default function Booking() {
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
     </div>
   );
-
-  const nights = checkIn && checkOut
-    ? Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-  const hotel = hotels?.find((h) => h.id === selectedHotel);
+  const typeLabels: Record<string, string> = {
+    flight: "Flights", hotel: "Accommodation", restaurant: "Dining",
+    activity: "Activities", event: "Events", transport: "Transport", experience: "Experiences",
+  };
 
   return (
     <div className="container max-w-2xl py-8 md:py-12">
       <h1 className="font-display text-3xl font-bold mb-2">Check Availability</h1>
-      <p className="text-muted-foreground mb-8">Select your travel dates and number of guests to see live pricing.</p>
+      <p className="text-muted-foreground mb-8">
+        This is a curated package — everything in the itinerary is included. Select your dates and guests to get your price.
+      </p>
 
       <div className="space-y-6">
+        {/* Dates & Guests */}
         <Card>
-          <CardHeader><CardTitle className="font-display text-lg">Travel Dates</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="font-display text-lg">Travel Dates & Guests</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -180,42 +205,18 @@ export default function Booking() {
           </CardContent>
         </Card>
 
-        {hotels && hotels.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="font-display text-lg">Select Hotel</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {hotels.map((h) => (
-                <div
-                  key={h.id}
-                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${selectedHotel === h.id ? "border-accent bg-accent/5" : "hover:border-accent/50"}`}
-                  onClick={() => { setSelectedHotel(h.id); setPriceCalculated(false); }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{h.name}</h4>
-                      <p className="text-sm text-muted-foreground">{h.star_rating}★ · {h.amenities?.slice(0, 3).join(", ")}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">${h.price_per_night}</p>
-                      <p className="text-xs text-muted-foreground">per night</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
+        {/* Calculate / Loading / Breakdown / Book */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-6 space-y-4">
+            {/* Loading animation */}
             {calculating && (
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3">
                 {loadingSteps.map((step, i) => {
                   const Icon = step.icon;
                   const done = i < currentStep;
                   const active = i === currentStep;
                   return (
-                    <div key={step.label} className={`flex items-center gap-3 text-sm transition-opacity ${active ? "opacity-100" : done ? "opacity-60" : "opacity-30"}`}>
+                    <div key={step.label} className={`flex items-center gap-3 text-sm transition-opacity duration-300 ${active ? "opacity-100" : done ? "opacity-60" : "opacity-30"}`}>
                       {done ? (
                         <Check className="h-4 w-4 text-green-500" />
                       ) : active ? (
@@ -230,46 +231,62 @@ export default function Booking() {
               </div>
             )}
 
+            {/* Price breakdown — only after calculation */}
             {priceCalculated && (
-              <div className="space-y-2 mb-4">
-                {hasFlights && (
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center gap-2"><Plane className="h-3.5 w-3.5 text-muted-foreground" /> Flights</span>
-                    <span className="text-muted-foreground italic text-xs">Live pricing coming soon</span>
+              <div className="space-y-3">
+                <h3 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider">Package Breakdown</h3>
+                {Object.entries(groupedByType).map(([type, group]) => {
+                  const Icon = typeIcon[type] || Activity;
+                  const label = typeLabels[type] || type;
+                  return (
+                    <div key={type} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 font-medium">
+                          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                          {label}
+                        </span>
+                        <span>${group.total.toLocaleString()}</span>
+                      </div>
+                      {group.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs text-muted-foreground pl-6">
+                          <span>{item.title}</span>
+                          <span>${item.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                {parseInt(guests) > 1 && (
+                  <div className="flex justify-between text-sm text-muted-foreground border-t pt-2">
+                    <span>× {guests} guests</span>
+                    <span></span>
                   </div>
                 )}
-                {hasHotels && hotel && nights > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center gap-2"><Hotel className="h-3.5 w-3.5 text-muted-foreground" /> {hotel.name} ({nights} nights)</span>
-                    <span>${(hotel.price_per_night * nights).toLocaleString()}</span>
-                  </div>
-                )}
-                {hasHotels && !hotel && (
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center gap-2"><Hotel className="h-3.5 w-3.5 text-muted-foreground" /> Hotel</span>
-                    <span className="text-muted-foreground italic text-xs">Select a hotel above</span>
-                  </div>
-                )}
-                {hasExperiences && (
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center gap-2"><Activity className="h-3.5 w-3.5 text-muted-foreground" /> Experiences</span>
-                    <span className="text-muted-foreground italic text-xs">Live pricing coming soon</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold border-t pt-2">
-                  <span>Estimated Total</span>
-                  <span>{hotel && nights > 0 ? `$${(hotel.price_per_night * nights).toLocaleString()}+` : "TBD"}</span>
+                <div className="flex justify-between font-bold text-lg border-t pt-3">
+                  <span>Total</span>
+                  <span>${totalPrice.toLocaleString()}</span>
                 </div>
               </div>
             )}
 
-            {priceCalculated ? (
-              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook} disabled={loading}>
-                {loading ? "Processing..." : "Confirm Booking"}
+            {/* Buttons */}
+            {!priceCalculated ? (
+              <Button
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                size="lg"
+                onClick={handleCalculatePrice}
+                disabled={calculating}
+              >
+                {calculating ? "Calculating..." : "Calculate Price →"}
               </Button>
             ) : (
-              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleCalculatePrice} disabled={calculating}>
-                {calculating ? "Calculating..." : "Calculate Price →"}
+              <Button
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_0_20px_hsl(var(--accent)/0.3)]"
+                size="lg"
+                onClick={handleBook}
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Confirm & Book →"}
               </Button>
             )}
           </CardContent>
