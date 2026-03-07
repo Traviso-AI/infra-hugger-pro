@@ -270,15 +270,30 @@ export default function AiPlanner() {
           <div className="flex items-center gap-2.5">
             <NalaAvatar />
             <div>
-              <h1 className="font-display text-lg font-bold leading-tight">Nala</h1>
-              <p className="text-[11px] text-muted-foreground leading-none">AI Trip Planner</p>
+              <h1 className="font-display text-sm font-bold leading-tight">Nala</h1>
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <p className="text-[11px] text-emerald-600 leading-none font-medium">Online</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="relative flex-1 overflow-y-auto">
+        {/* Gradient shimmer background */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-[shimmer_8s_ease-in-out_infinite] opacity-[0.035]"
+            style={{
+              background: "conic-gradient(from 0deg at 50% 50%, hsl(var(--accent)) 0deg, transparent 60deg, transparent 300deg, hsl(var(--accent)) 360deg)",
+            }}
+          />
+        </div>
+        <div className="relative px-4 py-6">
         <div className="container max-w-3xl space-y-4">
           <AnimatePresence mode="wait">
             {messages.length === 0 && (
