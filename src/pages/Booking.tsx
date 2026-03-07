@@ -83,6 +83,12 @@ export default function Booking() {
     }
   };
 
+  const hasPrice = trip?.price_estimate && trip.price_estimate > 0;
+
+  const handleCalculatePrice = () => {
+    toast.info("Live pricing coming soon — we're working on it!");
+    setPriceCalculated(true);
+  };
 
   if (!trip) return (
     <div className="flex min-h-[60vh] items-center justify-center">
