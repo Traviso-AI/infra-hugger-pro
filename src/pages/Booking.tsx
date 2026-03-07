@@ -188,11 +188,11 @@ export default function Booking() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Check-in</Label>
-                <Input type="date" value={checkIn} onChange={(e) => { setCheckIn(e.target.value); setPriceCalculated(false); }} />
+                <Input type="date" value={checkIn} min={new Date().toISOString().split("T")[0]} onChange={(e) => { setCheckIn(e.target.value); setPriceCalculated(false); }} />
               </div>
               <div className="space-y-2">
                 <Label>Check-out</Label>
-                <Input type="date" value={checkOut} onChange={(e) => { setCheckOut(e.target.value); setPriceCalculated(false); }} />
+                <Input type="date" value={checkOut} min={checkIn || new Date().toISOString().split("T")[0]} onChange={(e) => { setCheckOut(e.target.value); setPriceCalculated(false); }} />
               </div>
             </div>
             <div className="space-y-2">
