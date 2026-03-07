@@ -151,7 +151,13 @@ export default function Booking() {
       // Handle both possible response shapes
       const url = typeof data === "string" ? JSON.parse(data)?.url : data?.url;
       if (url) {
-        window.location.href = url;
+        // Open in new tab — Stripe Checkout blocks iframe embedding
+        const win = window.open(url, "_blank");
+        if (!win) {
+          // Popup blocked — fall back to redirect
+          window.location.href = url;
+        }
+        setLoading(false);
       } else {
         console.error("Checkout response:", data);
         throw new Error("No checkout URL returned");
