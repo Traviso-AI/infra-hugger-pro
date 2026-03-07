@@ -271,7 +271,7 @@ export default function AiPlanner() {
   const canSend = (input.trim().length > 0 || selectedFile !== null) && !loading;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-full">
 
       {/* Chat area */}
       <div className="relative flex-1 overflow-y-auto">

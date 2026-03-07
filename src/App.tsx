@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { AppLayout, AppLayoutNoFooter } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -45,13 +45,15 @@ const App = () => (
               <Route path="/trip/:id" element={<TripDetail />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/create-trip" element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
-              <Route path="/ai-planner" element={<ProtectedRoute><AiPlanner /></ProtectedRoute>} />
               <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
               <Route path="/booking/:tripId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/profile/:username" element={<PublicProfile />} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
+            </Route>
+            <Route element={<AppLayoutNoFooter />}>
+              <Route path="/ai-planner" element={<ProtectedRoute><AiPlanner /></ProtectedRoute>} />
             </Route>
           </Routes>
         </BrowserRouter>
