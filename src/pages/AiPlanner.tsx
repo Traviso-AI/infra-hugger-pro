@@ -30,11 +30,19 @@ function TypingDots() {
   );
 }
 
-function NalaAvatar({ size = "sm" }: { size?: "sm" | "lg" }) {
+function NalaAvatar({ size = "sm", showOnline = false }: { size?: "sm" | "lg"; showOnline?: boolean }) {
   const sizeClasses = size === "lg" ? "h-16 w-16" : "h-7 w-7";
   return (
-    <div className={`${sizeClasses} rounded-full bg-accent/10 border-2 border-accent/20 overflow-hidden shrink-0 flex items-center justify-center`}>
-      <img src={nalaAvatar} alt="Nala" className="h-full w-full object-cover" />
+    <div className="relative shrink-0">
+      <div className={`${sizeClasses} rounded-full bg-accent/10 border-2 border-accent/20 overflow-hidden flex items-center justify-center`}>
+        <img src={nalaAvatar} alt="Nala" className="h-full w-full object-cover" />
+      </div>
+      {showOnline && (
+        <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+          <span className="relative inline-flex rounded-full h-4 w-4 bg-accent border-2 border-background" />
+        </span>
+      )}
     </div>
   );
 }
@@ -264,24 +272,6 @@ export default function AiPlanner() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Header */}
-      <div className="border-b bg-card px-4 py-3">
-        <div className="mx-auto max-w-5xl flex items-center justify-between w-full">
-          <div className="flex items-center gap-2.5">
-            <NalaAvatar />
-            <div>
-              <h1 className="font-display text-sm font-bold leading-tight">Nala</h1>
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
-                </span>
-                <p className="text-[11px] text-accent leading-none font-medium">Online</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Chat area */}
       <div className="relative flex-1 overflow-y-auto">
@@ -311,9 +301,10 @@ export default function AiPlanner() {
                   transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
                   className="flex justify-center"
                 >
-                  <NalaAvatar size="lg" />
+                  <NalaAvatar size="lg" showOnline />
                 </motion.div>
-                <h2 className="font-display text-2xl font-bold mb-2 mt-4">Meet Nala 🐾</h2>
+                <h2 className="font-display text-2xl font-bold mb-1 mt-4">Meet Nala 🐾</h2>
+                <p className="text-xs text-accent font-medium mb-3">AI Trip Planner · Online</p>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                   Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
                 </p>
