@@ -273,10 +273,10 @@ export default function AiPlanner() {
               <h1 className="font-display text-sm font-bold leading-tight">Nala</h1>
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
                 </span>
-                <p className="text-[11px] text-emerald-600 leading-none font-medium">Online</p>
+                <p className="text-[11px] text-accent leading-none font-medium">Online</p>
               </div>
             </div>
           </div>
