@@ -26,7 +26,9 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Compass className="h-6 w-6 text-primary" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+            <Compass className="h-4 w-4 text-primary-foreground" />
+          </div>
           <span className="text-lg font-bold">Traviso AI</span>
         </Link>
 
