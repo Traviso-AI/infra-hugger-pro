@@ -164,15 +164,6 @@ export default function Booking() {
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
     </div>
   );
-    const groups: Record<string, { items: typeof flatActivities; total: number }> = {};
-    flatActivities.forEach((a) => {
-      if (!groups[a.type]) groups[a.type] = { items: [], total: 0 };
-      groups[a.type].items.push(a);
-      groups[a.type].total += a.price;
-    });
-    return groups;
-  }, [flatActivities]);
-
   const typeLabels: Record<string, string> = {
     flight: "Flights", hotel: "Accommodation", restaurant: "Dining",
     activity: "Activities", event: "Events", transport: "Transport", experience: "Experiences",
