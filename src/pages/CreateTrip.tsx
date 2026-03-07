@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getDestinationCover } from "@/lib/destination-covers";
 import { StepProgressBar } from "@/components/creator-studio/StepProgressBar";
 import { StepTripBasics, TripBasicsData, TripBasicsErrors } from "@/components/creator-studio/StepTripBasics";
 import { StepBuildItinerary, DayForm, ItineraryErrors } from "@/components/creator-studio/StepBuildItinerary";
@@ -10,19 +11,6 @@ import { StepPreviewPublish, validatePublishReady } from "@/components/creator-s
 import { SuccessScreen } from "@/components/creator-studio/SuccessScreen";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
-
-const unsplashMap: Record<string, string> = {
-  tokyo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
-  seoul: "https://images.unsplash.com/photo-1601621915196-2621bfb0cd6e?w=800&q=80",
-  bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80",
-  paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
-  miami: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
-  barcelona: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800&q=80",
-  "new york": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80",
-  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80",
-  london: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80",
-  rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80",
-};
 
 function toTitleCase(str: string): string {
   const minor = new Set(["a","an","the","and","but","or","for","nor","on","at","to","by","in","of","up","as","is","it"]);
@@ -163,7 +151,7 @@ export default function CreateTrip() {
 
     setLoading(true);
     try {
-      const coverUrl = basics.coverImageUrl || getUnsplashFallback(basics.destination);
+      const coverUrl = basics.coverImageUrl || getDestinationCover(basics.destination);
 
       const { data: trip, error: tripError } = await supabase
         .from("trips")
