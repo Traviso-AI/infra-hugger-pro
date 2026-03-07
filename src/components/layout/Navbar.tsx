@@ -46,7 +46,7 @@ export function Navbar() {
                 AI Planner
               </Link>
               <Link to="/create-trip" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Create Trip
+                {profile?.is_creator ? "Creator Studio" : "Create Trip"}
               </Link>
             </>
           )}
@@ -108,7 +108,7 @@ export function Navbar() {
             {user ? (
               <>
                 <Link to="/ai-planner" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>AI Planner</Link>
-                <Link to="/create-trip" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>Create Trip</Link>
+                <Link to="/create-trip" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>{profile?.is_creator ? "Creator Studio" : "Create Trip"}</Link>
                 <Link to="/dashboard" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>Dashboard</Link>
                 <Button variant="outline" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
               </>
