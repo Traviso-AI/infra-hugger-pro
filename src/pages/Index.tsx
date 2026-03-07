@@ -63,9 +63,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Live stats */}
-      <LiveStats />
-
       {/* Value props */}
       <section className="border-y bg-card py-16">
         <div className="container">
