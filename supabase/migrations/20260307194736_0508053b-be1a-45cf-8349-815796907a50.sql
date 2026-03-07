@@ -1,0 +1,1 @@
+UPDATE trips SET cover_image_url = 'https://images.unsplash.com/photo-1512813195386-6cf811ad3542?w=800&q=80' WHERE id = '9b09fbdd-30f5-4eb2-96a5-b16d2152aedb';
