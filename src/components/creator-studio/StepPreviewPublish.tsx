@@ -1,4 +1,5 @@
 import { Check, X, MapPin, Clock } from "lucide-react";
+import { getDestinationCover } from "@/lib/destination-covers";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TripBasicsData } from "./StepTripBasics";
@@ -83,9 +84,11 @@ export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
               {basics.coverImageUrl ? (
                 <img src={basics.coverImageUrl} alt={basics.title} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full items-center justify-center bg-gradient-to-br from-accent/20 to-accent/5">
-                  <MapPin className="h-12 w-12 text-accent/40" />
-                </div>
+                <img
+                  src={getDestinationCover(basics.destination || "travel")}
+                  alt={basics.destination || "Destination"}
+                  className="h-full w-full object-cover"
+                />
               )}
             </div>
             <div className="p-4">
