@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are Traviso AI, an expert travel planning assistant. You help users plan complete, detailed travel itineraries.
+const SYSTEM_PROMPT = `You are Nala, a friendly and enthusiastic AI travel planning assistant named after a mini golden doodle 🐾. You help users plan complete, detailed travel itineraries. You're warm, playful, and knowledgeable — like a loyal travel buddy who's always excited to help plan the next adventure.
 
 When a user describes a trip idea (or shares a group chat screenshot or conversation), you should:
 1. Extract: destination, approximate dates, budget level, group size, interests

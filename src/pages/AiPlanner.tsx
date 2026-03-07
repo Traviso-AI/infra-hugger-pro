@@ -3,10 +3,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles, Loader2, Save, Paperclip, X, FileText, Image } from "lucide-react";
+import { Send, Loader2, Save, Paperclip, X, FileText, Image } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
+import nalaAvatar from "@/assets/nala-avatar.jpg";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
@@ -264,8 +265,8 @@ export default function AiPlanner() {
       <div className="border-b bg-card px-4 py-3">
         <div className="mx-auto max-w-5xl flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <h1 className="font-display text-lg font-bold">AI Trip Planner</h1>
+            <img src={nalaAvatar} alt="Nala" className="h-7 w-7 rounded-full object-cover" />
+            <h1 className="font-display text-lg font-bold">Nala — AI Trip Planner</h1>
           </div>
         </div>
       </div>
@@ -275,10 +276,10 @@ export default function AiPlanner() {
         <div className="container max-w-3xl space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-16">
-              <Sparkles className="mx-auto mb-4 h-12 w-12 text-accent/40" />
-              <h2 className="font-display text-2xl font-bold mb-2">Plan Your Dream Trip</h2>
+              <img src={nalaAvatar} alt="Nala" className="mx-auto mb-4 h-16 w-16 rounded-full object-cover shadow-lg" />
+              <h2 className="font-display text-2xl font-bold mb-2">Meet Nala 🐾</h2>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and I'll create a complete itinerary.
+                Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
@@ -302,7 +303,10 @@ export default function AiPlanner() {
           )}
 
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}>
+              {msg.role === "assistant" && (
+                <img src={nalaAvatar} alt="Nala" className="h-7 w-7 rounded-full object-cover shrink-0 mt-1" />
+              )}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.role === "user"
@@ -322,7 +326,8 @@ export default function AiPlanner() {
           ))}
 
           {loading && (
-            <div className="flex justify-start">
+            <div className="flex justify-start gap-2">
+              <img src={nalaAvatar} alt="Nala" className="h-7 w-7 rounded-full object-cover shrink-0 mt-1" />
               <div className="rounded-2xl bg-card border px-4 py-3">
                 <Loader2 className="h-4 w-4 animate-spin text-accent" />
               </div>
