@@ -110,6 +110,15 @@ serve(async (req) => {
 
     const tripData = JSON.parse(toolCall.function.arguments);
 
+    // Title case helper
+    const minor = new Set(["a","an","the","and","but","or","for","nor","on","at","to","by","in","of","up","as","is","it"]);
+    function toTitleCase(str: string): string {
+      return str.replace(/\w\S*/g, (word: string, index: number) => {
+        if (index !== 0 && minor.has(word.toLowerCase())) return word.toLowerCase();
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      });
+    }
+
     // Assign cover image based on destination
     const destLower = tripData.destination.toLowerCase();
     const unsplashMap: Record<string, string> = {
@@ -134,7 +143,7 @@ serve(async (req) => {
       .from("trips")
       .insert({
         creator_id: user.id,
-        title: tripData.title,
+        title: toTitleCase(tripData.title),
         destination: tripData.destination,
         description: tripData.description || null,
         duration_days: tripData.duration_days || 1,
