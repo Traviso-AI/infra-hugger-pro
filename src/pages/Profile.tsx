@@ -23,6 +23,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!profile) return;
+    const wasCreator = profile.is_creator;
     setSaving(true);
     try {
       const { error } = await supabase
@@ -40,7 +41,11 @@ export default function Profile() {
 
       if (error) throw error;
       await refreshProfile();
-      toast.success("Profile updated!");
+      if (isCreator && !wasCreator) {
+        toast.success("🎉 You're now a creator! You can publish trips and start earning commissions.");
+      } else {
+        toast.success("Profile updated!");
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
     } finally {

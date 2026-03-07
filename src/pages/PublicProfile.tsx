@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Globe, Trophy, Pencil } from "lucide-react";
+import { MapPin, Globe, Trophy, Pencil, Sparkles } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -124,7 +125,12 @@ export default function PublicProfile() {
             {profile.display_name?.[0]?.toUpperCase() || "U"}
           </AvatarFallback>
         </Avatar>
-        <h1 className="font-display text-3xl font-bold">{profile.display_name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display text-3xl font-bold">{profile.display_name}</h1>
+          {profile.is_creator && (
+            <Badge className="bg-accent text-accent-foreground text-xs">Creator</Badge>
+          )}
+        </div>
         <p className="text-muted-foreground">@{profile.username}</p>
         {profile.bio && <p className="mt-2 max-w-md text-sm text-muted-foreground">{profile.bio}</p>}
 
@@ -236,18 +242,24 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
   const [bio, setBio] = useState(profile.bio || "");
   const [website, setWebsite] = useState(profile.website || "");
   const [displayName, setDisplayName] = useState(profile.display_name || "");
+  const [isCreator, setIsCreator] = useState(profile.is_creator || false);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    const wasCreator = profile.is_creator;
     setSaving(true);
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ bio, website, display_name: displayName })
+        .update({ bio, website, display_name: displayName, is_creator: isCreator })
         .eq("user_id", profile.user_id);
       if (error) throw error;
       await onSaved();
-      toast.success("Profile updated!");
+      if (isCreator && !wasCreator) {
+        toast.success("🎉 You're now a creator! You can publish trips and start earning commissions.");
+      } else {
+        toast.success("Profile updated!");
+      }
       setOpen(false);
     } catch (err: any) {
       toast.error(err.message || "Failed to update");
@@ -279,6 +291,15 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
           <div className="space-y-2">
             <Label>Website</Label>
             <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p className="font-medium text-sm flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" /> Creator Mode
+              </p>
+              <p className="text-xs text-muted-foreground">Publish trips and earn commission from bookings</p>
+            </div>
+            <Switch checked={isCreator} onCheckedChange={setIsCreator} />
           </div>
           <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save Changes"}

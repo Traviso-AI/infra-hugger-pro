@@ -72,7 +72,7 @@ function validateItinerary(days: DayForm[]): ItineraryErrors {
 }
 
 export default function CreateTrip() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -145,6 +145,16 @@ export default function CreateTrip() {
     if (!user) return;
 
     if (publish) {
+      // Check creator mode
+      if (!profile?.is_creator) {
+        toast.error("Enable Creator Mode in your profile to publish trips and start earning.", {
+          action: {
+            label: "Go to Profile",
+            onClick: () => navigate(`/profile/${profile?.username || user?.id}`),
+          },
+        });
+        return;
+      }
       // Re-validate everything
       const bErrors = validateBasics(basics);
       setBasicsErrors(bErrors);
