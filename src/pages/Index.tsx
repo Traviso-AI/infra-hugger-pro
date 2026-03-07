@@ -38,14 +38,13 @@ export default function Index() {
               AI-powered travel planning
             </div>
             <h1 className="font-display text-5xl font-bold leading-tight tracking-tight md:text-7xl">
-              Turn any idea into a{" "}
+              The trip finally made it{" "}
               <span className="bg-gradient-to-r from-accent to-teal bg-clip-text text-transparent">
-                bookable trip
+                out of the group chat.
               </span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-              Plan trips with AI, discover creator itineraries, and book everything in one place.
-              The future of travel starts here.
+              Plan it, book it, and get paid when others follow your lead.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-base px-8">
