@@ -161,11 +161,11 @@ export default function Booking() {
 
         <Card>
           <CardContent className="p-6">
-            {trip.price_estimate && trip.price_estimate > 0 ? (
+            {hasPrice && (
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                   <span>Trip package</span>
-                  <span>${trip.price_estimate.toLocaleString()}</span>
+                  <span>${trip.price_estimate!.toLocaleString()}</span>
                 </div>
                 {selectedHotel && checkIn && checkOut && (() => {
                   const hotel = hotels?.find((h) => h.id === selectedHotel);
@@ -188,26 +188,16 @@ export default function Booking() {
                   </span>
                 </div>
               </div>
-            ) : null}
-            <div className="flex gap-3">
-              <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook} disabled={loading}>
+            )}
+            {hasPrice || priceCalculated ? (
+              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook} disabled={loading}>
                 {loading ? "Processing..." : "Confirm Booking"}
               </Button>
-              {(!trip.price_estimate || trip.price_estimate === 0) && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="lg" disabled className="opacity-50">
-                        Calculate Price
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Live pricing coming soon</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
+            ) : (
+              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleCalculatePrice}>
+                Calculate Price →
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
