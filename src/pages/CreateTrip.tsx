@@ -10,7 +10,6 @@ import { StepPreviewPublish } from "@/components/creator-studio/StepPreviewPubli
 import { SuccessScreen } from "@/components/creator-studio/SuccessScreen";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
-import { SuccessScreen } from "@/components/creator-studio/SuccessScreen";
 
 // Unsplash fallback map (same as extract-trip function)
 const unsplashMap: Record<string, string> = {
