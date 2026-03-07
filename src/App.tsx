@@ -45,13 +45,15 @@ const App = () => (
               <Route path="/trip/:id" element={<TripDetail />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/create-trip" element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
-              <Route path="/ai-planner" element={<ProtectedRoute><AiPlanner /></ProtectedRoute>} />
               <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
               <Route path="/booking/:tripId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/profile/:username" element={<PublicProfile />} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
+            </Route>
+            <Route element={<AppLayoutNoFooter />}>
+              <Route path="/ai-planner" element={<ProtectedRoute><AiPlanner /></ProtectedRoute>} />
             </Route>
           </Routes>
         </BrowserRouter>
