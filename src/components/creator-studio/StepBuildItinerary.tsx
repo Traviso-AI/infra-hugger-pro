@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 import { DestinationAutocomplete } from "./DestinationAutocomplete";
 
@@ -73,14 +73,38 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
     }
     setGenerating(true);
     try {
-      const resp = await supabase.functions.invoke("generate-itinerary", {
-        body: { destination, durationDays },
-      });
+      const numDays = parseInt(durationDays) || 3;
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API key is not configured");
 
-      if (resp.error) throw resp.error;
-      if (resp.data?.error) throw new Error(resp.data.error);
+      const prompt = `Create a ${numDays} day itinerary for ${destination}. Return ONLY valid JSON, no markdown, no backticks, just raw JSON in this format: {"days": [{"title": "string", "description": "string", "activities": [{"type": "Activity", "title": "string", "location": "string", "description": "string"}]}]}`;
 
-      const parsed = resp.data;
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+          }),
+        }
+      );
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error("Gemini API error:", resp.status, errText);
+        throw new Error(`Gemini API error ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+
+      // Clean and parse JSON
+      const cleaned = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("No JSON found in AI response");
+
+      const parsed = JSON.parse(jsonMatch[0]);
       const aiDays: DayForm[] = (parsed.days || []).map((d: any) => ({
         title: d.title || "",
         description: d.description || "",
