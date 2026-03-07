@@ -294,11 +294,11 @@ export default function AiPlanner() {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+                  className="flex justify-center"
                 >
                   <NalaAvatar size="lg" />
                 </motion.div>
-                <div className="flex justify-center mb-4" />
-                <h2 className="font-display text-2xl font-bold mb-2">Meet Nala 🐾</h2>
+                <h2 className="font-display text-2xl font-bold mb-2 mt-4">Meet Nala 🐾</h2>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                   Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
                 </p>
