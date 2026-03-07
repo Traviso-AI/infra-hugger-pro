@@ -21,6 +21,7 @@ export default function Booking() {
   const [guests, setGuests] = useState("1");
   const [selectedHotel, setSelectedHotel] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [priceCalculated, setPriceCalculated] = useState(false);
 
   const { data: trip } = useQuery({
     queryKey: ["booking-trip", tripId],
