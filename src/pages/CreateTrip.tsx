@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -145,16 +145,6 @@ export default function CreateTrip() {
     if (!user) return;
 
     if (publish) {
-      // Check creator mode
-      if (!profile?.is_creator) {
-        toast.error("Enable Creator Mode in your profile to publish trips and start earning.", {
-          action: {
-            label: "Go to Profile",
-            onClick: () => navigate(`/profile/${profile?.username || user?.id}`),
-          },
-        });
-        return;
-      }
       // Re-validate everything
       const bErrors = validateBasics(basics);
       setBasicsErrors(bErrors);
@@ -243,6 +233,46 @@ export default function CreateTrip() {
     return (
       <div className="container max-w-3xl py-8 md:py-12 pb-24">
         <SuccessScreen tripId={publishedTripId} basics={basics} />
+      </div>
+    );
+  }
+
+  // Gate: require Creator Mode before entering the studio
+  if (!profile?.is_creator) {
+    return (
+      <div className="container max-w-lg py-16 md:py-24 text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
+          <Save className="h-7 w-7 text-accent" />
+        </div>
+        <h1 className="font-display text-3xl font-bold mb-3">Enable Creator Mode</h1>
+        <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+          Creator Mode lets you build trips, publish them to the marketplace, and earn when others book.
+        </p>
+        <Button
+          className="bg-accent text-accent-foreground hover:bg-accent/90 px-6"
+          onClick={async () => {
+            if (!user) { navigate("/login"); return; }
+            try {
+              const { error } = await supabase
+                .from("profiles")
+                .update({ is_creator: true })
+                .eq("user_id", user.id);
+              if (error) throw error;
+              toast.success("Creator Mode enabled! Welcome to Creator Studio.");
+              window.location.reload();
+            } catch (err: any) {
+              toast.error(err.message || "Failed to enable Creator Mode");
+            }
+          }}
+        >
+          Enable Creator Mode
+        </Button>
+        <p className="text-xs text-muted-foreground mt-4">
+          You can disable this anytime in your{" "}
+          <Link to={`/profile/${profile?.username || user?.id}`} className="text-accent underline">
+            profile settings
+          </Link>.
+        </p>
       </div>
     );
   }
