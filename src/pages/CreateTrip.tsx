@@ -71,6 +71,13 @@ export default function CreateTrip() {
         setDays(newDays);
       }
     }
+    if (step === 2) {
+      const emptyDays = days.filter((d) => !d.activities.some((a) => a.title.trim()));
+      if (emptyDays.length > 0) {
+        toast.error("Each day must have at least one activity with a title");
+        return;
+      }
+    }
     setStep((s) => Math.min(s + 1, 3));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
