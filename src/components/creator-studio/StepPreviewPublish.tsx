@@ -1,5 +1,5 @@
 import { Check, X, MapPin, Clock } from "lucide-react";
-import { getDestinationCover } from "@/lib/destination-covers";
+import { getDestinationCover, getDestinationCoverFallback } from "@/lib/destination-covers";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { TripBasicsData } from "./StepTripBasics";
@@ -88,6 +88,7 @@ export function StepPreviewPublish({ basics, days }: StepPreviewPublishProps) {
                   src={getDestinationCover(basics.destination || "travel")}
                   alt={basics.destination || "Destination"}
                   className="h-full w-full object-cover"
+                  onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(basics.destination || "travel"); }}
                 />
               )}
             </div>

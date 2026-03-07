@@ -86,17 +86,32 @@ function simpleHash(str: string): number {
   return Math.abs(hash);
 }
 
+/**
+ * Returns the best cover image URL for a destination:
+ * 1. Curated photo if destination matches a known keyword
+ * 2. Dynamic Unsplash source redirect for any other destination
+ * 3. Deterministic generic travel photo as ultimate fallback
+ */
 export function getDestinationCover(destination: string, width = 800, height = 600): string {
   const lower = destination.toLowerCase().trim();
 
-  // Check for exact or partial keyword matches
+  // 1. Curated match — guaranteed quality
   for (const [keyword, photoId] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(keyword)) {
       return `https://images.unsplash.com/${photoId}?w=${width}&h=${height}&fit=crop&q=80`;
     }
   }
 
-  // Fallback: pick a generic travel photo deterministically
-  const idx = simpleHash(lower) % GENERIC_TRAVEL_PHOTOS.length;
+  // 2. Dynamic Unsplash source — works for any destination
+  const query = encodeURIComponent(destination.trim());
+  return `https://source.unsplash.com/${width}x${height}/?${query}+travel`;
+}
+
+/**
+ * Returns a static fallback URL (no network dependency).
+ * Use as an onError fallback when the dynamic Unsplash URL fails.
+ */
+export function getDestinationCoverFallback(destination: string, width = 800, height = 600): string {
+  const idx = simpleHash(destination.toLowerCase().trim()) % GENERIC_TRAVEL_PHOTOS.length;
   return `https://images.unsplash.com/${GENERIC_TRAVEL_PHOTOS[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
 }
