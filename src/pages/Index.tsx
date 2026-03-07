@@ -6,48 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, TrendingUp, Users, ArrowRight, Globe, BookOpen, UserCheck } from "lucide-react";
 import { motion } from "framer-motion";
 
-function LiveStats() {
-  const { data: stats } = useQuery({
-    queryKey: ["live-stats"],
-    queryFn: async () => {
-      const [tripsRes, bookingsRes, usersRes] = await Promise.all([
-        supabase.from("trips").select("id", { count: "exact", head: true }).eq("is_published", true),
-        supabase.from("bookings").select("id", { count: "exact", head: true }).eq("status", "confirmed"),
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-      ]);
-      return {
-        trips: tripsRes.count ?? 0,
-        bookings: bookingsRes.count ?? 0,
-        users: usersRes.count ?? 0,
-      };
-    },
-  });
-
-  const items = [
-    { icon: Globe, value: stats?.trips ?? 0, label: "Published Trips" },
-    { icon: BookOpen, value: stats?.bookings ?? 0, label: "Confirmed Bookings" },
-    { icon: UserCheck, value: stats?.users ?? 0, label: "Registered Users" },
-  ];
-
-  return (
-    <section className="border-y py-8 bg-muted/30">
-      <div className="container">
-        <p className="text-center text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
-          Live on Traviso AI
-        </p>
-        <div className="grid grid-cols-3 gap-6 text-center">
-          {items.map(({ icon: Icon, value, label }) => (
-            <div key={label} className="flex flex-col items-center gap-1">
-              <Icon className="h-5 w-5 text-accent mb-1" />
-              <p className="font-display text-3xl font-bold text-accent">{value}</p>
-              <p className="text-sm text-muted-foreground">{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export default function Index() {
   const { data: featuredTrips } = useQuery({
