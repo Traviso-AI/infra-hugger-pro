@@ -77,6 +77,21 @@ const GENERIC_TRAVEL_PHOTOS = [
   "photo-1473496169904-658ba7c44d8a",
 ];
 
+// Old generic placeholder URLs that should be replaced with destination-specific covers
+const STALE_PLACEHOLDER_IDS = [
+  "photo-1488085061387-422e29b40080",
+  "photo-1488646953014-85cb44e25828",
+];
+
+/**
+ * Returns true if the given URL is a known generic placeholder
+ * that should be replaced with a destination-specific cover.
+ */
+export function isGenericPlaceholder(url: string | null | undefined): boolean {
+  if (!url) return true;
+  return STALE_PLACEHOLDER_IDS.some((id) => url.includes(id));
+}
+
 function simpleHash(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
