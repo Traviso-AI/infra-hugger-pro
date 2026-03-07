@@ -86,7 +86,7 @@ export default function TripDetail() {
       {/* Hero */}
       <div className="relative h-64 md:h-96 bg-muted">
         <img
-          src={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? getDestinationCover(trip.destination, 1200, 600) : trip.cover_image_url}
+          src={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? getDestinationCover(trip.destination, 1200, 600, trip.title) : trip.cover_image_url}
           alt={trip.title}
           className="h-full w-full object-cover"
           onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(trip.destination); }}
