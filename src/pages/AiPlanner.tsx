@@ -24,7 +24,7 @@ export default function AiPlanner() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState(() => crypto.randomUUID());
+  const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
   const [conversationCreated, setConversationCreated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
