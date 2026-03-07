@@ -122,6 +122,17 @@ export default function Booking() {
     return flatActivities.reduce((sum, a) => sum + a.price, 0) * numGuests;
   }, [flatActivities, guests]);
 
+  // Group activities by type for the breakdown
+  const groupedByType = useMemo(() => {
+    const groups: Record<string, { items: typeof flatActivities; total: number }> = {};
+    flatActivities.forEach((a) => {
+      if (!groups[a.type]) groups[a.type] = { items: [], total: 0 };
+      groups[a.type].items.push(a);
+      groups[a.type].total += a.price;
+    });
+    return groups;
+  }, [flatActivities]);
+
   const handleBook = async () => {
     if (!user || !trip) return;
     setLoading(true);
@@ -153,9 +164,6 @@ export default function Booking() {
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
     </div>
   );
-
-  // Group activities by type for the breakdown
-  const groupedByType = useMemo(() => {
     const groups: Record<string, { items: typeof flatActivities; total: number }> = {};
     flatActivities.forEach((a) => {
       if (!groups[a.type]) groups[a.type] = { items: [], total: 0 };
