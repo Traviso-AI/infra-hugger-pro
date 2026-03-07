@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, TrendingUp, Users, ArrowRight, Globe, BookOpen, UserCheck } from "lucide-react";
+import { Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 
