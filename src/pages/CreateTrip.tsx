@@ -1,98 +1,99 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, GripVertical } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StepProgressBar } from "@/components/creator-studio/StepProgressBar";
+import { StepTripBasics, TripBasicsData } from "@/components/creator-studio/StepTripBasics";
+import { StepBuildItinerary, DayForm } from "@/components/creator-studio/StepBuildItinerary";
+import { StepPreviewPublish } from "@/components/creator-studio/StepPreviewPublish";
+import { SuccessScreen } from "@/components/creator-studio/SuccessScreen";
+import { StickyBottomBar } from "@/components/creator-studio/StickyBottomBar";
 
-interface ActivityForm {
-  type: string;
-  title: string;
-  description: string;
-  location: string;
-  startTime: string;
-  priceEstimate: string;
-}
+// Unsplash fallback map (same as extract-trip function)
+const unsplashMap: Record<string, string> = {
+  tokyo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
+  seoul: "https://images.unsplash.com/photo-1601621915196-2621bfb0cd6e?w=800&q=80",
+  bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80",
+  paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
+  miami: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
+  barcelona: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800&q=80",
+  "new york": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80",
+  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80",
+  london: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80",
+  rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80",
+};
 
-interface DayForm {
-  title: string;
-  description: string;
-  activities: ActivityForm[];
+function getUnsplashFallback(destination: string): string {
+  const lower = destination.toLowerCase();
+  const match = Object.entries(unsplashMap).find(([key]) => lower.includes(key));
+  return match?.[1] || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=80";
 }
 
 export default function CreateTrip() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [publishedTripId, setPublishedTripId] = useState<string | null>(null);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [destination, setDestination] = useState("");
-  const [priceEstimate, setPriceEstimate] = useState("");
-  const [tags, setTags] = useState("");
+  const [basics, setBasics] = useState<TripBasicsData>({
+    title: "", destination: "", description: "", durationDays: "3",
+    priceEstimate: "", tags: [], coverImageUrl: null,
+  });
+
   const [days, setDays] = useState<DayForm[]>([
-    { title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "", startTime: "", priceEstimate: "" }] }
+    { title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "", priceEstimate: "" }] },
   ]);
 
-  const addDay = () => {
-    setDays([...days, { title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "", startTime: "", priceEstimate: "" }] }]);
+  const goNext = () => {
+    if (step === 1) {
+      if (!basics.title || !basics.destination) {
+        toast.error("Title and destination are required");
+        return;
+      }
+      // Sync days count with duration
+      const numDays = parseInt(basics.durationDays) || 1;
+      if (days.length < numDays) {
+        const newDays = [...days];
+        while (newDays.length < numDays) {
+          newDays.push({ title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "", priceEstimate: "" }] });
+        }
+        setDays(newDays);
+      }
+    }
+    setStep((s) => Math.min(s + 1, 3));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const removeDay = (idx: number) => {
-    setDays(days.filter((_, i) => i !== idx));
-  };
-
-  const addActivity = (dayIdx: number) => {
-    const updated = [...days];
-    updated[dayIdx].activities.push({ type: "activity", title: "", description: "", location: "", startTime: "", priceEstimate: "" });
-    setDays(updated);
-  };
-
-  const removeActivity = (dayIdx: number, actIdx: number) => {
-    const updated = [...days];
-    updated[dayIdx].activities = updated[dayIdx].activities.filter((_, i) => i !== actIdx);
-    setDays(updated);
-  };
-
-  const updateDay = (dayIdx: number, field: keyof DayForm, value: string) => {
-    const updated = [...days];
-    (updated[dayIdx] as any)[field] = value;
-    setDays(updated);
-  };
-
-  const updateActivity = (dayIdx: number, actIdx: number, field: keyof ActivityForm, value: string) => {
-    const updated = [...days];
-    (updated[dayIdx].activities[actIdx] as any)[field] = value;
-    setDays(updated);
+  const goBack = () => {
+    setStep((s) => Math.max(s - 1, 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (publish: boolean) => {
     if (!user) return;
-    if (!title || !destination) {
+    if (!basics.title || !basics.destination) {
       toast.error("Title and destination are required");
       return;
     }
 
     setLoading(true);
     try {
+      const coverUrl = basics.coverImageUrl || getUnsplashFallback(basics.destination);
+
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
           creator_id: user.id,
-          title,
-          description,
-          destination,
+          title: basics.title,
+          description: basics.description,
+          destination: basics.destination,
           duration_days: days.length,
-          price_estimate: priceEstimate ? parseFloat(priceEstimate) : null,
-          tags: tags ? tags.split(",").map((t) => t.trim()) : [],
+          price_estimate: basics.priceEstimate ? parseFloat(basics.priceEstimate) : null,
+          tags: basics.tags,
           is_published: publish,
+          cover_image_url: coverUrl,
         })
         .select()
         .single();
@@ -122,7 +123,6 @@ export default function CreateTrip() {
             title: a.title,
             description: a.description || null,
             location: a.location || null,
-            start_time: a.startTime || null,
             price_estimate: a.priceEstimate ? parseFloat(a.priceEstimate) : null,
             sort_order: idx,
           }));
@@ -133,8 +133,13 @@ export default function CreateTrip() {
         }
       }
 
-      toast.success(publish ? "Trip published!" : "Trip saved as draft!");
-      navigate(`/trip/${trip.id}`);
+      if (publish) {
+        setPublishedTripId(trip.id);
+        toast.success("Trip published!");
+      } else {
+        toast.success("Trip saved as draft!");
+        navigate(`/trip/${trip.id}`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to save trip");
     } finally {
@@ -142,130 +147,49 @@ export default function CreateTrip() {
     }
   };
 
-  return (
-    <div className="container max-w-3xl py-8 md:py-12">
-      <h1 className="font-display text-3xl font-bold mb-2">Create a Trip</h1>
-      <p className="text-muted-foreground mb-8">Design an itinerary and share it with the world</p>
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-display text-xl">Trip Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input placeholder="3 Days in Tokyo" value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Destination</Label>
-              <Input placeholder="Tokyo, Japan" value={destination} onChange={(e) => setDestination(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea placeholder="Describe your trip..." value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Price Estimate ($)</Label>
-                <Input type="number" placeholder="1500" value={priceEstimate} onChange={(e) => setPriceEstimate(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Tags (comma-separated)</Label>
-                <Input placeholder="food, nightlife, culture" value={tags} onChange={(e) => setTags(e.target.value)} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {days.map((day, dayIdx) => (
-          <Card key={dayIdx}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="font-display text-lg">Day {dayIdx + 1}</CardTitle>
-                {days.length > 1 && (
-                  <Button variant="ghost" size="icon" onClick={() => removeDay(dayIdx)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Day Title</Label>
-                  <Input placeholder="Arrival & Exploration" value={day.title} onChange={(e) => updateDay(dayIdx, "title", e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Input placeholder="Brief description" value={day.description} onChange={(e) => updateDay(dayIdx, "description", e.target.value)} />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Activities</Label>
-                {day.activities.map((act, actIdx) => (
-                  <div key={actIdx} className="rounded-lg border p-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline">Activity {actIdx + 1}</Badge>
-                      {day.activities.length > 1 && (
-                        <Button variant="ghost" size="sm" onClick={() => removeActivity(dayIdx, actIdx)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Type</Label>
-                        <Select value={act.type} onValueChange={(v) => updateActivity(dayIdx, actIdx, "type", v)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {["flight", "hotel", "restaurant", "activity", "event", "transport"].map((t) => (
-                              <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Title</Label>
-                        <Input placeholder="Visit Senso-ji" value={act.title} onChange={(e) => updateActivity(dayIdx, actIdx, "title", e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Location</Label>
-                        <Input placeholder="Asakusa, Tokyo" value={act.location} onChange={(e) => updateActivity(dayIdx, actIdx, "location", e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Price ($)</Label>
-                        <Input type="number" placeholder="0" value={act.priceEstimate} onChange={(e) => updateActivity(dayIdx, actIdx, "priceEstimate", e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Description</Label>
-                      <Input placeholder="Brief description" value={act.description} onChange={(e) => updateActivity(dayIdx, actIdx, "description", e.target.value)} />
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={() => addActivity(dayIdx)}>
-                  <Plus className="mr-1 h-3 w-3" /> Add Activity
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        <Button variant="outline" onClick={addDay} className="w-full">
-          <Plus className="mr-2 h-4 w-4" /> Add Day
-        </Button>
-
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={() => handleSubmit(false)} disabled={loading}>
-            Save Draft
-          </Button>
-          <Button className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => handleSubmit(true)} disabled={loading}>
-            {loading ? "Publishing..." : "Publish Trip"}
-          </Button>
-        </div>
+  // Success screen after publishing
+  if (publishedTripId) {
+    return (
+      <div className="container max-w-3xl py-8 md:py-12 pb-24">
+        <SuccessScreen tripId={publishedTripId} basics={basics} />
       </div>
+    );
+  }
+
+  return (
+    <div className="container max-w-3xl py-8 md:py-12 pb-24">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="font-display text-3xl font-bold">Creator Studio</h1>
+        <p className="text-muted-foreground mt-1">Build a trip. Earn when others book it.</p>
+      </div>
+
+      {/* Progress */}
+      <div className="mb-8">
+        <StepProgressBar currentStep={step} />
+      </div>
+
+      {/* Steps */}
+      {step === 1 && <StepTripBasics data={basics} onChange={setBasics} />}
+      {step === 2 && (
+        <StepBuildItinerary
+          days={days}
+          onChange={setDays}
+          destination={basics.destination}
+          durationDays={basics.durationDays}
+        />
+      )}
+      {step === 3 && <StepPreviewPublish basics={basics} days={days} />}
+
+      {/* Sticky Bottom Bar */}
+      <StickyBottomBar
+        currentStep={step}
+        onBack={goBack}
+        onNext={goNext}
+        onSaveDraft={() => handleSubmit(false)}
+        onPublish={() => handleSubmit(true)}
+        loading={loading}
+      />
     </div>
   );
 }
