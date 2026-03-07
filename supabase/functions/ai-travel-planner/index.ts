@@ -155,9 +155,9 @@ async function callGeminiWithVision(
 }
 
 // ---------------------------------------------------------------------------
-// Lovable gateway — used for text-only messages (unchanged)
+// AI gateway — used for text-only messages
 // ---------------------------------------------------------------------------
-async function callLovableGateway(messages: ChatMessage[]): Promise<Response> {
+async function callAIGateway(messages: ChatMessage[]): Promise<Response> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -188,8 +188,8 @@ async function callLovableGateway(messages: ChatMessage[]): Promise<Response> {
       });
     }
     const t = await response.text();
-    console.error("[ai-travel-planner] Lovable gateway error:", response.status, t);
-    throw new Error("Lovable gateway request failed");
+    console.error("[ai-travel-planner] AI gateway error:", response.status, t);
+    throw new Error("AI gateway request failed");
   }
 
   return new Response(response.body, {
@@ -216,8 +216,8 @@ serve(async (req: Request) => {
       return await callGeminiWithVision(messages, imageUrl);
     }
 
-    console.log("[ai-travel-planner] Text-only → Lovable gateway");
-    return await callLovableGateway(messages);
+    console.log("[ai-travel-planner] Text-only → AI gateway");
+    return await callAIGateway(messages);
   } catch (e) {
     console.error("[ai-travel-planner] Unhandled error:", e);
     return new Response(
