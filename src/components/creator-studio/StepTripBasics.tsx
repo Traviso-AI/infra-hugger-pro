@@ -86,16 +86,16 @@ export function StepTripBasics({ data, onChange }: StepTripBasicsProps) {
             value={data.priceEstimate}
             onChange={(e) => update("priceEstimate", e.target.value)}
           />
-          {price > 0 && (
-            <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 mt-2">
-              <div className="flex items-center gap-2 text-sm font-semibold text-accent">
-                <DollarSign className="h-4 w-4" />
-                <span>💰 You earn ${earnings}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Traviso takes 20% platform fee</p>
-            </div>
-          )}
         </div>
+
+        {price > 0 && (
+          <div className="sm:col-span-2 rounded-lg bg-accent/10 border border-accent/20 p-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+              <span>💰 You earn ${earnings} per booking</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Traviso takes 20% platform fee</p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
