@@ -287,7 +287,7 @@ export default function AiPlanner() {
       <div className="relative flex-1 overflow-y-auto">
         {/* Gradient shimmer background */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-[shimmer_8s_ease-in-out_infinite] opacity-[0.035]"
+          <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shimmer opacity-[0.035]"
             style={{
               background: "conic-gradient(from 0deg at 50% 50%, hsl(var(--accent)) 0deg, transparent 60deg, transparent 300deg, hsl(var(--accent)) 360deg)",
             }}

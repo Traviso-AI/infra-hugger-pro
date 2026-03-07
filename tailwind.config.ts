@@ -96,6 +96,10 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-8px)" },
         },
+        "shimmer": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -103,6 +107,7 @@ export default {
         "fade-in": "fade-in 0.5s ease-out forwards",
         "float": "float 4s ease-in-out infinite",
         "float-delayed": "float-delayed 5s ease-in-out 1s infinite",
+        "shimmer": "shimmer 8s linear infinite",
       },
     },
   },
