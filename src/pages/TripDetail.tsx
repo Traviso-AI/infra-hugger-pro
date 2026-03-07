@@ -164,9 +164,9 @@ export default function TripDetail() {
                           Day {day.day_number}{day.title ? `: ${day.title.replace(/^Day\s*\d+\s*:\s*/i, "")}` : ""}
                         </h3>
                         {day.description && <p className="text-sm text-muted-foreground mb-3">{day.description}</p>}
-                        {day.trip_activities && day.trip_activities.length > 0 && (
+                        {day.trip_activities && day.trip_activities.length > 0 ? (
                           <div className="space-y-3">
-                            {day.trip_activities
+                            {[...day.trip_activities]
                               .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
                               .map((act: any) => {
                                 const Icon = typeIcons[act.type] || Activity;
@@ -191,6 +191,8 @@ export default function TripDetail() {
                                 );
                               })}
                           </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">No activities planned yet</p>
                         )}
                       </CardContent>
                     </Card>
