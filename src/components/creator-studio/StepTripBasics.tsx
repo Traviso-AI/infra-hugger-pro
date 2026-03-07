@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CoverImageUpload } from "./CoverImageUpload";
 import { TagSelector } from "./TagSelector";
-import { DollarSign } from "lucide-react";
+import { Info } from "lucide-react";
 
 export interface TripBasicsData {
   title: string;
@@ -25,8 +25,6 @@ export function StepTripBasics({ data, onChange }: StepTripBasicsProps) {
     onChange({ ...data, [field]: value });
   };
 
-  const price = parseFloat(data.priceEstimate) || 0;
-  const earnings = (price * 0.8).toFixed(2);
 
   return (
     <div className="space-y-6">
@@ -77,24 +75,11 @@ export function StepTripBasics({ data, onChange }: StepTripBasicsProps) {
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Price ($)</Label>
-          <Input
-            type="number"
-            min="0"
-            placeholder="1500"
-            value={data.priceEstimate}
-            onChange={(e) => update("priceEstimate", e.target.value)}
-          />
-          {price > 0 && (
-            <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 mt-2">
-              <div className="flex items-center gap-2 text-sm font-semibold text-accent">
-                <DollarSign className="h-4 w-4" />
-                <span>💰 You earn ${earnings}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Traviso takes 20% platform fee</p>
-            </div>
-          )}
+        <div className="sm:col-span-2 rounded-lg bg-accent/5 border border-accent/15 p-4 flex items-start gap-3">
+          <Info className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            💡 Your trip price is automatically calculated from your flights, hotels, activities, and experiences added in Step 2. You'll review the total before publishing.
+          </p>
         </div>
       </div>
 
