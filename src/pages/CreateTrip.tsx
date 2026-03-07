@@ -44,7 +44,7 @@ export default function CreateTrip() {
   });
 
   const [days, setDays] = useState<DayForm[]>([
-    { title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "", priceEstimate: "" }] },
+    { title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "" }] },
   ]);
 
   const goNext = () => {
@@ -58,7 +58,7 @@ export default function CreateTrip() {
       if (days.length < numDays) {
         const newDays = [...days];
         while (newDays.length < numDays) {
-          newDays.push({ title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "", priceEstimate: "" }] });
+          newDays.push({ title: "", description: "", activities: [{ type: "activity", title: "", description: "", location: "" }] });
         }
         setDays(newDays);
       }
@@ -124,7 +124,6 @@ export default function CreateTrip() {
             title: a.title,
             description: a.description || null,
             location: a.location || null,
-            price_estimate: a.priceEstimate ? parseFloat(a.priceEstimate) : null,
             sort_order: idx,
           }));
 
