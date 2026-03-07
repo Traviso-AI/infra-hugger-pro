@@ -14,7 +14,6 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   tulum: [
     "photo-1512813195386-6cf811ad3542",
     "photo-1570737543098-a2ac1a5e57e5",
-    "photo-1682553064835-0forked",
     "photo-1504019347908-b45f9b0b8e8c",
   ],
   cancun: [
