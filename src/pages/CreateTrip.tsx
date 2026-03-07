@@ -278,7 +278,7 @@ export default function CreateTrip() {
         </Button>
         <p className="text-xs text-muted-foreground mt-4">
           You can disable this anytime in your{" "}
-          <Link to={`/profile/${profile?.username || user?.id}`} className="text-accent underline">
+          <Link to="/profile" className="text-accent underline">
             profile settings
           </Link>.
         </p>
