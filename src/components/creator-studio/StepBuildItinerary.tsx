@@ -74,7 +74,12 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
     setGenerating(true);
     try {
       const numDays = parseInt(durationDays) || 3;
-      const prompt = `Generate a detailed ${numDays}-day travel itinerary for ${destination}. For each day, provide a title and 3-5 activities with type (activity/restaurant/hotel/flight/experience/transport), title, location, and brief description. Return as JSON with this exact structure: { "days": [{ "title": "Day title", "description": "Brief description", "activities": [{ "type": "activity", "title": "Activity name", "location": "Location", "description": "Brief description" }] }] }. Return ONLY the JSON, no markdown.`;
+      const prompt = `Create a ${numDays} day itinerary for ${destination}. Return a day-by-day breakdown with activities, restaurants, and experiences for each day.
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object, no markdown, no explanation, no code fences. Use this exact structure:
+{"days":[{"title":"Day 1: Arrival","description":"Brief overview","activities":[{"type":"activity","title":"Visit Temple","location":"Asakusa, Tokyo","description":"Historic temple"}]}]}
+
+Valid types: activity, restaurant, hotel, flight, experience, transport. Include 3-5 activities per day.`;
 
       const resp = await supabase.functions.invoke("ai-travel-planner", {
         body: { messages: [{ role: "user", content: prompt }] },
@@ -82,31 +87,44 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
 
       if (resp.error) throw resp.error;
 
+      // Collect full text from SSE stream or direct response
       let fullText = "";
       if (typeof resp.data === "string") {
         const lines = resp.data.split("\n");
         for (const line of lines) {
-          if (line.startsWith("data: ") && line.slice(6).trim() !== "[DONE]") {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data: ") && trimmed.slice(6).trim() !== "[DONE]") {
             try {
-              const parsed = JSON.parse(line.slice(6));
+              const parsed = JSON.parse(trimmed.slice(6));
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) fullText += content;
             } catch {}
           }
         }
       } else if (resp.data && typeof resp.data === "object") {
+        // Check if it's an error response
+        if (resp.data.error) throw new Error(resp.data.error);
         fullText = JSON.stringify(resp.data);
       }
 
+      console.log("AI raw response length:", fullText.length);
+
+      // Strip markdown code fences if present
+      fullText = fullText.replace(/```json\s*/g, "").replace(/```\s*/g, "");
+
+      // Extract JSON object
       const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("Could not parse AI response");
+      if (!jsonMatch) {
+        console.error("Could not find JSON in response:", fullText.substring(0, 500));
+        throw new Error("Could not parse AI response");
+      }
 
       const parsed = JSON.parse(jsonMatch[0]);
       const aiDays: DayForm[] = (parsed.days || []).map((d: any) => ({
         title: d.title || "",
         description: d.description || "",
         activities: (d.activities || []).map((a: any) => ({
-          type: a.type || "activity",
+          type: ACTIVITY_TYPES.includes(a.type) ? a.type : "activity",
           title: a.title || "",
           description: a.description || "",
           location: a.location || "",
@@ -121,7 +139,7 @@ export function StepBuildItinerary({ days, onChange, destination, durationDays }
       }
     } catch (err: any) {
       console.error("AI generation error:", err);
-      toast.error("Failed to generate itinerary. Try again or build manually.");
+      toast.error(err.message || "Failed to generate itinerary. Try again or build manually.");
     } finally {
       setGenerating(false);
     }
