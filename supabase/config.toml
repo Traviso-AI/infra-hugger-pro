@@ -1,10 +1,11 @@
 project_id = "hmogswuliehwbmcyzfie"
 
-[functions.ai-travel-planner]
-verify_jwt = false
-
-[functions.extract-trip]
-verify_jwt = false
-
-[functions.create-checkout-session]
-verify_jwt = false
+[functions]
+  [functions.ai-travel-planner]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.create-checkout-session]
+    verify_jwt = false
+  [functions.extract-trip]
+    verify_jwt = false
