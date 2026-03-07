@@ -72,7 +72,7 @@ function validateItinerary(days: DayForm[]): ItineraryErrors {
 }
 
 export default function CreateTrip() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
