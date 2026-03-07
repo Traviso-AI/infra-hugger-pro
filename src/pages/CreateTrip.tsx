@@ -8,7 +8,8 @@ import { StepTripBasics, TripBasicsData } from "@/components/creator-studio/Step
 import { StepBuildItinerary, DayForm } from "@/components/creator-studio/StepBuildItinerary";
 import { StepPreviewPublish } from "@/components/creator-studio/StepPreviewPublish";
 import { SuccessScreen } from "@/components/creator-studio/SuccessScreen";
-import { StickyBottomBar } from "@/components/creator-studio/StickyBottomBar";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 
 // Unsplash fallback map (same as extract-trip function)
 const unsplashMap: Record<string, string> = {
@@ -157,7 +158,7 @@ export default function CreateTrip() {
   }
 
   return (
-    <div className="container max-w-3xl py-8 md:py-12 pb-24">
+    <div className="container max-w-3xl py-8 md:py-12">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="font-display text-3xl font-bold">Creator Studio</h1>
@@ -170,26 +171,52 @@ export default function CreateTrip() {
       </div>
 
       {/* Steps */}
-      {step === 1 && <StepTripBasics data={basics} onChange={setBasics} />}
-      {step === 2 && (
-        <StepBuildItinerary
-          days={days}
-          onChange={setDays}
-          destination={basics.destination}
-          durationDays={basics.durationDays}
-        />
+      {step === 1 && (
+        <>
+          <StepTripBasics data={basics} onChange={setBasics} />
+          <div className="mt-6 flex justify-end">
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={goNext}>
+              Next: Build Itinerary <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </>
       )}
-      {step === 3 && <StepPreviewPublish basics={basics} days={days} />}
-
-      {/* Sticky Bottom Bar */}
-      <StickyBottomBar
-        currentStep={step}
-        onBack={goBack}
-        onNext={goNext}
-        onSaveDraft={() => handleSubmit(false)}
-        onPublish={() => handleSubmit(true)}
-        loading={loading}
-      />
+      {step === 2 && (
+        <>
+          <StepBuildItinerary
+            days={days}
+            onChange={setDays}
+            destination={basics.destination}
+            durationDays={basics.durationDays}
+          />
+          <div className="mt-6 flex justify-between">
+            <Button variant="ghost" onClick={goBack}>
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back
+            </Button>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={goNext}>
+              Next: Preview <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </>
+      )}
+      {step === 3 && (
+        <>
+          <StepPreviewPublish basics={basics} days={days} />
+          <div className="mt-6 flex justify-between">
+            <Button variant="ghost" onClick={goBack}>
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back
+            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => handleSubmit(false)} disabled={loading}>
+                <Save className="mr-1 h-4 w-4" /> Save Draft
+              </Button>
+              <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => handleSubmit(true)} disabled={loading}>
+                {loading ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Publishing...</> : "Publish Trip"}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
