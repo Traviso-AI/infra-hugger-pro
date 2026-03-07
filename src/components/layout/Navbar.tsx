@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Compass, Menu, X, User, LogOut, Plus, BarChart3, MessageSquare } from "lucide-react";
+import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -26,8 +27,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Compass className="h-7 w-7 text-accent" />
-          <span className="font-display text-xl font-bold tracking-tight">Traviso AI</span>
+          <img src={logo} alt="Traviso AI" className="h-8" />
         </Link>
 
         {/* Desktop nav */}
