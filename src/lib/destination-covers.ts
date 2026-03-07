@@ -347,14 +347,12 @@ function buildSmartUnsplashQuery(destination: string, title?: string): string {
 
 /**
  * Returns the best cover image URL for a destination + trip title:
- * 1. Theme-based photo if title contains specific keywords (cherry blossom, etc.)
- * 2. Curated photo if destination matches a known keyword (rotated by title hash)
+ * 1. Curated destination photo (rotated by title hash for variety)
+ * 2. Theme-based photo if destination is unknown but title has keywords
  * 3. Dynamic Unsplash source redirect with smart query
  *
- * @param destination - The trip destination (e.g., "Tokyo, Japan")
- * @param width - Image width
- * @param height - Image height
- * @param title - Optional trip title for smarter image selection
+ * IMPORTANT: Destination always wins over theme. Themes are only used
+ * when the destination has no curated photos.
  */
 export function getDestinationCover(
   destination: string,
@@ -367,21 +365,21 @@ export function getDestinationCover(
   const hashSource = (title || destination).toLowerCase().trim();
   const hash = simpleHash(hashSource);
 
-  // 1. Check for theme keywords in the title first
+  // 1. Curated destination match — ALWAYS takes priority
+  for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
+    if (lower.includes(keyword)) {
+      const idx = hash % photos.length;
+      return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
+    }
+  }
+
+  // 2. No destination match — check theme keywords in title
   if (title) {
     for (const [theme, photos] of Object.entries(THEME_PHOTOS)) {
       if (lowerTitle.includes(theme)) {
         const idx = hash % photos.length;
         return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
       }
-    }
-  }
-
-  // 2. Curated destination match — pick from array using title hash
-  for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
-    if (lower.includes(keyword)) {
-      const idx = hash % photos.length;
-      return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
     }
   }
 
