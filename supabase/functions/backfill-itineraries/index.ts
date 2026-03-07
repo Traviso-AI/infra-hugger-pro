@@ -68,7 +68,7 @@ serve(async (req) => {
     content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(content);
 
-    const VALID_TYPES = ["activity", "restaurant", "hotel", "flight", "experience", "transport"];
+    const VALID_TYPES = ["activity", "restaurant", "hotel", "flight", "event", "transport"];
     let daysInserted = 0;
 
     for (let i = 0; i < (parsed.days || []).length; i++) {
