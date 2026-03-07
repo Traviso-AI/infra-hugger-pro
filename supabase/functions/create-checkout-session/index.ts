@@ -26,27 +26,25 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
 
-    // Use service role to validate the user token server-side
-    const supabaseAdmin = createClient(
+    // Use anon client with the auth header for RLS-scoped queries
+    const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) {
-      console.error("Auth error:", authError);
+    // Use getClaims to validate the JWT — this works in edge functions unlike getUser
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      console.error("Claims error:", claimsError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create a client scoped to the user for RLS queries
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
 
     const { trip_id, hotel_id, check_in, check_out, guests, total_price } = await req.json();
 
@@ -69,14 +67,14 @@ Deno.serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     let customerId: string;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     } else {
       const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { user_id: user.id },
+        email: userEmail,
+        metadata: { user_id: userId },
       });
       customerId = customer.id;
     }
@@ -103,7 +101,7 @@ Deno.serve(async (req) => {
       success_url: `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}&trip_id=${trip_id}&hotel_id=${hotel_id || ""}&check_in=${check_in}&check_out=${check_out}&guests=${guests}&total_price=${total_price}`,
       cancel_url: `${origin}/booking/${trip_id}`,
       metadata: {
-        user_id: user.id,
+        user_id: userId,
         trip_id,
         hotel_id: hotel_id || "",
         check_in,
