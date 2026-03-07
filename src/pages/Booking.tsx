@@ -148,12 +148,16 @@ export default function Booking() {
         },
       });
       if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
+      // Handle both possible response shapes
+      const url = typeof data === "string" ? JSON.parse(data)?.url : data?.url;
+      if (url) {
+        window.location.href = url;
       } else {
+        console.error("Checkout response:", data);
         throw new Error("No checkout URL returned");
       }
     } catch (err: any) {
+      console.error("Booking error:", err);
       toast.error(err.message || "Booking failed");
       setLoading(false);
     }
