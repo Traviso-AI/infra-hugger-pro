@@ -176,7 +176,7 @@ export default function CreateTrip() {
           <StepTripBasics data={basics} onChange={setBasics} />
           <div className="border-t border-border mt-6" />
           <div className="flex items-center justify-between py-8">
-            <span className="text-sm text-muted-foreground">Step 1 of 3 · Takes about 2 minutes</span>
+            <span className="text-sm text-muted-foreground">Step 1 of 3</span>
             <Button className="bg-accent text-accent-foreground hover:bg-accent/90 px-6" onClick={goNext}>
               Next: Build Itinerary <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
