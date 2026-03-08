@@ -4,27 +4,74 @@ import { TripCard } from "@/components/trips/TripCard";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import {
+  Pagination, PaginationContent, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis,
+} from "@/components/ui/pagination";
+
+const PAGE_SIZE = 24;
 
 export default function Explore() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const { data: trips, isLoading } = useQuery({
-    queryKey: ["explore-trips", search],
+  // Reset to page 1 when search changes
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["explore-trips", search, page],
     queryFn: async () => {
+      let countQuery = supabase
+        .from("trips")
+        .select("id", { count: "exact", head: true })
+        .eq("is_published", true);
+
+      if (search) {
+        countQuery = countQuery.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
+      }
+
+      const { count } = await countQuery;
+
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       let query = supabase
         .from("trips")
         .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
         .eq("is_published", true)
-        .order("total_bookings", { ascending: false });
+        .order("total_bookings", { ascending: false })
+        .range(from, to);
 
       if (search) {
         query = query.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
       }
 
-      const { data } = await query.limit(24);
-      return data || [];
+      const { data: trips } = await query;
+      return { trips: trips || [], total: count || 0 };
     },
   });
+
+  const trips = data?.trips || [];
+  const totalPages = Math.ceil((data?.total || 0) / PAGE_SIZE);
+
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (page > 3) pages.push("ellipsis");
+      for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+        pages.push(i);
+      }
+      if (page < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   return (
     <div className="container py-8 md:py-12">
@@ -39,7 +86,7 @@ export default function Explore() {
           placeholder="Search destinations or trips..."
           className="pl-10"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
 
@@ -49,27 +96,64 @@ export default function Explore() {
             <div key={i} className="animate-pulse rounded-xl border bg-muted aspect-[4/5]" />
           ))}
         </div>
-      ) : trips && trips.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {trips.map((trip: any) => (
-            <TripCard
-              key={trip.id}
-              id={trip.id}
-              title={trip.title}
-              destination={trip.destination}
-              coverImage={trip.cover_image_url}
-              durationDays={trip.duration_days}
-              priceEstimate={trip.price_estimate}
-              avgRating={trip.avg_rating}
-              totalBookings={trip.total_bookings}
-              creatorName={trip.profiles?.display_name}
-              creatorAvatar={trip.profiles?.avatar_url}
-              creatorUsername={trip.profiles?.username}
-              creatorId={trip.creator_id}
-              tags={trip.tags}
-            />
-          ))}
-        </div>
+      ) : trips.length > 0 ? (
+        <>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {trips.map((trip: any) => (
+              <TripCard
+                key={trip.id}
+                id={trip.id}
+                title={trip.title}
+                destination={trip.destination}
+                coverImage={trip.cover_image_url}
+                durationDays={trip.duration_days}
+                priceEstimate={trip.price_estimate}
+                avgRating={trip.avg_rating}
+                totalBookings={trip.total_bookings}
+                creatorName={trip.profiles?.display_name}
+                creatorAvatar={trip.profiles?.avatar_url}
+                creatorUsername={trip.profiles?.username}
+                creatorId={trip.creator_id}
+                tags={trip.tags}
+              />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <Pagination className="mt-10">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {getPageNumbers().map((p, i) =>
+                  p === "ellipsis" ? (
+                    <PaginationItem key={`e-${i}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={p}>
+                      <PaginationLink
+                        isActive={p === page}
+                        onClick={() => setPage(p)}
+                        className="cursor-pointer"
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </>
       ) : (
         <div className="rounded-xl border-2 border-dashed bg-muted/50 p-12 text-center">
           <p className="text-muted-foreground">No trips found. Try a different search or check back later!</p>
