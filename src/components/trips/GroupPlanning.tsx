@@ -47,23 +47,26 @@ export function GroupPlanningPanel({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("members");
   const [isInGroup, setIsInGroup] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
   const [groupSize, setGroupSize] = useState(0);
 
-  // Check if user is the trip creator or already in the group
+  // Check if user is an organizer, or already a collaborator
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: trip } = await supabase
-        .from("trips")
-        .select("creator_id")
-        .eq("id", tripId)
-        .single();
-      if (trip?.creator_id === user.id) {
-        setIsOwner(true);
+      // Check if user is a group organizer for this trip
+      const { data: orgRow } = await supabase
+        .from("group_organizers")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (orgRow) {
+        setIsOrganizer(true);
         setIsInGroup(true);
       }
 
+      // Check if user is an accepted collaborator
       const { data: collab } = await supabase
         .from("trip_collaborators")
         .select("id")
@@ -73,19 +76,35 @@ export function GroupPlanningPanel({
         .maybeSingle();
       if (collab) setIsInGroup(true);
 
-      const { count } = await supabase
+      // Check if any organizer exists (for group size display)
+      const { count: orgCount } = await supabase
+        .from("group_organizers")
+        .select("id", { count: "exact", head: true })
+        .eq("trip_id", tripId);
+
+      const { count: collabCount } = await supabase
         .from("trip_collaborators")
         .select("id", { count: "exact", head: true })
         .eq("trip_id", tripId)
         .not("accepted_at", "is", null);
-      setGroupSize(count || 0);
+      setGroupSize((orgCount || 0) + (collabCount || 0));
     })();
   }, [tripId, user]);
 
   if (!user) return null;
 
   const handleStartGroup = async () => {
-    // Trip creator doesn't need a collaborator row — they're automatically the organizer
+    // Record this user as the group organizer
+    const { error } = await supabase
+      .from("group_organizers")
+      .insert({ trip_id: tripId, user_id: user.id });
+    if (error && error.code === "23505") {
+      // Already organizer — just open
+    } else if (error) {
+      toast.error("Failed to start group");
+      return;
+    }
+    setIsOrganizer(true);
     setIsInGroup(true);
     setIsExpanded(true);
     toast.success("Group created! Invite friends to plan together.");
