@@ -186,7 +186,7 @@ export default function TripDetail() {
   }, [days]);
 
   const isOwner = !!(user && trip && trip.creator_id === user.id);
-  const canVote = isOwner || !!isCollaborator;
+  const canVote = !!isGroupOrganizer || !!isCollaborator;
 
   usePageSEO({
     title: trip ? `${trip.title} — ${trip.destination}` : "Loading trip...",
