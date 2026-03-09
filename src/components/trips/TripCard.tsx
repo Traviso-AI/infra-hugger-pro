@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, Star, Users, Clock, Heart } from "lucide-react";
+import { MapPin, Star, Users, Clock, Heart, FolderPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useState } from "react";
+import { AddToCollectionModal } from "@/components/collections/AddToCollectionModal";
 
 interface TripCardProps {
   id: string;
