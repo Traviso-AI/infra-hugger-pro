@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { Input } from "@/components/ui/input";
-import { Search, Users, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
-import { useState, useRef } from "react";
+import { Search, Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
+import { useState, useRef, useMemo } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
   PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis,
