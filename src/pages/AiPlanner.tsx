@@ -211,6 +211,105 @@ export default function AiPlanner() {
       }
     }
 
+    if (selectedFile) {
+      try {
+        if (selectedFile.type.startsWith("image/")) {
+          imageUrl = await uploadImageToStorage(selectedFile);
+          userText = userText
+            ? `${userText}\n\n📎 [Attached image: ${selectedFile.name}]`
+            : `📎 [Attached image: ${selectedFile.name}] — please read this screenshot and build a trip itinerary from the group chat conversation shown.`;
+        } else {
+          const textContent = await readTextFile(selectedFile);
+          userText = userText
+            ? `${userText}\n\n📎 [Attached file: ${selectedFile.name}]:\n${textContent.slice(0, 10000)}`
+            : `📎 [Attached file: ${selectedFile.name}]:\n${textContent.slice(0, 10000)}\n\nPlease analyze this text and create a trip itinerary if possible.`;
+        }
+      } catch (err: any) {
+        toast.error("Failed to process attachment.");
+        setLoading(false);
+        setUploadLoading(false);
+        return;
+      }
+      clearFile();
+      setUploadLoading(false);
+    }
+
+    const userMsg: Message = { role: "user", content: userText };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+
+    try {
+      // Ensure conversation exists
+      if (!conversationCreated && user) {
+        await createConversation(conversationId);
+        setConversationCreated(true);
+      }
+
+      if (user) {
+        await supabase.from("messages").insert({
+          user_id: user.id,
+          conversation_id: conversationId,
+          role: "user",
+          content: userText,
+        });
+        touchConversation(conversationId);
+      }
+
+      // Build messages for AI
+      const aiMessages = [...messages, userMsg].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-travel-planner`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            messages: aiMessages,
+            ...(imageUrl ? { imageUrl } : {}),
+          }),
+        }
+      );
+
+      if (!resp.ok) throw new Error(`AI error (${resp.status})`);
+
+      // Stream response
+      const reader = resp.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+
+      if (reader) {
+        const assistantMsg: Message = { role: "assistant", content: "" };
+        setMessages((prev) => [...prev, assistantMsg]);
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+            try {
+              const json = JSON.parse(line.slice(6));
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) {
+                assistantContent += delta;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { role: "assistant", content: assistantContent };
+                  return updated;
+                });
+              }
+            } catch {}
+          }
+        }
+      }
+
       if (user && assistantContent) {
         await supabase.from("messages").insert({
           user_id: user.id,
