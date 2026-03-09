@@ -12,6 +12,8 @@ import { NalaAvatar } from "@/components/ai-planner/NalaAvatar";
 import { TypingDots } from "@/components/ai-planner/TypingDots";
 import { ChatHistoryDrawer } from "@/components/ai-planner/ChatHistoryDrawer";
 import { useConversations } from "@/hooks/useConversations";
+import { ComparisonCard, parseComparisonBlocks } from "@/components/ai-planner/ComparisonCard";
+import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
