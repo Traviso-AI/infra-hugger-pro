@@ -266,6 +266,7 @@ export default function TripDetail() {
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium text-sm">{act.title}</span>
                                         <Badge variant="outline" className="text-xs">{act.type}</Badge>
+                                        {user && <div className="ml-auto"><ActivityVoteButtons activityId={act.id} tripId={trip.id} /></div>}
                                       </div>
                                       {act.description && <p className="text-xs text-muted-foreground mt-0.5">{act.description}</p>}
                                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
