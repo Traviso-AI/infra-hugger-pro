@@ -191,6 +191,9 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Try Nala Widget */}
+      <TryNalaWidget />
+
       {/* CTA */}
       <section className="bg-primary py-16 md:py-24">
         <div className="container text-center">
