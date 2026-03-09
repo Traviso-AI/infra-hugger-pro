@@ -351,6 +351,8 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
   const [bio, setBio] = useState(profile.bio || "");
   const [website, setWebsite] = useState(profile.website || "");
   const [displayName, setDisplayName] = useState(profile.display_name || "");
+  const [instagram, setInstagram] = useState(profile.instagram || "");
+  const [twitter, setTwitter] = useState(profile.twitter || "");
   const [isCreator, setIsCreator] = useState(profile.is_creator || false);
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
@@ -384,7 +386,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null })
+        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null, instagram: instagram || null, twitter: twitter || null })
         .eq("user_id", profile.user_id);
       if (error) throw error;
       await onSaved();
@@ -439,6 +441,14 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
           <div className="space-y-2">
             <Label>Bio</Label>
             <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+          </div>
+          <div className="space-y-2">
+            <Label>Instagram</Label>
+            <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@yourusername" />
+          </div>
+          <div className="space-y-2">
+            <Label>X / Twitter</Label>
+            <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="@yourusername" />
           </div>
           <div className="space-y-2">
             <Label>Website</Label>
