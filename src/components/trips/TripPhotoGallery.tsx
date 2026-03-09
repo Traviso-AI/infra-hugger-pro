@@ -116,16 +116,9 @@ function LightboxDialog({
   onNavigate: (dir: number) => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl p-0 bg-black/95 border-none">
-        <div className="relative flex items-center justify-center min-h-[60vh]">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-10 h-9 w-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <X className="h-5 w-5 text-white" />
-          </button>
-
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button]:text-white [&>button]:hover:bg-white/20 [&>button]:rounded-full">
+        <div className="relative flex items-center justify-center min-h-[60vh]" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
           {photos.length > 1 && (
             <>
               <button
