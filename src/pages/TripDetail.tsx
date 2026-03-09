@@ -10,7 +10,8 @@ import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder 
 import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
-import { useEffect } from "react";
+import { ReviewForm } from "@/components/trips/ReviewForm";
+import { useEffect, useMemo } from "react";
 
 const typeIcons: Record<string, any> = {
   flight: Plane, hotel: Hotel, restaurant: Utensils,
