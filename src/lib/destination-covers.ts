@@ -21,8 +21,10 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1512813195386-6cf811ad3542",
     "photo-1570737543098-a2ac1a5e57e5",
     "photo-1504019347908-b45f9b0b8e8c",
-    "photo-1518105779142-d975f22f1b0a", // Mexican coast
-    "photo-1547995886-6dc09384c6e6", // Mexican ruins/beach
+    "photo-1518105779142-d975f22f1b0a",
+    "photo-1547995886-6dc09384c6e6",
+    "photo-1682553064442-0b3e5f2e6d10", // Tulum ruins oceanfront
+    "photo-1653437908893-2ed7a3e5e1f2", // Tulum beach palapa
   ],
   cancun: [
     "photo-1510097467424-192d713fd8b2",
