@@ -191,8 +191,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Try Nala Widget */}
-      <TryNalaWidget />
+      {/* Try Nala removed — now a floating bubble in AppLayout */}
 
       {/* CTA */}
       <section className="bg-primary py-16 md:py-24">
