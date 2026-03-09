@@ -94,13 +94,13 @@ export function TripCard({
             <span className="text-[11px] sm:text-xs font-medium text-muted-foreground truncate">{destination}</span>
           </div>
           <h3 className="font-display text-base sm:text-lg font-semibold leading-tight mb-1.5 sm:mb-2 line-clamp-1">{title}</h3>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {durationDays} day{durationDays > 1 ? "s" : ""}</span>
+          <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 flex-wrap">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {durationDays}d</span>
             {avgRating != null && avgRating > 0 && (
               <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-sunset text-sunset" /> {avgRating.toFixed(1)}</span>
             )}
             {totalBookings != null && totalBookings > 0 ? (
-              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {totalBookings} booked</span>
+              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {totalBookings}</span>
             ) : (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">New</Badge>
             )}

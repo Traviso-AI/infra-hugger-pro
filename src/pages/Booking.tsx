@@ -182,10 +182,10 @@ export default function Booking() {
   };
 
   return (
-    <div className="container max-w-2xl py-8 md:py-12">
-      <h1 className="font-display text-3xl font-bold mb-2">Check Availability</h1>
-      <p className="text-muted-foreground mb-8">
-        This is a curated package — everything in the itinerary is included. Select your dates and guests to get your price.
+    <div className="container max-w-2xl px-4 py-6 md:py-12">
+      <h1 className="font-display text-2xl md:text-3xl font-bold mb-2">Check Availability</h1>
+      <p className="text-muted-foreground text-sm md:text-base mb-6 md:mb-8">
+        Curated package — everything included. Select dates and guests.
       </p>
 
       <div className="space-y-6">

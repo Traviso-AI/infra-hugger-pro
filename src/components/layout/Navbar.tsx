@@ -104,21 +104,39 @@ export function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="border-t bg-background p-4 md:hidden">
-          <div className="flex flex-col gap-3">
-            <Link to="/explore" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>Explore</Link>
-            <Link to="/leaderboard" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>Leaderboard</Link>
+          <div className="flex flex-col gap-1">
+            <Link to="/explore" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+              <Compass className="h-4 w-4 text-muted-foreground" /> Explore
+            </Link>
+            <Link to="/leaderboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" /> Leaderboard
+            </Link>
             {user ? (
               <>
-                <Link to="/ai-planner" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>AI Planner</Link>
-                <Link to="/create-trip" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>{profile?.is_creator ? "Creator Studio" : "Create Trip"}</Link>
-                <Link to="/dashboard" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>Dashboard</Link>
-                <Button variant="outline" size="sm" onClick={() => { handleSignOut(); setMobileOpen(false); }}>Sign out</Button>
+                <Link to="/ai-planner" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" /> AI Planner
+                </Link>
+                <Link to="/create-trip" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Plus className="h-4 w-4 text-muted-foreground" /> {profile?.is_creator ? "Creator Studio" : "Create Trip"}
+                </Link>
+                <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <User className="h-4 w-4 text-muted-foreground" /> Dashboard
+                </Link>
+                <div className="flex items-center gap-2 mt-2 px-3">
+                  <NotificationBell />
+                  <span className="text-sm text-muted-foreground">Notifications</span>
+                </div>
+                <div className="border-t mt-2 pt-2">
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
+                    <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  </Button>
+                </div>
               </>
             ) : (
-              <>
-                <Button variant="ghost" size="sm" onClick={() => { navigate("/login"); setMobileOpen(false); }}>Log in</Button>
-                <Button size="sm" className="bg-accent text-accent-foreground" onClick={() => { navigate("/signup"); setMobileOpen(false); }}>Sign up</Button>
-              </>
+              <div className="flex flex-col gap-2 mt-2">
+                <Button variant="ghost" className="w-full justify-center" onClick={() => { navigate("/login"); setMobileOpen(false); }}>Log in</Button>
+                <Button className="w-full bg-accent text-accent-foreground" onClick={() => { navigate("/signup"); setMobileOpen(false); }}>Sign up</Button>
+              </div>
             )}
           </div>
         </div>

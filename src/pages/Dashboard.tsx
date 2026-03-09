@@ -90,7 +90,7 @@ export default function Dashboard() {
       <OnboardingChecklist />
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
         {[
           { label: "Published Trips", value: publishedCount, icon: MapPin },
           { label: "Total Bookings", value: totalBookings, icon: BookOpen },

@@ -488,7 +488,7 @@ export default function AiPlanner() {
               className="min-h-[40px] max-h-32 resize-none text-sm py-2.5 leading-5"
               rows={1}
             />
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-10 w-10" size="icon" onClick={sendMessage} disabled={!canSend}>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-10 w-10 min-w-[40px]" size="icon" onClick={sendMessage} disabled={!canSend}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
