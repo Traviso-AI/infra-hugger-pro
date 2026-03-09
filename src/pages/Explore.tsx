@@ -62,14 +62,14 @@ export default function Explore() {
   });
 
   // Trips from creators the user follows
-  const { data: followingTrips } = useQuery({
+  const { data: followingTrips, isLoading: followingLoading } = useQuery({
     queryKey: ["explore-following-trips", user?.id],
     queryFn: async () => {
       const { data: follows } = await supabase
         .from("follows")
         .select("following_id")
         .eq("follower_id", user!.id);
-      if (!follows || follows.length === 0) return [];
+      if (!follows || follows.length === 0) return { trips: [], hasFollows: false };
       const creatorIds = follows.map((f) => f.following_id);
       const { data } = await supabase
         .from("trips")
@@ -77,11 +77,25 @@ export default function Explore() {
         .eq("is_published", true)
         .in("creator_id", creatorIds)
         .order("created_at", { ascending: false })
-        .limit(6);
-      return data || [];
+        .limit(12);
+      return { trips: data || [], hasFollows: true };
     },
     enabled: !!user,
   });
+
+  const hasFollows = followingTrips?.hasFollows ?? false;
+  const allFollowingTrips = followingTrips?.trips || [];
+
+  // Filter following trips by search
+  const filteredFollowingTrips = useMemo(() => {
+    if (!search) return allFollowingTrips;
+    const s = search.toLowerCase();
+    return allFollowingTrips.filter(
+      (t: any) =>
+        t.title?.toLowerCase().includes(s) ||
+        t.destination?.toLowerCase().includes(s)
+    );
+  }, [allFollowingTrips, search]);
 
   const trips = data?.trips || [];
   const totalPages = Math.ceil((data?.total || 0) / PAGE_SIZE);
