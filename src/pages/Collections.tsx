@@ -22,6 +22,7 @@ export default function Collections() {
   const [newDesc, setNewDesc] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "collection" | "item"; id: string; name: string } | null>(null);
 
   const { data: collections } = useQuery({
     queryKey: ["collections", user?.id],
