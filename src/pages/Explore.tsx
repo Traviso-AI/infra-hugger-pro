@@ -17,6 +17,11 @@ export default function Explore() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const scrollCarousel = (offset: number) => {
+    carouselRef.current?.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
   // Reset to page 1 when search changes
   const handleSearch = (value: string) => {
     setSearch(value);
