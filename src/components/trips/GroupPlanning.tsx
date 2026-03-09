@@ -399,7 +399,7 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
               👑
             </div>
             <span className="truncate text-xs font-medium">
-              {isOwner ? "You" : creatorName || "Trip creator"}
+              {organizerName || "Organizer"}
             </span>
           </div>
           <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Organizer</Badge>
