@@ -56,7 +56,7 @@ export default function Explore() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["explore-trips", search, page],
+    queryKey: ["explore-trips", search, page, filters],
     queryFn: async () => {
       let countQuery = supabase
         .from("trips")
@@ -66,21 +66,59 @@ export default function Explore() {
       if (search) {
         countQuery = countQuery.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
       }
+      if (filters.minPrice > 0) {
+        countQuery = countQuery.gte("price_estimate", filters.minPrice);
+      }
+      if (filters.maxPrice < 10000) {
+        countQuery = countQuery.lte("price_estimate", filters.maxPrice);
+      }
+      if (filters.minDuration > 1) {
+        countQuery = countQuery.gte("duration_days", filters.minDuration);
+      }
+      if (filters.maxDuration < 30) {
+        countQuery = countQuery.lte("duration_days", filters.maxDuration);
+      }
+      if (filters.selectedTags.length > 0) {
+        countQuery = countQuery.overlaps("tags", filters.selectedTags);
+      }
 
       const { count } = await countQuery;
 
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
+      // Determine sort
+      let orderCol = "total_bookings";
+      let ascending = false;
+      if (filters.sortBy === "newest") { orderCol = "created_at"; ascending = false; }
+      else if (filters.sortBy === "price-low") { orderCol = "price_estimate"; ascending = true; }
+      else if (filters.sortBy === "price-high") { orderCol = "price_estimate"; ascending = false; }
+      else if (filters.sortBy === "rating") { orderCol = "avg_rating"; ascending = false; }
+
       let query = supabase
         .from("trips")
         .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
         .eq("is_published", true)
-        .order("total_bookings", { ascending: false })
+        .order(orderCol, { ascending })
         .range(from, to);
 
       if (search) {
         query = query.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
+      }
+      if (filters.minPrice > 0) {
+        query = query.gte("price_estimate", filters.minPrice);
+      }
+      if (filters.maxPrice < 10000) {
+        query = query.lte("price_estimate", filters.maxPrice);
+      }
+      if (filters.minDuration > 1) {
+        query = query.gte("duration_days", filters.minDuration);
+      }
+      if (filters.maxDuration < 30) {
+        query = query.lte("duration_days", filters.maxDuration);
+      }
+      if (filters.selectedTags.length > 0) {
+        query = query.overlaps("tags", filters.selectedTags);
       }
 
       const { data: trips } = await query;
