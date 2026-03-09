@@ -74,10 +74,13 @@ export function Navbar() {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-52">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium truncate">{profile?.display_name || "My Account"}</p>
+                  <p className="text-xs text-muted-foreground truncate">@{profile?.username || "user"}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Travel</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => navigate("/my-trips")}>
                   <Plane className="mr-2 h-4 w-4" /> My Trips
                 </DropdownMenuItem>
@@ -86,6 +89,11 @@ export function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
                   <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Account</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" /> Profile
