@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { useState } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
@@ -12,6 +13,7 @@ import {
 const PAGE_SIZE = 24;
 
 export default function Explore() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -54,6 +56,28 @@ export default function Explore() {
     },
   });
 
+  // Trips from creators the user follows
+  const { data: followingTrips } = useQuery({
+    queryKey: ["explore-following-trips", user?.id],
+    queryFn: async () => {
+      const { data: follows } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user!.id);
+      if (!follows || follows.length === 0) return [];
+      const creatorIds = follows.map((f) => f.following_id);
+      const { data } = await supabase
+        .from("trips")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
+        .eq("is_published", true)
+        .in("creator_id", creatorIds)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const trips = data?.trips || [];
   const totalPages = Math.ceil((data?.total || 0) / PAGE_SIZE);
 
@@ -89,6 +113,35 @@ export default function Explore() {
           onChange={(e) => handleSearch(e.target.value)}
         />
       </div>
+
+      {/* From Creators You Follow */}
+      {user && followingTrips && followingTrips.length > 0 && !search && (
+        <div className="mb-10">
+          <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5 text-accent" /> From Creators You Follow
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {followingTrips.map((trip: any) => (
+              <TripCard
+                key={trip.id}
+                id={trip.id}
+                title={trip.title}
+                destination={trip.destination}
+                coverImage={trip.cover_image_url}
+                durationDays={trip.duration_days}
+                priceEstimate={trip.price_estimate}
+                avgRating={trip.avg_rating}
+                totalBookings={trip.total_bookings}
+                creatorName={trip.profiles?.display_name}
+                creatorAvatar={trip.profiles?.avatar_url}
+                creatorUsername={trip.profiles?.username}
+                creatorId={trip.creator_id}
+                tags={trip.tags}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

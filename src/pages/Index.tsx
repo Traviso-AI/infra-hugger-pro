@@ -3,14 +3,11 @@ import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, TrendingUp, Users, ArrowRight, MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 
 export default function Index() {
-  const { user } = useAuth();
-
   const { data: featuredTrips } = useQuery({
     queryKey: ["featured-trips"],
     queryFn: async () => {
@@ -22,28 +19,6 @@ export default function Index() {
         .limit(6);
       return data || [];
     },
-  });
-
-  // Trips from creators the user follows
-  const { data: followingTrips } = useQuery({
-    queryKey: ["homepage-following-trips", user?.id],
-    queryFn: async () => {
-      const { data: follows } = await supabase
-        .from("follows")
-        .select("following_id")
-        .eq("follower_id", user!.id);
-      if (!follows || follows.length === 0) return [];
-      const creatorIds = follows.map((f) => f.following_id);
-      const { data } = await supabase
-        .from("trips")
-        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
-        .eq("is_published", true)
-        .in("creator_id", creatorIds)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      return data || [];
-    },
-    enabled: !!user,
   });
 
   return (
@@ -161,45 +136,6 @@ export default function Index() {
           </div>
         </div>
       </section>
-
-      {/* From Creators You Follow */}
-      {user && followingTrips && followingTrips.length > 0 && (
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container">
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <h2 className="font-display text-3xl font-bold flex items-center gap-2">
-                  <Users className="h-7 w-7 text-accent" /> From Creators You Follow
-                </h2>
-                <p className="mt-1 text-muted-foreground">Latest itineraries from your favorite creators</p>
-              </div>
-              <Button asChild variant="ghost" className="hidden sm:flex">
-                <Link to="/dashboard">See all <ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {followingTrips.map((trip: any) => (
-                <TripCard
-                  key={trip.id}
-                  id={trip.id}
-                  title={trip.title}
-                  destination={trip.destination}
-                  coverImage={trip.cover_image_url}
-                  durationDays={trip.duration_days}
-                  priceEstimate={trip.price_estimate}
-                  avgRating={trip.avg_rating}
-                  totalBookings={trip.total_bookings}
-                  creatorName={trip.profiles?.display_name}
-                  creatorAvatar={trip.profiles?.avatar_url}
-                  creatorUsername={trip.profiles?.username}
-                  creatorId={trip.creator_id}
-                  tags={trip.tags}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Featured Trips */}
       <section className="py-16 md:py-24">
