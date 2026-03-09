@@ -102,7 +102,11 @@ export default function Leaderboard() {
               </Link>
             ))}
             {(!topTrips || topTrips.length === 0) && (
-              <Card><CardContent className="p-8 text-center text-muted-foreground">No trips yet</CardContent></Card>
+              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-muted/30 px-6 py-14 text-center">
+                <Users className="h-10 w-10 text-accent/40 mb-3" />
+                <h3 className="font-display text-lg font-semibold mb-1">No trips yet</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">Be the first to create and publish a trip to appear on the leaderboard.</p>
+              </div>
             )}
           </div>
         </TabsContent>
