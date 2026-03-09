@@ -271,12 +271,13 @@ export function isGenericPlaceholder(url: string | null | undefined): boolean {
 }
 
 function simpleHash(str: string): number {
-  let hash = 0;
+  // FNV-1a inspired hash for better distribution
+  let hash = 2166136261;
   for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
   }
-  return Math.abs(hash);
+  return Math.abs(hash | 0);
 }
 
 /**
