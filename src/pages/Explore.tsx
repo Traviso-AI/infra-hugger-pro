@@ -203,20 +203,24 @@ export default function Explore() {
                   </div>
                 ))}
               </div>
-              {/* Fade hints on both edges */}
-              <div className="absolute left-0 top-0 bottom-4 w-10 bg-gradient-to-r from-background to-transparent pointer-events-none z-[1]" />
-              <div className="absolute right-0 top-0 bottom-4 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none z-[1]" />
-              {/* Arrow buttons */}
+              {/* Fade hints — only when scrollable in that direction */}
+              {canScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-4 w-10 bg-gradient-to-r from-background to-transparent pointer-events-none z-[1]" />
+              )}
+              {canScrollRight && (
+                <div className="absolute right-0 top-0 bottom-4 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none z-[1]" />
+              )}
+              {/* Arrow buttons — always visible on mobile, hover on desktop */}
               <button
                 onClick={() => scrollCarousel(-300)}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors md:opacity-0 md:group-hover:opacity-100"
                 aria-label="Scroll left"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => scrollCarousel(300)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors md:opacity-0 md:group-hover:opacity-100"
                 aria-label="Scroll right"
               >
                 <ChevronRight className="h-4 w-4" />
