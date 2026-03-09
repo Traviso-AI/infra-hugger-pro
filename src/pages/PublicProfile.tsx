@@ -465,12 +465,26 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
 
           <div className="space-y-2">
             <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Social & Links</Label>
-            <div className="space-y-2">
-              <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle" className="h-9 text-sm" />
-              <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="X / Twitter @handle" className="h-9 text-sm" />
-              <Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok @handle" className="h-9 text-sm" />
-              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp URL" className="h-9 text-sm" />
-              <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website URL" className="h-9 text-sm" />
+            <div className="space-y-1.5">
+              {[
+                { icon: <Instagram className="h-4 w-4" />, value: instagram, set: setInstagram, placeholder: "username" },
+                { icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>, value: twitter, set: setTwitter, placeholder: "username" },
+                { icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 0 0-.82-.05A6.34 6.34 0 0 0 3.15 15.4 6.34 6.34 0 0 0 9.49 21.7a6.34 6.34 0 0 0 6.34-6.34V8.82a8.22 8.22 0 0 0 4.78 1.52V6.89a4.85 4.85 0 0 1-1.02-.2z" /></svg>, value: tiktok, set: setTiktok, placeholder: "username" },
+                { icon: <MessageCircle className="h-4 w-4" />, value: whatsapp, set: setWhatsapp, placeholder: "wa.me/... or group link" },
+                { icon: <Globe className="h-4 w-4" />, value: website, set: setWebsite, placeholder: "https://yoursite.com" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-0 rounded-md border border-input overflow-hidden focus-within:ring-1 focus-within:ring-ring">
+                  <div className="flex items-center justify-center w-9 h-9 bg-muted/50 text-muted-foreground shrink-0 border-r border-input">
+                    {item.icon}
+                  </div>
+                  <input
+                    value={item.value}
+                    onChange={(e) => item.set(e.target.value)}
+                    placeholder={item.placeholder}
+                    className="flex-1 h-9 px-3 text-sm bg-transparent outline-none placeholder:text-muted-foreground/60"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
