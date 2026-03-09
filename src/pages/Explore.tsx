@@ -153,7 +153,7 @@ export default function Explore() {
     <div className="container py-8 md:py-12">
       <div className="mb-8">
         <h1 className="font-display text-4xl font-bold">Explore Trips</h1>
-        <p className="mt-2 text-muted-foreground">Browse itineraries from your favorite creators and influencers — book the exact trips they took</p>
+        <p className="mt-2 text-lg text-muted-foreground">Travel like the creators you love. Find their itineraries, book their spots.</p>
       </div>
 
       <div className="relative mb-8 max-w-md">
