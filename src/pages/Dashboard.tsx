@@ -76,16 +76,18 @@ export default function Dashboard() {
     }
   };
   return (
-    <div className="container py-8 md:py-12">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container px-4 py-6 md:py-12">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
         <div>
-          <h1 className="font-display text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {profile?.display_name || "Traveler"}</p>
+          <h1 className="font-display text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground text-sm">Welcome back, {profile?.display_name || "Traveler"}</p>
         </div>
-        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 w-full sm:w-auto">
           <Link to="/create-trip"><Plus className="mr-2 h-4 w-4" /> Create Trip</Link>
         </Button>
       </div>
+
+      <OnboardingChecklist />
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4 mb-8">
