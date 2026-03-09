@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShareProfileModal } from "@/components/sharing/ShareProfileModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
+import { VerifiedBadge } from "@/components/profile/VerifiedBadge";
+import { SocialFeedEmbed } from "@/components/profile/SocialFeedEmbed";
 
 export default function PublicProfile() {
   const { username } = useParams();
@@ -195,6 +197,10 @@ export default function PublicProfile() {
         </Avatar>
         <div className="flex items-center gap-2">
           <h1 className="font-display text-3xl font-bold">{profile.display_name}</h1>
+          <VerifiedBadge
+            isVerified={profile.is_creator && tripsCreatedCount >= 3}
+            isTopCreator={!!rank && rank <= 10}
+          />
           {profile.is_creator && (
             <Badge className="bg-accent text-accent-foreground text-xs">Creator</Badge>
           )}
@@ -263,6 +269,12 @@ export default function PublicProfile() {
           )}
         </div>
       </div>
+      {/* Social Feed Links */}
+      {(profile.instagram || profile.twitter) && (
+        <div className="mb-8">
+          <SocialFeedEmbed instagram={profile.instagram} twitter={profile.twitter} />
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="created" className="w-full">

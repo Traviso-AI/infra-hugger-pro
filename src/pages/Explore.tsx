@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { ExploreFilterBar, ExploreFilters, defaultFilters } from "@/components/trips/ExploreFilterBar";
-import { Input } from "@/components/ui/input";
-import { Search, Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
+import { SearchAutocomplete } from "@/components/explore/SearchAutocomplete";
+import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
@@ -201,15 +201,11 @@ export default function Explore() {
         <p className="mt-2 text-lg text-muted-foreground">Travel like your favorite influencer. Find their itineraries, book their spots.</p>
       </div>
 
-      <div className="relative mb-4 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search destinations or trips..."
-          className="pl-10"
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-      </div>
+      <SearchAutocomplete
+        value={search}
+        onChange={handleSearch}
+        className="mb-4 max-w-md"
+      />
 
       <div className="mb-8">
         <ExploreFilterBar filters={filters} onChange={handleFiltersChange} />

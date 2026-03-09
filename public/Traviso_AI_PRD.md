@@ -700,4 +700,26 @@ Full dark mode support with inverted token values. Toggle via `next-themes`.
 
 ---
 
+## 30. Recent Feature Additions (March 9, 2026 — Update 2)
+
+### 30.1 Enhanced Search with Autocomplete
+- **Search bar** on Explore page now includes Mapbox-powered destination autocomplete
+- **Trending destinations** dropdown (8 curated destinations) shown on focus with thumbnail photos
+- **Destination photos** shown inline in autocomplete results
+- Replaces basic text input; debounced API calls (250ms)
+
+### 30.2 Trip Detail — Photo Gallery & Activity Map
+- **Multi-photo gallery**: Displays cover image + activity images + destination variants in a grid layout
+- **Lightbox viewer**: Full-screen photo browsing with navigation arrows and dot indicators
+- **Activity location list**: Numbered list of all activities with locations, grouped by day
+- Responsive: single hero on mobile, grid on desktop
+
+### 30.3 Creator Profiles — Verified Badges & Social
+- **Verified badge** (✓): Auto-awarded to creators with 3+ published trips
+- **Top Creator badge** (👑): Auto-awarded to creators ranked in top 10 on leaderboard
+- **Social links**: Instagram and X/Twitter displayed as branded cards on public profiles
+- Links open in new tabs; handles parsed from various URL/handle formats
+
+---
+
 *This document reflects the current state of the Traviso AI platform as of March 9, 2026. Items marked with ⚠️ require additional implementation work before they are production-ready.*

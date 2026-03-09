@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { ReviewForm } from "@/components/trips/ReviewForm";
+import { TripPhotoGallery } from "@/components/trips/TripPhotoGallery";
+import { ActivityMap } from "@/components/trips/ActivityMap";
 import { usePageSEO } from "@/hooks/usePageSEO";
 import { useEffect, useMemo } from "react";
 
@@ -81,6 +83,27 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
+  // Collect activity images for the gallery
+  const activityImages = useMemo(() => {
+    if (!days) return [];
+    return days.flatMap((day: any) =>
+      (day.trip_activities || [])
+        .filter((a: any) => a.image_url)
+        .map((a: any) => a.image_url as string)
+    );
+  }, [days]);
+
+  // Collect all activities with locations for the map
+  const allActivities = useMemo(() => {
+    if (!days) return [];
+    return days.flatMap((day: any) =>
+      (day.trip_activities || []).map((a: any) => ({
+        ...a,
+        day_number: day.day_number,
+      }))
+    );
+  }, [days]);
+
   usePageSEO({
     title: trip ? `${trip.title} — ${trip.destination}` : "Loading trip...",
     description: trip?.description || (trip ? `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.` : undefined),
@@ -113,16 +136,13 @@ export default function TripDetail() {
 
   return (
     <div>
-      {/* Hero */}
-      <div className="relative h-64 md:h-96 bg-muted">
-        <img
-          src={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? getDestinationCover(trip.destination, 1200, 600, trip.id) : trip.cover_image_url}
-          alt={trip.title}
-          className="h-full w-full object-cover"
-          onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(trip.destination); }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-      </div>
+      {/* Photo Gallery */}
+      <TripPhotoGallery
+        coverImage={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? undefined : trip.cover_image_url}
+        destination={trip.destination}
+        tripId={trip.id}
+        activityImages={activityImages}
+      />
 
       <div className="container -mt-16 relative pb-16">
         <Button
@@ -246,7 +266,12 @@ export default function TripDetail() {
               </div>
             )}
 
-            {/* Reviews */}
+            {/* Activity Map */}
+            {allActivities.length > 0 && (
+              <ActivityMap activities={allActivities} destination={trip.destination} />
+            )}
+
+
             <div>
               <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
               
