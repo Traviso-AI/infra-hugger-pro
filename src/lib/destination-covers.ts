@@ -335,7 +335,7 @@ export function getDestinationCover(
   for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(keyword)) {
       const idx = h1 % photos.length;
-      return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80&sig=${h2}`;
+      return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
     }
   }
 
