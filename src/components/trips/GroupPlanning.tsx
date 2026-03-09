@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Users, UserPlus, ThumbsUp, ThumbsDown, DollarSign, Copy, Check,
-  Link2, ChevronDown, ChevronUp, X, Wallet,
+  Link2, ChevronDown, ChevronUp, X, Wallet, MessageCircle, Send,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -177,17 +177,24 @@ export function GroupPlanningPanel({
           >
             <div className="border-t px-4 pb-4 pt-2">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full grid grid-cols-2 h-9 mb-3">
+                <TabsList className="w-full grid grid-cols-3 h-9 mb-3">
                   <TabsTrigger value="members" className="text-xs gap-1.5">
                     <Users className="h-3 w-3" /> Members
                   </TabsTrigger>
+                  <TabsTrigger value="chat" className="text-xs gap-1.5">
+                    <MessageCircle className="h-3 w-3" /> Chat
+                  </TabsTrigger>
                   <TabsTrigger value="costs" className="text-xs gap-1.5">
-                    <DollarSign className="h-3 w-3" /> Split Costs
+                    <DollarSign className="h-3 w-3" /> Costs
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="members" className="mt-0">
                   <MembersTab tripId={tripId} isOwner={isOrganizer} />
+                </TabsContent>
+
+                <TabsContent value="chat" className="mt-0">
+                  <GroupChatTab tripId={tripId} />
                 </TabsContent>
 
                 <TabsContent value="costs" className="mt-0">
@@ -214,7 +221,6 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showInviteForm, setShowInviteForm] = useState(false);
 
   const fetchCollaborators = async () => {
     const { data } = await supabase
@@ -439,79 +445,200 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
         })}
       </div>
 
-      {/* Invite actions */}
-      {!showInviteForm ? (
+      {/* Invite actions — always visible */}
+      <div className="space-y-2 pt-1 border-t">
+        <div className="flex gap-1.5">
+          <Input
+            placeholder="friend@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="text-xs h-8"
+            onKeyDown={(e) => e.key === "Enter" && handleInviteByEmail()}
+          />
+          <Button
+            size="sm"
+            onClick={handleInviteByEmail}
+            disabled={loading || !email.trim()}
+            className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
         <Button
           variant="outline"
           size="sm"
           className="w-full text-xs"
-          onClick={() => setShowInviteForm(true)}
+          onClick={handleGenerateLink}
+          disabled={loading}
         >
-          <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-          Invite Friends
+          <Link2 className="mr-1.5 h-3.5 w-3.5" />
+          Generate Invite Link
         </Button>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-2.5 pt-1 border-t"
-        >
-          {/* Email invite */}
-          <div className="flex gap-1.5">
-            <Input
-              placeholder="friend@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="text-xs h-8"
-              onKeyDown={(e) => e.key === "Enter" && handleInviteByEmail()}
-            />
-            <Button
-              size="sm"
-              onClick={handleInviteByEmail}
-              disabled={loading || !email.trim()}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
+
+        {inviteLink && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 p-2 bg-muted rounded-lg">
+            <Input value={inviteLink} readOnly className="text-[10px] h-7 bg-transparent border-0 font-mono" />
+            <Button size="sm" variant="ghost" className="shrink-0 h-7 w-7 p-0" onClick={copyLink}>
+              {copied ? <Check className="h-3 w-3 text-accent" /> : <Copy className="h-3 w-3" />}
             </Button>
-          </div>
-
-          {/* Or generate link */}
-          <button
-            onClick={handleGenerateLink}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-1.5 text-[11px] text-accent hover:text-accent/80 transition-colors py-1"
-          >
-            <Link2 className="h-3 w-3" />
-            Or generate a shareable link
-          </button>
-
-          {/* Show invite link */}
-          {inviteLink && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 p-2 bg-muted rounded-lg">
-              <Input value={inviteLink} readOnly className="text-[10px] h-7 bg-transparent border-0 font-mono" />
-              <Button size="sm" variant="ghost" className="shrink-0 h-7 w-7 p-0" onClick={copyLink}>
-                {copied ? <Check className="h-3 w-3 text-accent" /> : <Copy className="h-3 w-3" />}
-              </Button>
-            </motion.div>
-          )}
-
-          <button
-            onClick={() => { setShowInviteForm(false); setInviteLink(null); }}
-            className="w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Cancel
-          </button>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </div>
 
       {/* Explain what collaborators can do */}
       <div className="rounded-lg bg-muted/30 p-3 space-y-1.5">
         <p className="text-[11px] font-medium text-foreground/80">What can group members do?</p>
         <ul className="text-[10px] text-muted-foreground space-y-0.5">
           <li>👍 Vote on activities (thumbs up/down)</li>
-          <li>💬 Help decide the final itinerary</li>
+          <li>💬 Chat with your group in real-time</li>
           <li>💰 Split costs after someone books</li>
         </ul>
+      </div>
+    </div>
+  );
+}
+
+// =============================================
+// Group Chat Tab — Real-time messaging
+// =============================================
+interface GroupMessage {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+}
+
+function GroupChatTab({ tripId }: { tripId: string }) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<GroupMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const { data } = await supabase
+        .from("group_messages")
+        .select("*")
+        .eq("trip_id", tripId)
+        .order("created_at", { ascending: true })
+        .limit(100);
+      if (data) {
+        setMessages(data as GroupMessage[]);
+        const userIds = [...new Set(data.map((m: any) => m.user_id))];
+        if (userIds.length > 0) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, avatar_url")
+            .in("user_id", userIds);
+          if (profs) {
+            const map: Record<string, { display_name: string; avatar_url: string | null }> = {};
+            profs.forEach((p: any) => { map[p.user_id] = p; });
+            setProfiles(map);
+          }
+        }
+      }
+    };
+    fetchMessages();
+
+    const channel = supabase
+      .channel(`group-chat-${tripId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "group_messages",
+        filter: `trip_id=eq.${tripId}`,
+      }, async (payload) => {
+        const msg = payload.new as GroupMessage;
+        setMessages((prev) => [...prev, msg]);
+        if (!profiles[msg.user_id]) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, avatar_url")
+            .eq("user_id", msg.user_id)
+            .maybeSingle();
+          if (prof) {
+            setProfiles((prev) => ({ ...prev, [prof.user_id]: prof }));
+          }
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [tripId]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || !user || sending) return;
+    setSending(true);
+    const { error } = await supabase
+      .from("group_messages")
+      .insert({ trip_id: tripId, user_id: user.id, content: newMessage.trim() });
+    if (error) {
+      toast.error("Failed to send message");
+      console.error("Chat send error:", error);
+    }
+    setNewMessage("");
+    setSending(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div
+        ref={scrollRef}
+        className="h-52 overflow-y-auto space-y-2 rounded-lg border bg-muted/20 p-2"
+      >
+        {messages.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-[11px] text-muted-foreground">No messages yet. Say hi to your group! 👋</p>
+          </div>
+        ) : (
+          messages.map((msg) => {
+            const isMe = msg.user_id === user?.id;
+            const profile = profiles[msg.user_id];
+            return (
+              <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
+                  {profile?.display_name?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div className={`max-w-[75%] ${isMe ? "text-right" : ""}`}>
+                  <p className="text-[10px] text-muted-foreground mb-0.5">
+                    {isMe ? "You" : profile?.display_name || "User"}
+                  </p>
+                  <div className={`rounded-lg px-2.5 py-1.5 text-xs ${isMe ? "bg-accent text-accent-foreground" : "bg-muted"}`}>
+                    {msg.content}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="flex gap-1.5">
+        <Input
+          placeholder="Type a message..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+          className="text-xs h-8"
+        />
+        <Button
+          size="sm"
+          onClick={handleSend}
+          disabled={sending || !newMessage.trim()}
+          className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </div>
   );
