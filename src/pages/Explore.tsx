@@ -50,6 +50,11 @@ export default function Explore() {
     setPage(1);
   };
 
+  const handleFiltersChange = (newFilters: ExploreFilters) => {
+    setFilters(newFilters);
+    setPage(1);
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: ["explore-trips", search, page],
     queryFn: async () => {
