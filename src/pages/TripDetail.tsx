@@ -107,6 +107,22 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
+  // Check if current user is a group organizer
+  const { data: isGroupOrganizer } = useQuery({
+    queryKey: ["trip-organizer", id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("group_organizers")
+        .select("id")
+        .eq("trip_id", id!)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && !!user,
+  });
+
   // Check if current user is a collaborator (accepted)
   const { data: isCollaborator } = useQuery({
     queryKey: ["trip-collaborator", id, user?.id],
