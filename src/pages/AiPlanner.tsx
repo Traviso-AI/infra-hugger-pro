@@ -465,7 +465,7 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1.5 sm:gap-2 items-end">
             <ChatHistoryDrawer
               conversations={conversations}
               activeId={conversationId}
