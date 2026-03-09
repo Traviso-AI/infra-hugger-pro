@@ -178,14 +178,13 @@ export default function Collections() {
               })}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground mb-4">No trips in this collection yet. Browse and add trips from the Explore page!</p>
-                <Button asChild variant="outline">
-                  <Link to="/explore">Explore Trips</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={MapPin}
+              title="Collection is empty"
+              description="Add trips from the Explore page to start building this collection."
+              actionLabel="Explore Trips"
+              actionHref="/explore"
+            />
           )}
         </div>
       ) : (
