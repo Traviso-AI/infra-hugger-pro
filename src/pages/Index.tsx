@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, TrendingUp, Users, ArrowRight, MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
