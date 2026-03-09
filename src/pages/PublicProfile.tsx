@@ -386,7 +386,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null })
+        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null, instagram: instagram || null, twitter: twitter || null })
         .eq("user_id", profile.user_id);
       if (error) throw error;
       await onSaved();
