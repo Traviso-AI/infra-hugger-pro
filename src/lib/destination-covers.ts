@@ -134,7 +134,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1518638150340-f706e86654de",
   ],
   mexico: [
-    "photo-1518105779142-d975f22f1b0a",
+    "photo-1682687220742-aba13b6e50ba",
     "photo-1547995886-6dc09384c6e6",
   ],
   cabo: [
