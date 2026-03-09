@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, FolderOpen, Trash2, MapPin } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";

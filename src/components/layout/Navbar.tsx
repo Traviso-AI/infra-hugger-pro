@@ -54,7 +54,8 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
+          <ThemeToggle />
           {user && <NotificationBell />}
           {user ? (
             <DropdownMenu>
