@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { ExploreFilterBar, ExploreFilters, defaultFilters } from "@/components/trips/ExploreFilterBar";
 import { SearchAutocomplete } from "@/components/explore/SearchAutocomplete";
-import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
+import { ExploreMap } from "@/components/explore/ExploreMap";
+import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus, Map as MapIcon, LayoutGrid } from "lucide-react";
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
@@ -18,6 +19,7 @@ export default function Explore() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<ExploreFilters>(defaultFilters);
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -288,11 +290,29 @@ export default function Explore() {
         </div>
       )}
 
-      <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-        <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl font-bold flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
+        </h2>
+        <div className="flex rounded-lg border overflow-hidden">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors ${viewMode === "grid" ? "bg-accent text-white" : "hover:bg-muted"}`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" /> Grid
+          </button>
+          <button
+            onClick={() => setViewMode("map")}
+            className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors ${viewMode === "map" ? "bg-accent text-white" : "hover:bg-muted"}`}
+          >
+            <MapIcon className="h-3.5 w-3.5" /> Map
+          </button>
+        </div>
+      </div>
 
-      {isLoading ? (
+      {viewMode === "map" ? (
+        <ExploreMap trips={trips} />
+      ) : isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="animate-pulse rounded-xl border bg-muted aspect-[4/5]" />
