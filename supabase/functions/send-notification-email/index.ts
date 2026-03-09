@@ -219,12 +219,13 @@ Deno.serve(async (req) => {
       try {
         const result = await sendLovableEmail(
           {
+            run_id: crypto.randomUUID(),
             to: recipientEmail,
             from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
             sender_domain: SENDER_DOMAIN,
             subject,
             html,
-            text: subject, // Fallback plain text
+            text: subject,
             purpose: "transactional",
           },
           { apiKey }
