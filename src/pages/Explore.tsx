@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { Input } from "@/components/ui/input";
 import { Search, Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
   PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis,
@@ -18,6 +18,16 @@ export default function Explore() {
   const [page, setPage] = useState(1);
 
   const carouselRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  }, []);
+
   const scrollCarousel = (offset: number) => {
     const el = carouselRef.current;
     if (!el) return;
@@ -107,6 +117,19 @@ export default function Explore() {
     );
   }, [allFollowingTrips, search]);
 
+  // Track carousel scroll position for smart fades
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    // Small delay to let DOM update after filtered trips change
+    const timer = setTimeout(updateScrollState, 100);
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", updateScrollState);
+    };
+  }, [updateScrollState, filteredFollowingTrips]);
+
   const trips = data?.trips || [];
   const totalPages = Math.ceil((data?.total || 0) / PAGE_SIZE);
 
@@ -185,20 +208,24 @@ export default function Explore() {
                   </div>
                 ))}
               </div>
-              {/* Fade hints on both edges */}
-              <div className="absolute left-0 top-0 bottom-4 w-10 bg-gradient-to-r from-background to-transparent pointer-events-none z-[1]" />
-              <div className="absolute right-0 top-0 bottom-4 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none z-[1]" />
-              {/* Arrow buttons */}
+              {/* Fade hints — only when scrollable in that direction */}
+              {canScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-4 w-10 bg-gradient-to-r from-background to-transparent pointer-events-none z-[1]" />
+              )}
+              {canScrollRight && (
+                <div className="absolute right-0 top-0 bottom-4 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none z-[1]" />
+              )}
+              {/* Arrow buttons — always visible on mobile, hover on desktop */}
               <button
                 onClick={() => scrollCarousel(-300)}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors md:opacity-0 md:group-hover:opacity-100"
                 aria-label="Scroll left"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => scrollCarousel(300)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors md:opacity-0 md:group-hover:opacity-100"
                 aria-label="Scroll right"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -207,6 +234,8 @@ export default function Explore() {
           )}
         </div>
       )}
+
+      {user && <div className="border-t my-2" />}
 
       <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
         <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
