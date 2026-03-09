@@ -34,7 +34,7 @@ export default function Explore() {
     updateScrollState();
     el.addEventListener("scroll", updateScrollState, { passive: true });
     return () => el.removeEventListener("scroll", updateScrollState);
-  }, [updateScrollState, filteredFollowingTrips]);
+  }, [updateScrollState, allFollowingTrips, search]);
 
   const scrollCarousel = (offset: number) => {
     const el = carouselRef.current;
