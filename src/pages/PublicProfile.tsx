@@ -208,6 +208,11 @@ export default function PublicProfile() {
             <p className="font-display text-2xl font-bold">{tripsTakenCount}</p>
             <p className="text-xs text-muted-foreground">Trips Taken</p>
           </div>
+          <div className="h-8 w-px bg-border" />
+          <div className="text-center">
+            <p className="font-display text-2xl font-bold">{followerCount}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </div>
           {rank && (
             <>
               <div className="h-8 w-px bg-border" />
@@ -221,7 +226,22 @@ export default function PublicProfile() {
           )}
         </div>
 
-        {isOwnProfile && <EditProfileDialog profile={profile} onSaved={refreshProfile} />}
+        <div className="mt-4 flex items-center gap-2">
+          {isOwnProfile ? (
+            <EditProfileDialog profile={profile} onSaved={refreshProfile} />
+          ) : user && user.id !== profile.user_id ? (
+            <Button
+              variant={isFollowing ? "outline" : "default"}
+              size="sm"
+              className={isFollowing ? "gap-2" : "gap-2 bg-accent text-accent-foreground hover:bg-accent/90"}
+              onClick={handleFollow}
+              disabled={followLoading}
+            >
+              {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+              {isFollowing ? "Unfollow" : "Follow"}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {/* Tabs */}
