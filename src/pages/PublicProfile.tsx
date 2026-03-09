@@ -416,50 +416,55 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
         <DialogHeader>
           <DialogTitle className="font-display">Edit Profile</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 pt-2">
-          <div className="flex flex-col items-center gap-3">
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col items-center gap-2">
             <div className="relative group">
-              <Avatar className="h-20 w-20">
+              <Avatar className="h-16 w-16">
                 <AvatarImage src={avatarUrl || ""} />
-                <AvatarFallback className="bg-accent text-accent-foreground text-2xl">
+                <AvatarFallback className="bg-accent text-accent-foreground text-xl">
                   {displayName?.[0]?.toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
               <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                 {uploadingAvatar ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
-                  <Camera className="h-5 w-5 text-white" />
+                  <Camera className="h-4 w-4 text-white" />
                 )}
                 <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
               </label>
             </div>
-            <p className="text-xs text-muted-foreground">Click photo to change</p>
+            <p className="text-[11px] text-muted-foreground">Click to change</p>
           </div>
-          <div className="space-y-2">
-            <Label>Display Name</Label>
-            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Bio</Label>
-            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Social & Links</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle" className="text-sm" />
-              <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="X / Twitter @handle" className="text-sm" />
-              <Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok @handle" className="text-sm" />
-              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp number" className="text-sm" />
+
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            <div className="col-span-2 space-y-1">
+              <Label className="text-xs">Display Name</Label>
+              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="h-9 text-sm" />
             </div>
-            <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website https://..." className="text-sm" />
+            <div className="col-span-2 space-y-1">
+              <Label className="text-xs">Bio</Label>
+              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={2} className="text-sm resize-none" />
+            </div>
           </div>
-          <div className="flex items-center justify-between rounded-lg border p-3">
+
+          <div className="space-y-2">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Social & Links</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle" className="h-9 text-sm" />
+              <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="X @handle" className="h-9 text-sm" />
+              <Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok @handle" className="h-9 text-sm" />
+              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp wa.me link" className="h-9 text-sm" />
+              <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website URL" className="h-9 text-sm col-span-2" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-2.5">
             <div>
               <p className="font-medium text-sm flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-accent" /> Creator Mode
               </p>
-              <p className="text-xs text-muted-foreground">Publish trips and earn commission from bookings</p>
+              <p className="text-xs text-muted-foreground">Publish trips & earn commission</p>
             </div>
             <Switch checked={isCreator} onCheckedChange={setIsCreator} />
           </div>

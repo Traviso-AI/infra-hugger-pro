@@ -16,7 +16,11 @@ export function SocialFeedEmbed({ instagram, twitter, tiktok, whatsapp }: Social
   const igHandle = instagram?.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/.*$/, "");
   const twitterHandle = twitter?.replace(/^@/, "").replace(/^https?:\/\/(www\.)?(twitter|x)\.com\//, "").replace(/\/.*$/, "");
   const tiktokHandle = tiktok?.replace(/^@/, "").replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, "").replace(/\/.*$/, "");
-  const waNumber = whatsapp?.replace(/\D/g, "");
+  // WhatsApp: accept wa.me links, full URLs, or just the slug
+  const waLink = whatsapp?.replace(/^https?:\/\//, "").replace(/^wa\.me\//, "").replace(/^chat\.whatsapp\.com\//, "").replace(/\/.*$/, "").trim();
+  const waUrl = whatsapp?.includes("chat.whatsapp.com") 
+    ? `https://chat.whatsapp.com/${waLink}` 
+    : `https://wa.me/${waLink}`;
 
   return (
     <div className="space-y-4">
@@ -107,9 +111,9 @@ export function SocialFeedEmbed({ instagram, twitter, tiktok, whatsapp }: Social
         )}
 
         {/* WhatsApp */}
-        {waNumber && (
+        {waLink && (
           <a
-            href={`https://wa.me/${waNumber}`}
+            href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 rounded-xl border px-4 py-3 hover:bg-muted/50 transition-colors group"
