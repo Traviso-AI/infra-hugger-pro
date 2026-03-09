@@ -138,7 +138,7 @@ export default function Index() {
       </section>
 
       {/* Featured Trips */}
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <div className="container">
           <div className="flex items-end justify-between mb-8">
             <div>
