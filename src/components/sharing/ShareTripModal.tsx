@@ -26,8 +26,8 @@ export function ShareTripModal({ trip, creator }: ShareTripModalProps) {
   const isMobile = useIsMobile();
   const isCreator = user && trip.creator_id === user.id;
 
-  const tripLink = `${BASE_URL}/trips/${trip.id}`;
-  const refLink = `${BASE_URL}/trips/${trip.id}?ref=${creator?.username || ""}`;
+  const tripLink = `${BASE_URL}/trip/${trip.id}`;
+  const refLink = `${BASE_URL}/trip/${trip.id}?ref=${creator?.username || ""}`;
   const tags = trip.tags || [];
   const tagStr = tags.slice(0, 2).join(" & ");
   const dest = trip.destination;
