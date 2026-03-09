@@ -12,9 +12,6 @@ const TRENDING_DESTINATIONS = [
   "Tokyo, Japan",
   "Paris, France",
   "Dubai, UAE",
-  "Barcelona, Spain",
-  "Miami, USA",
-  "Seoul, South Korea",
 ];
 
 interface Place {
