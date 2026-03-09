@@ -235,7 +235,13 @@ export default function Explore() {
         </div>
       )}
 
-      {user && <div className="my-6" />}
+      {user && (
+        <div className="my-8 flex items-center gap-4">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+          <div className="h-1.5 w-1.5 rounded-full bg-accent/40" />
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+        </div>
+      )}
 
       <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
         <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
