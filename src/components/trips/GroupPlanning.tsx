@@ -47,23 +47,26 @@ export function GroupPlanningPanel({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("members");
   const [isInGroup, setIsInGroup] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
   const [groupSize, setGroupSize] = useState(0);
 
-  // Check if user is the trip creator or already in the group
+  // Check if user is an organizer, or already a collaborator
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: trip } = await supabase
-        .from("trips")
-        .select("creator_id")
-        .eq("id", tripId)
-        .single();
-      if (trip?.creator_id === user.id) {
-        setIsOwner(true);
+      // Check if user is a group organizer for this trip
+      const { data: orgRow } = await supabase
+        .from("group_organizers")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (orgRow) {
+        setIsOrganizer(true);
         setIsInGroup(true);
       }
 
+      // Check if user is an accepted collaborator
       const { data: collab } = await supabase
         .from("trip_collaborators")
         .select("id")
@@ -73,19 +76,35 @@ export function GroupPlanningPanel({
         .maybeSingle();
       if (collab) setIsInGroup(true);
 
-      const { count } = await supabase
+      // Check if any organizer exists (for group size display)
+      const { count: orgCount } = await supabase
+        .from("group_organizers")
+        .select("id", { count: "exact", head: true })
+        .eq("trip_id", tripId);
+
+      const { count: collabCount } = await supabase
         .from("trip_collaborators")
         .select("id", { count: "exact", head: true })
         .eq("trip_id", tripId)
         .not("accepted_at", "is", null);
-      setGroupSize(count || 0);
+      setGroupSize((orgCount || 0) + (collabCount || 0));
     })();
   }, [tripId, user]);
 
   if (!user) return null;
 
   const handleStartGroup = async () => {
-    // Trip creator doesn't need a collaborator row — they're automatically the organizer
+    // Record this user as the group organizer
+    const { error } = await supabase
+      .from("group_organizers")
+      .insert({ trip_id: tripId, user_id: user.id });
+    if (error && error.code === "23505") {
+      // Already organizer — just open
+    } else if (error) {
+      toast.error("Failed to start group");
+      return;
+    }
+    setIsOrganizer(true);
     setIsInGroup(true);
     setIsExpanded(true);
     toast.success("Group created! Invite friends to plan together.");
@@ -115,7 +134,7 @@ export function GroupPlanningPanel({
             onClick={handleStartGroup}
           >
             <Users className="mr-1.5 h-3.5 w-3.5" />
-            {isOwner ? "Start a Group" : "Join Group Planning"}
+            Start a Group
           </Button>
         </div>
       </Card>
@@ -168,11 +187,11 @@ export function GroupPlanningPanel({
                 </TabsList>
 
                 <TabsContent value="members" className="mt-0">
-                  <MembersTab tripId={tripId} isOwner={isOwner} />
+                  <MembersTab tripId={tripId} isOwner={isOrganizer} />
                 </TabsContent>
 
                 <TabsContent value="costs" className="mt-0">
-                  <CostsTab tripId={tripId} isOwner={isOwner} bookedPrice={bookedPrice} />
+                  <CostsTab tripId={tripId} isOwner={isOrganizer} bookedPrice={bookedPrice} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -189,7 +208,8 @@ export function GroupPlanningPanel({
 function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const [creatorName, setCreatorName] = useState<string | null>(null);
+  const [organizerName, setOrganizerName] = useState<string | null>(null);
+  const [organizerIsMe, setOrganizerIsMe] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -205,20 +225,30 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     setCollaborators((data as Collaborator[]) || []);
   };
 
-  // Fetch trip creator name
+  // Fetch the group organizer's name
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("trips")
-        .select("creator_id, profiles!trips_creator_id_profiles_fkey(display_name)")
-        .eq("id", tripId)
-        .single();
-      if (data) {
-        const profile = data.profiles as any;
-        setCreatorName(profile?.display_name || "Trip creator");
+      const { data: org } = await supabase
+        .from("group_organizers")
+        .select("user_id")
+        .eq("trip_id", tripId)
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      if (!org) return;
+      if (org.user_id === user?.id) {
+        setOrganizerIsMe(true);
+        setOrganizerName("You");
+      } else {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", org.user_id)
+          .maybeSingle();
+        setOrganizerName(profile?.display_name || "Organizer");
       }
     })();
-  }, [tripId]);
+  }, [tripId, user]);
 
   useEffect(() => {
     fetchCollaborators();
@@ -369,7 +399,7 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
               👑
             </div>
             <span className="truncate text-xs font-medium">
-              {isOwner ? "You" : creatorName || "Trip creator"}
+              {organizerName || "Organizer"}
             </span>
           </div>
           <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Organizer</Badge>
