@@ -165,9 +165,9 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1503614472-8c93d56e92ce",
   ],
   toronto: [
-    "photo-1517090504332-eac35b2cc8c6",
-    "photo-1507992781348-310259076fe0",
-    "photo-1544723795-3fb6469f5b39", // CN Tower
+    "photo-1517935706615-2717063c2225", // Toronto skyline waterfront
+    "photo-1559041881-74dd9fd9b600", // CN Tower cityscape
+    "photo-1614630982169-e89202c5e045", // Toronto downtown aerial
   ],
   canada: [
     "photo-1503614472-8c93d56e92ce",
