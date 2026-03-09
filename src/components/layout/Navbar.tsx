@@ -56,6 +56,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-1 md:flex">
+          <LanguageSwitcher />
           <ThemeToggle />
           {user && <NotificationBell />}
           {user ? (
