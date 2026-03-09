@@ -477,7 +477,7 @@ export default function AiPlanner() {
               onOpenChange={setDrawerOpen}
             />
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,text/plain" className="hidden" onChange={handleFileSelect} />
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 min-w-[40px]" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
               {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
             </Button>
             <Textarea
