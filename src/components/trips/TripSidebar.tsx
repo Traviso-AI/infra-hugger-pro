@@ -16,7 +16,7 @@ interface TripSidebarProps {
 
 export function TripSidebar({ trip, creator, onBook, searchParams, user }: TripSidebarProps) {
   return (
-    <div className="lg:sticky lg:top-24 space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardContent className="p-6">
           {trip.price_estimate && (
