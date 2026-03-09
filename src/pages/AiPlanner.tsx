@@ -168,8 +168,12 @@ export default function AiPlanner() {
       );
       if (!resp.ok) return null;
       const data = await resp.json();
-      if (data.success && data.content) {
+      if (data.success && data.content && data.content.trim().length > 0) {
         return `📎 [Scraped content from ${url}]:\nTitle: ${data.title || "N/A"}\nDescription: ${data.description || "N/A"}\n\nContent:\n${data.content.slice(0, 8000)}`;
+      }
+      // Success but no content — return description as minimal context
+      if (data.success && data.description) {
+        return `📎 [Link detected: ${url}]\nDescription: ${data.description}`;
       }
       return null;
     } catch {
