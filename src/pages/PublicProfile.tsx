@@ -329,6 +329,7 @@ export default function PublicProfile() {
           )}
         </TabsContent>
       </Tabs>
+      <ViralSignupBanner />
     </div>
   );
 }
