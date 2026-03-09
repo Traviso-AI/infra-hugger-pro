@@ -5,8 +5,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Users } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
 import { toast } from "sonner";
 
@@ -53,28 +52,8 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Following feed: trips from creators user follows
-  const { data: followingTrips } = useQuery({
-    queryKey: ["following-trips", user?.id],
-    queryFn: async () => {
-      // Get who the user follows
-      const { data: follows } = await supabase
-        .from("follows")
-        .select("following_id")
-        .eq("follower_id", user!.id);
-      if (!follows || follows.length === 0) return [];
-      const creatorIds = follows.map((f) => f.following_id);
-      const { data } = await supabase
-        .from("trips")
-        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
-        .eq("is_published", true)
-        .in("creator_id", creatorIds)
-        .order("created_at", { ascending: false })
-        .limit(12);
-      return data || [];
-    },
-    enabled: !!user,
-  });
+
+
 
   const publishedCount = myTrips?.filter((t) => t.is_published).length || 0;
   const totalBookings = myTrips?.reduce((sum, t) => sum + (t.total_bookings || 0), 0) || 0;
@@ -209,23 +188,19 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Following Feed + Saved Trips */}
-      <Tabs defaultValue="following" className="mb-8">
-        <TabsList>
-          <TabsTrigger value="following" className="gap-2">
-            <Users className="h-4 w-4" /> Following
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="gap-2">
-            <Heart className="h-4 w-4" /> Saved
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="following" className="mt-4">
-          {followingTrips && followingTrips.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {followingTrips.map((trip: any) => (
+      {/* Saved Trips */}
+      <div className="mb-8">
+        <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+          <Heart className="h-5 w-5 text-red-500" /> Saved Trips
+        </h2>
+        {myFavorites && myFavorites.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {myFavorites.map((fav: any) => {
+              const trip = fav.trips;
+              if (!trip) return null;
+              return (
                 <TripCard
-                  key={trip.id}
+                  key={fav.id}
                   id={trip.id}
                   title={trip.title}
                   destination={trip.destination}
@@ -236,61 +211,22 @@ export default function Dashboard() {
                   totalBookings={trip.total_bookings}
                   creatorName={trip.profiles?.display_name}
                   creatorAvatar={trip.profiles?.avatar_url}
-                  creatorUsername={trip.profiles?.username}
-                  creatorId={trip.creator_id}
                   tags={trip.tags}
                 />
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-                <p className="text-muted-foreground mb-4">Follow creators to see their latest trips here</p>
-                <Button asChild variant="outline">
-                  <Link to="/explore">Discover Creators</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="saved" className="mt-4">
-          {myFavorites && myFavorites.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {myFavorites.map((fav: any) => {
-                const trip = fav.trips;
-                if (!trip) return null;
-                return (
-                  <TripCard
-                    key={fav.id}
-                    id={trip.id}
-                    title={trip.title}
-                    destination={trip.destination}
-                    coverImage={trip.cover_image_url}
-                    durationDays={trip.duration_days}
-                    priceEstimate={trip.price_estimate}
-                    avgRating={trip.avg_rating}
-                    totalBookings={trip.total_bookings}
-                    creatorName={trip.profiles?.display_name}
-                    creatorAvatar={trip.profiles?.avatar_url}
-                    tags={trip.tags}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
-                <Button asChild variant="outline">
-                  <Link to="/explore">Explore Trips</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+              );
+            })}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
+              <Button asChild variant="outline">
+                <Link to="/explore">Explore Trips</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
