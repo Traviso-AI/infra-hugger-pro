@@ -121,3 +121,55 @@
     display: none;
   }
 }
+
+/* Nala chat bubble prose overrides for better scanability */
+.nala-prose h2 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.nala-prose h2:first-child {
+  margin-top: 0;
+}
+
+.nala-prose h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--accent));
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.nala-prose hr {
+  border-color: hsl(var(--border));
+  margin: 0.75rem 0;
+}
+
+.nala-prose ul {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding-left: 1rem;
+}
+
+.nala-prose li {
+  margin-top: 0.15rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.825rem;
+  line-height: 1.45;
+}
+
+.nala-prose p {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
