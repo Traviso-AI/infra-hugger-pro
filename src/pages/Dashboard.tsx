@@ -5,9 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil, FolderOpen } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { CreatorAnalytics } from "@/components/dashboard/CreatorAnalytics";
 import { toast } from "sonner";
 
 export default function Dashboard() {
