@@ -1,27 +1,22 @@
-import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music, ArrowLeft } from "lucide-react";
-import { GroupPlanningPanel, ActivityVoteButtons } from "@/components/trips/GroupPlanning";
-import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
-import { toast } from "sonner";
-import { ShareTripModal } from "@/components/sharing/ShareTripModal";
-import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
-import { ReviewForm } from "@/components/trips/ReviewForm";
+import { Button } from "@/components/ui/button";
+import { MapPin, Clock, Star, Users, ArrowLeft } from "lucide-react";
+import { TripSidebar } from "@/components/trips/TripSidebar";
+import { TripItinerary } from "@/components/trips/TripItinerary";
+import { TripReviews } from "@/components/trips/TripReviews";
+import { GroupPlanningPanel } from "@/components/trips/GroupPlanning";
 import { TripPhotoGallery } from "@/components/trips/TripPhotoGallery";
 import { ActivityMap } from "@/components/trips/ActivityMap";
-import { usePageSEO } from "@/hooks/usePageSEO";
-import { useEffect, useMemo } from "react";
+import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { TripDetailSkeleton } from "@/components/skeletons/TripDetailSkeleton";
-
-const typeIcons: Record<string, any> = {
-  flight: Plane, hotel: Hotel, restaurant: Utensils,
-  activity: Activity, event: Music, transport: Bus,
-};
+import { isGenericPlaceholder } from "@/lib/destination-covers";
+import { usePageSEO } from "@/hooks/usePageSEO";
+import { toast } from "sonner";
+import { useEffect, useMemo } from "react";
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -35,12 +30,11 @@ export default function TripDetail() {
     if (ref) sessionStorage.setItem("traviso_referral", ref);
   }, [searchParams]);
 
-  // Accept invite if token present — token now lives on group_organizers
+  // Accept invite
   useEffect(() => {
     const inviteToken = searchParams.get("invite");
     if (!inviteToken || !user || !id) return;
     (async () => {
-      // Verify the token belongs to this trip's group
       const { data: org } = await supabase
         .from("group_organizers")
         .select("id, trip_id")
@@ -49,7 +43,6 @@ export default function TripDetail() {
         .maybeSingle();
       if (!org) return;
 
-      // Check if already a collaborator
       const { data: existing } = await supabase
         .from("trip_collaborators")
         .select("id")
@@ -57,7 +50,6 @@ export default function TripDetail() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (existing) {
-        // Already joined — update accepted_at if not set
         await supabase
           .from("trip_collaborators")
           .update({ accepted_at: new Date().toISOString() })
@@ -67,23 +59,20 @@ export default function TripDetail() {
         return;
       }
 
-      // Create a collaborator entry for this user
       const { error } = await supabase
         .from("trip_collaborators")
         .insert({
           trip_id: id,
           user_id: user.id,
-          invited_by: org.id, // reference the organizer
+          invited_by: org.id,
           role: "editor",
           accepted_at: new Date().toISOString(),
         });
-      if (!error) {
-        toast.success("You've joined this trip group! You can now vote, chat, and plan together.");
-      }
+      if (!error) toast.success("You've joined this trip group!");
     })();
   }, [searchParams, user, id]);
 
-  // Track view
+  // Track view (dedup handled by DB trigger)
   useEffect(() => {
     if (!id) return;
     const ref = searchParams.get("ref");
@@ -107,7 +96,6 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
-  // Check if current user is a group organizer
   const { data: isGroupOrganizer } = useQuery({
     queryKey: ["trip-organizer", id, user?.id],
     queryFn: async () => {
@@ -123,7 +111,6 @@ export default function TripDetail() {
     enabled: !!id && !!user,
   });
 
-  // Check if current user is a collaborator (accepted)
   const { data: isCollaborator } = useQuery({
     queryKey: ["trip-collaborator", id, user?.id],
     queryFn: async () => {
@@ -169,28 +156,22 @@ export default function TripDetail() {
   const activityImages = useMemo(() => {
     if (!days) return [];
     return days.flatMap((day: any) =>
-      (day.trip_activities || [])
-        .filter((a: any) => a.image_url)
-        .map((a: any) => a.image_url as string)
+      (day.trip_activities || []).filter((a: any) => a.image_url).map((a: any) => a.image_url as string)
     );
   }, [days]);
 
   const allActivities = useMemo(() => {
     if (!days) return [];
     return days.flatMap((day: any) =>
-      (day.trip_activities || []).map((a: any) => ({
-        ...a,
-        day_number: day.day_number,
-      }))
+      (day.trip_activities || []).map((a: any) => ({ ...a, day_number: day.day_number }))
     );
   }, [days]);
 
-  const isOwner = !!(user && trip && trip.creator_id === user.id);
   const canVote = !!isGroupOrganizer || !!isCollaborator;
 
   usePageSEO({
     title: trip ? `${trip.title} — ${trip.destination}` : "Loading trip...",
-    description: trip?.description || (trip ? `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.` : undefined),
+    description: trip?.description || (trip ? `${trip.duration_days}-day trip to ${trip.destination}. Book on Traviso AI.` : undefined),
     image: trip?.cover_image_url || undefined,
     url: trip ? `${window.location.origin}/trip/${trip.id}` : undefined,
   });
@@ -204,11 +185,7 @@ export default function TripDetail() {
   );
 
   const handleBook = () => {
-    if (!user) {
-      toast.error("Please sign in to book this trip");
-      navigate("/login");
-      return;
-    }
+    if (!user) { toast.error("Please sign in to book this trip"); navigate("/login"); return; }
     navigate(`/booking/${trip.id}`);
   };
 
@@ -224,77 +201,27 @@ export default function TripDetail() {
       />
 
       <div className="container -mt-16 relative pb-16">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
-          onClick={() => navigate(-1)}
-        >
+        <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Back
         </Button>
+
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Sidebar */}
           <div className="order-first lg:order-last">
-            <div className="lg:sticky lg:top-24 space-y-6">
-              <Card>
-                <CardContent className="p-6">
-                  {trip.price_estimate && (
-                    <div className="mb-4">
-                      <span className="text-3xl font-bold">${trip.price_estimate.toLocaleString()}</span>
-                      <span className="text-muted-foreground"> / person</span>
-                    </div>
-                  )}
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook}>
-                    Check Availability →
-                  </Button>
-                  <div className="mt-2">
-                    <ShareTripModal trip={trip} creator={creator} />
-                  </div>
-
-                  {creator && (
-                    <div className="mt-6 border-t pt-4">
-                      <p className="text-xs text-muted-foreground mb-2">Created by</p>
-                      <Link
-                        to={creator.username ? `/profile/${creator.username}` : "#"}
-                        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                      >
-                        <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center font-medium">
-                          {creator.display_name?.[0] || "C"}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{creator.display_name}</p>
-                          {creator.username && <p className="text-xs text-muted-foreground">@{creator.username}</p>}
-                        </div>
-                      </Link>
-                      {creator.bio && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{creator.bio}</p>}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Group Planning — visible to ALL logged-in users */}
-              {user && (
-                <GroupPlanningPanel tripId={trip.id} autoExpand={searchParams.get("tab") === "group"} />
-              )}
-            </div>
+            <TripSidebar trip={trip} creator={creator} onBook={handleBook} searchParams={searchParams} user={user} />
+            {user && <div className="mt-6"><GroupPlanningPanel tripId={trip.id} autoExpand={searchParams.get("tab") === "group"} /></div>}
           </div>
 
-          {/* Main content */}
           <div className="lg:col-span-2 space-y-8 order-last lg:order-first">
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
-                {trip.tags?.map((tag: string) => (
-                  <Badge key={tag} variant="secondary">{tag}</Badge>
-                ))}
+                {trip.tags?.map((tag: string) => <Badge key={tag} variant="secondary">{tag}</Badge>)}
               </div>
               <h1 className="font-display text-3xl font-bold md:text-4xl">{trip.title}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-accent" /> {trip.destination}</span>
                 <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {trip.duration_days} days</span>
-                {trip.avg_rating && trip.avg_rating > 0 && (
-                  <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-sunset text-sunset" /> {trip.avg_rating}</span>
-                )}
-                {trip.total_bookings != null && trip.total_bookings > 0 ? (
+                {trip.avg_rating > 0 && <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-sunset text-sunset" /> {trip.avg_rating}</span>}
+                {trip.total_bookings > 0 ? (
                   <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {trip.total_bookings} booked</span>
                 ) : (
                   <Badge variant="secondary" className="text-xs">New</Badge>
@@ -303,99 +230,11 @@ export default function TripDetail() {
               {trip.description && <p className="mt-4 text-muted-foreground leading-relaxed">{trip.description}</p>}
             </div>
 
-            {/* Itinerary */}
-            {days && days.length > 0 && (
-              <div>
-                <h2 className="font-display text-2xl font-bold mb-4">Itinerary</h2>
-                <div className="space-y-6">
-                  {days.map((day: any) => (
-                    <Card key={day.id}>
-                      <CardContent className="p-5">
-                        <h3 className="font-display text-lg font-semibold mb-1">
-                          Day {day.day_number}{day.title ? `: ${day.title.replace(/^Day\s*\d+\s*:\s*/i, "")}` : ""}
-                        </h3>
-                        {day.description && <p className="text-sm text-muted-foreground mb-3">{day.description}</p>}
-                        {day.trip_activities && day.trip_activities.length > 0 ? (
-                          <div className="space-y-3">
-                            {[...day.trip_activities]
-                              .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
-                              .map((act: any) => {
-                                const Icon = typeIcons[act.type] || Activity;
-                                return (
-                                  <div key={act.id} className="flex gap-3 rounded-lg border p-3">
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                                      <Icon className="h-4 w-4 text-accent" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-medium text-sm">{act.title}</span>
-                                        <Badge variant="outline" className="text-xs">{act.type}</Badge>
-                                        {canVote && (
-                                          <div className="ml-auto shrink-0">
-                                            <ActivityVoteButtons activityId={act.id} />
-                                          </div>
-                                        )}
-                                      </div>
-                                      {act.description && <p className="text-xs text-muted-foreground mt-0.5">{act.description}</p>}
-                                      <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                                        {act.location && <span>{act.location}</span>}
-                                        {act.start_time && <span>{act.start_time}</span>}
-                                        {act.price_estimate && <span className="font-medium text-foreground">${act.price_estimate}</span>}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">No activities planned yet</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
+            <TripItinerary days={days || []} canVote={canVote} />
 
-            {allActivities.length > 0 && (
-              <ActivityMap activities={allActivities} destination={trip.destination} />
-            )}
+            {allActivities.length > 0 && <ActivityMap activities={allActivities} destination={trip.destination} />}
 
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
-              {user && trip.creator_id !== user.id && (
-                <div className="mb-4">
-                  <ReviewForm
-                    tripId={trip.id}
-                    existingReview={reviews?.find((r: any) => r.user_id === user.id) || null}
-                  />
-                </div>
-              )}
-              {reviews && reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {reviews.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
-                    <Card key={review.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium">
-                            {review.profiles?.display_name?.[0] || "U"}
-                          </div>
-                          <span className="text-sm font-medium">{review.profiles?.display_name || "User"}</span>
-                          <div className="flex">
-                            {Array.from({ length: review.rating }).map((_, i) => (
-                              <Star key={i} className="h-3.5 w-3.5 fill-sunset text-sunset" />
-                            ))}
-                          </div>
-                        </div>
-                        {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : !user ? (
-                <p className="text-sm text-muted-foreground">No reviews yet. Be the first to book and review!</p>
-              ) : null}
-            </div>
+            <TripReviews tripId={trip.id} creatorId={trip.creator_id} userId={user?.id} reviews={reviews || []} />
           </div>
         </div>
       </div>
