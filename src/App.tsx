@@ -52,12 +52,12 @@ const App = () => (
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/trip/:id" element={<TripDetail />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/my-trips" element={<ProtectedRoute><MyTrips /></ProtectedRoute>} />
               <Route path="/create-trip" element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
               <Route path="/edit-trip/:id" element={<ProtectedRoute><EditTrip /></ProtectedRoute>} />
               <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
               <Route path="/booking/:tripId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
               <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
-              <Route path="/calendar" element={<ProtectedRoute><TravelCalendar /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/install" element={<Install />} />
               <Route path="/profile/:username" element={<PublicProfile />} />
