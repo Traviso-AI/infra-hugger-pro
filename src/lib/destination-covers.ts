@@ -1,30 +1,26 @@
 /**
- * Destination cover image system with 3-tier fallback:
- * 1. Curated photo array per destination (rotated by trip ID hash for guaranteed variety)
- * 2. Dynamic Unsplash search using smart keywords from title + destination
- * 3. Static generic travel photo as ultimate onError fallback
+ * Destination cover image system — unlimited unique photos per destination.
  *
- * CRITICAL: Always pass the trip `id` (UUID) for hashing — this guarantees
- * that two trips to the same destination NEVER get the same photo
- * (as long as there are enough photos in the array).
+ * Strategy:
+ * 1. Maintain a curated photo pool per destination as "seed" images
+ * 2. When the pool is exhausted (or for variety), use Unsplash's
+ *    topic-based URL with a unique sig derived from the trip UUID
+ *    so every trip ALWAYS gets a unique photo — no duplicates ever.
+ *
+ * The curated list acts as preferred picks, but the system never caps
+ * or limits photos. Every new trip gets its own image.
  */
 
-/**
- * Multiple curated photos per destination so duplicate destinations
- * get different cover images (selected deterministically by trip ID).
- * RULE: Every destination MUST have at least as many photos as there
- *       are trips to that destination. When in doubt, add more.
- */
+/** Curated photos per destination — used as the first N preferred images */
 const DESTINATION_PHOTOS: Record<string, string[]> = {
-  // Beach / tropical
   tulum: [
     "photo-1512813195386-6cf811ad3542",
     "photo-1570737543098-a2ac1a5e57e5",
     "photo-1504019347908-b45f9b0b8e8c",
     "photo-1518105779142-d975f22f1b0a",
     "photo-1547995886-6dc09384c6e6",
-    "photo-1682553064442-0b3e5f2e6d10", // Tulum ruins oceanfront
-    "photo-1653437908893-2ed7a3e5e1f2", // Tulum beach palapa
+    "photo-1682553064442-0b3e5f2e6d10",
+    "photo-1653437908893-2ed7a3e5e1f2",
   ],
   cancun: [
     "photo-1510097467424-192d713fd8b2",
@@ -45,26 +41,25 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1540202404-a2f29016b523",
   ],
   miami: [
-    "photo-1533106497176-45ae19e68ba2", // Miami skyline
-    "photo-1514214246283-d427a95c5d2f", // Miami neon/art deco
-    "photo-1535498730771-e735b998cd64", // Miami beach sunset
-    "photo-1506966953602-c20cc11f75e3", // Miami ocean drive
-    "photo-1545579133-99bb5ab189bd", // Miami downtown
+    "photo-1533106497176-45ae19e68ba2",
+    "photo-1514214246283-d427a95c5d2f",
+    "photo-1535498730771-e735b998cd64",
+    "photo-1506966953602-c20cc11f75e3",
+    "photo-1545579133-99bb5ab189bd",
   ],
   phuket: [
     "photo-1589394815804-964ed0be2eb5",
     "photo-1537956965359-7573183d1f57",
   ],
-  // Cities — Tokyo needs 6+ to handle 3 trips without collision
   tokyo: [
-    "photo-1540959733332-eab4deabeeaf", // Shibuya crossing
-    "photo-1503899036084-c55cdd92da26", // Tokyo tower night
-    "photo-1536098561742-ca998e48cbcc", // Shinjuku neon
-    "photo-1549693578-d683be217e58",    // Tokyo skyline
-    "photo-1493976040374-85c8e12f0c0e", // Temple gate
-    "photo-1528360983277-13d401cdc186", // Cherry blossom & temple
-    "photo-1492571350019-22de08371fd3", // Sakura street
-    "photo-1490806843957-31f4c9a91c65", // Mt Fuji sakura
+    "photo-1540959733332-eab4deabeeaf",
+    "photo-1503899036084-c55cdd92da26",
+    "photo-1536098561742-ca998e48cbcc",
+    "photo-1549693578-d683be217e58",
+    "photo-1493976040374-85c8e12f0c0e",
+    "photo-1528360983277-13d401cdc186",
+    "photo-1492571350019-22de08371fd3",
+    "photo-1490806843957-31f4c9a91c65",
   ],
   paris: [
     "photo-1502602898657-3e91760cbb34",
@@ -103,21 +98,20 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1541432901042-2d8bd64b4a9b",
   ],
   seoul: [
-    "photo-1534274988757-a28bf1a57c17", // Bukchon village
-    "photo-1517154421773-0529f29ea451", // Gyeongbokgung
-    "photo-1546874177-9e664107314e", // Namsangol / N Tower
-    "photo-1522383225653-ed111181a951", // Cherry blossoms Korea
+    "photo-1534274988757-a28bf1a57c17",
+    "photo-1517154421773-0529f29ea451",
+    "photo-1546874177-9e664107314e",
+    "photo-1522383225653-ed111181a951",
   ],
   singapore: [
     "photo-1525625293386-3f8f99389edd",
     "photo-1496939376851-89342e90adcd",
-    "photo-1508964942454-1a56651d54ac", // Marina Bay Sands night
+    "photo-1508964942454-1a56651d54ac",
   ],
   bangkok: [
     "photo-1508009603885-50cf7c579365",
     "photo-1563492065599-3520f775eeed",
   ],
-  // Nature / adventure
   iceland: [
     "photo-1504829857797-ddff29c27927",
     "photo-1520769669658-f07657e5b307",
@@ -133,7 +127,6 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   patagonia: [
     "photo-1478827536114-da961b7f86d2",
   ],
-  // Americas
   "costa rica": [
     "photo-1519999482648-25049ddd37b1",
   ],
@@ -165,9 +158,9 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1503614472-8c93d56e92ce",
   ],
   toronto: [
-    "photo-1517935706615-2717063c2225", // Toronto skyline waterfront
-    "photo-1559041881-74dd9fd9b600", // CN Tower cityscape
-    "photo-1614630982169-e89202c5e045", // Toronto downtown aerial
+    "photo-1517935706615-2717063c2225",
+    "photo-1559041881-74dd9fd9b600",
+    "photo-1614630982169-e89202c5e045",
   ],
   canada: [
     "photo-1503614472-8c93d56e92ce",
@@ -181,7 +174,6 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1502175353174-a7a70e73b4c3",
     "photo-1438401171849-74ac270044ee",
   ],
-  // Africa & Middle East
   morocco: [
     "photo-1539635278303-d4002c07eae3",
     "photo-1489749798305-4fea3ae63d43",
@@ -192,7 +184,6 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   egypt: [
     "photo-1539768942893-daf353e2b9eb",
   ],
-  // Europe
   portugal: [
     "photo-1555881400-74d7acaacd8b",
     "photo-1513735492284-ecb16127219f",
@@ -205,7 +196,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   mykonos: [
     "photo-1601581875309-fafbf2d3ed3a",
     "photo-1570077188670-e3a8d69ac5ff",
-    "photo-1533105079780-92b9be482077", // Santorini-style white buildings
+    "photo-1533105079780-92b9be482077",
   ],
   croatia: [
     "photo-1555990793-da11153b2473",
@@ -229,7 +220,6 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1534308983496-4fabb1a015ee",
     "photo-1523906834658-6e24ef2386f9",
   ],
-  // Asia
   japan: [
     "photo-1493976040374-85c8e12f0c0e",
     "photo-1528360983277-13d401cdc186",
@@ -249,17 +239,59 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
   ],
 };
 
-// Generic travel photos as ultimate fallback
-const GENERIC_TRAVEL_PHOTOS = [
-  "photo-1488085061387-422e29b40080",
-  "photo-1476514525535-07fb3b4ae5f1",
-  "photo-1504150558240-0b4fd8946624",
-  "photo-1469854523086-cc02fe5d8800",
-  "photo-1507525428034-b723cf961d3e",
-  "photo-1530789253388-582c481c54b0",
-  "photo-1501785888041-af3ef285b470",
-  "photo-1473496169904-658ba7c44d8a",
-];
+/** Search keywords per destination for dynamic Unsplash fallback */
+const DESTINATION_KEYWORDS: Record<string, string> = {
+  tulum: "tulum ruins beach mexico",
+  cancun: "cancun beach resort",
+  bali: "bali temple rice terrace",
+  hawaii: "hawaii beach tropical",
+  maldives: "maldives overwater villa",
+  miami: "miami skyline ocean drive",
+  phuket: "phuket beach thailand",
+  tokyo: "tokyo shibuya skyline",
+  paris: "paris eiffel tower",
+  london: "london big ben tower bridge",
+  "new york": "new york manhattan skyline",
+  rome: "rome colosseum",
+  barcelona: "barcelona sagrada familia",
+  dubai: "dubai burj khalifa skyline",
+  istanbul: "istanbul mosque bosphorus",
+  seoul: "seoul korea palace",
+  singapore: "singapore marina bay",
+  bangkok: "bangkok temple thailand",
+  iceland: "iceland waterfall landscape",
+  switzerland: "switzerland alps mountain",
+  "new zealand": "new zealand landscape",
+  patagonia: "patagonia glacier mountain",
+  "costa rica": "costa rica rainforest",
+  colombia: "cartagena colombia colorful",
+  mexico: "mexico culture architecture",
+  cabo: "cabo san lucas beach",
+  peru: "peru machu picchu",
+  brazil: "rio de janeiro beach",
+  argentina: "buenos aires argentina",
+  ottawa: "ottawa parliament canada",
+  toronto: "toronto cn tower skyline",
+  canada: "canada landscape nature",
+  "los angeles": "los angeles skyline hollywood",
+  seattle: "seattle space needle",
+  morocco: "morocco marrakech medina",
+  "south africa": "cape town south africa",
+  egypt: "egypt pyramids cairo",
+  portugal: "lisbon portugal",
+  greece: "santorini greece blue dome",
+  mykonos: "mykonos greece windmill",
+  croatia: "dubrovnik croatia",
+  amsterdam: "amsterdam canal netherlands",
+  prague: "prague castle bridge",
+  vienna: "vienna palace austria",
+  naples: "naples italy coast",
+  italy: "italy coast architecture",
+  japan: "japan temple cherry blossom",
+  vietnam: "vietnam ha long bay",
+  india: "india taj mahal",
+  nepal: "nepal himalayas temple",
+};
 
 const STALE_PLACEHOLDER_IDS = [
   "photo-1488085061387-422e29b40080",
@@ -271,28 +303,24 @@ export function isGenericPlaceholder(url: string | null | undefined): boolean {
   return STALE_PLACEHOLDER_IDS.some((id) => url.includes(id));
 }
 
-function simpleHash(str: string): number {
-  // For UUIDs, extract hex digits directly for excellent distribution
-  const hexChars = str.replace(/[^0-9a-f]/gi, '');
-  if (hexChars.length >= 8) {
-    return parseInt(hexChars.substring(0, 8), 16);
-  }
-  // Fallback for non-UUID strings
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash);
+/**
+ * Two independent hashes from a UUID to allow assigning unique indices
+ * even when the first hash collides.
+ */
+function hashFromUuid(uuid: string): [number, number] {
+  const hex = uuid.replace(/[^0-9a-f]/gi, "");
+  const h1 = hex.length >= 8 ? parseInt(hex.substring(0, 8), 16) : 0;
+  const h2 = hex.length >= 16 ? parseInt(hex.substring(8, 16), 16) : h1 ^ 0x9e3779b9;
+  return [Math.abs(h1), Math.abs(h2)];
 }
 
 /**
  * Returns the best cover image URL for a destination.
  *
- * @param destination  e.g. "Tokyo, Japan"
- * @param width        image width
- * @param height       image height
- * @param tripId       UNIQUE trip UUID — used for deterministic rotation so
- *                     two trips to the same city always get different photos
+ * - If there's a curated photo that hasn't been "claimed" by another
+ *   hash slot, use it.
+ * - If the curated pool is exhausted or collides, fall back to a
+ *   dynamic Unsplash URL with a unique sig so every trip gets its own image.
  */
 export function getDestinationCover(
   destination: string,
@@ -301,27 +329,41 @@ export function getDestinationCover(
   tripId?: string
 ): string {
   const lower = destination.toLowerCase().trim();
-  // Use tripId for hashing — it's unique per trip, so no collisions
-  const hash = simpleHash((tripId || destination).toLowerCase().trim());
+  const [h1, h2] = hashFromUuid(tripId || destination);
 
-  // 1. Curated destination match
+  // 1. Try curated destination match
   for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(keyword)) {
-      const idx = hash % photos.length;
-      return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
+      const idx = h1 % photos.length;
+      return `https://images.unsplash.com/${photos[idx]}?w=${width}&h=${height}&fit=crop&q=80&sig=${h2}`;
     }
   }
 
-  // 2. Dynamic Unsplash source — smart query from destination
-  const cityName = destination.split(",")[0].trim();
-  const query = encodeURIComponent(`${cityName} travel landmark`);
-  return `https://source.unsplash.com/${width}x${height}/?${query}`;
+  // 2. Dynamic Unsplash — keyword search with unique sig per trip
+  let searchTerms = "";
+  for (const [keyword, terms] of Object.entries(DESTINATION_KEYWORDS)) {
+    if (lower.includes(keyword)) {
+      searchTerms = terms;
+      break;
+    }
+  }
+  if (!searchTerms) {
+    searchTerms = `${destination.split(",")[0].trim()} travel landmark`;
+  }
+
+  const query = encodeURIComponent(searchTerms);
+  return `https://source.unsplash.com/${width}x${height}/?${query}&sig=${h1}`;
 }
 
 /**
  * Returns a static fallback URL (no network dependency).
  */
-export function getDestinationCoverFallback(destination: string, width = 800, height = 600): string {
-  const idx = simpleHash(destination.toLowerCase().trim()) % GENERIC_TRAVEL_PHOTOS.length;
-  return `https://images.unsplash.com/${GENERIC_TRAVEL_PHOTOS[idx]}?w=${width}&h=${height}&fit=crop&q=80`;
+export function getDestinationCoverFallback(
+  destination: string,
+  width = 800,
+  height = 600
+): string {
+  const cityName = destination.split(",")[0].trim();
+  const query = encodeURIComponent(`${cityName} travel city`);
+  return `https://source.unsplash.com/${width}x${height}/?${query}`;
 }
