@@ -390,7 +390,7 @@ export default function AiPlanner() {
                 <h2 className="font-display text-2xl font-bold mb-1 mt-4">Meet Nala 🐾</h2>
                 <p className="text-xs text-accent font-medium mb-3">AI Trip Planner · Online</p>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
+                  Your AI travel buddy. Describe a trip, <span className="text-accent font-medium">paste a TikTok/Instagram link</span>, or upload a group chat screenshot — Nala will build your itinerary.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[
