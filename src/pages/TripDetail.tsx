@@ -35,6 +35,22 @@ export default function TripDetail() {
     if (ref) sessionStorage.setItem("traviso_referral", ref);
   }, [searchParams]);
 
+  // Accept invite if token present
+  useEffect(() => {
+    const inviteToken = searchParams.get("invite");
+    if (!inviteToken || !user) return;
+    (async () => {
+      const { error } = await supabase
+        .from("trip_collaborators")
+        .update({ user_id: user.id, accepted_at: new Date().toISOString() })
+        .eq("invite_token", inviteToken)
+        .is("accepted_at", null);
+      if (!error) {
+        toast.success("You've joined this trip as a collaborator!");
+      }
+    })();
+  }, [searchParams, user]);
+
   // Track view
   useEffect(() => {
     if (!id) return;
