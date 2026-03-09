@@ -6,7 +6,7 @@ import { NalaAvatar } from "@/components/ai-planner/NalaAvatar";
 import { TypingDots } from "@/components/ai-planner/TypingDots";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -21,6 +21,7 @@ const suggestions = [
 
 export function NalaChatBubble() {
   const { user } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -28,11 +29,18 @@ export function NalaChatBubble() {
   const [userMsgCount, setUserMsgCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Hide on pages with sticky sidebars that conflict with FAB position
+  const hiddenRoutes = ["/ai-planner", "/booking"];
+  const isTripDetail = location.pathname.startsWith("/trip/");
+  const shouldHide = isTripDetail || hiddenRoutes.some(r => location.pathname.startsWith(r));
+
   const gated = !user && userMsgCount >= MAX_FREE_MESSAGES;
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  if (shouldHide && !open) return null;
 
   const sendMessage = async () => {
     if (!input.trim() || loading || gated) return;
