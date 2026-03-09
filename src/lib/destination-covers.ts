@@ -21,8 +21,10 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1512813195386-6cf811ad3542",
     "photo-1570737543098-a2ac1a5e57e5",
     "photo-1504019347908-b45f9b0b8e8c",
-    "photo-1518105779142-d975f22f1b0a", // Mexican coast
-    "photo-1547995886-6dc09384c6e6", // Mexican ruins/beach
+    "photo-1518105779142-d975f22f1b0a",
+    "photo-1547995886-6dc09384c6e6",
+    "photo-1682553064442-0b3e5f2e6d10", // Tulum ruins oceanfront
+    "photo-1653437908893-2ed7a3e5e1f2", // Tulum beach palapa
   ],
   cancun: [
     "photo-1510097467424-192d713fd8b2",
@@ -163,9 +165,9 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1503614472-8c93d56e92ce",
   ],
   toronto: [
-    "photo-1517090504332-eac35b2cc8c6",
-    "photo-1507992781348-310259076fe0",
-    "photo-1544723795-3fb6469f5b39", // CN Tower
+    "photo-1517935706615-2717063c2225", // Toronto skyline waterfront
+    "photo-1559041881-74dd9fd9b600", // CN Tower cityscape
+    "photo-1614630982169-e89202c5e045", // Toronto downtown aerial
   ],
   canada: [
     "photo-1503614472-8c93d56e92ce",
