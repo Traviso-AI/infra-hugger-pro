@@ -15,6 +15,7 @@ import { TripPhotoGallery } from "@/components/trips/TripPhotoGallery";
 import { ActivityMap } from "@/components/trips/ActivityMap";
 import { usePageSEO } from "@/hooks/usePageSEO";
 import { useEffect, useMemo } from "react";
+import { TripDetailSkeleton } from "@/components/skeletons/TripDetailSkeleton";
 
 const typeIcons: Record<string, any> = {
   flight: Plane, hotel: Hotel, restaurant: Utensils,
