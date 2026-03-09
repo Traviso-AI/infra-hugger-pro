@@ -5,9 +5,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil, FolderOpen } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { CreatorAnalytics } from "@/components/dashboard/CreatorAnalytics";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -88,6 +89,11 @@ export default function Dashboard() {
       </div>
 
       <OnboardingChecklist />
+
+      {/* Creator Analytics */}
+      <div className="mb-6 md:mb-8">
+        <CreatorAnalytics />
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
@@ -233,6 +239,24 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+      </div>
+
+      {/* Collections CTA */}
+      <div className="mb-8">
+        <Card className="bg-accent/5 border-accent/20">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5">
+            <div className="flex items-center gap-3">
+              <FolderOpen className="h-8 w-8 text-accent" />
+              <div>
+                <h3 className="font-medium">Organize your saved trips</h3>
+                <p className="text-sm text-muted-foreground">Create collections like "Summer 2026" or "Honeymoon Ideas"</p>
+              </div>
+            </div>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link to="/collections">View Collections</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

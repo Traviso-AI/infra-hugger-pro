@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, Star, Users, Clock, Heart } from "lucide-react";
+import { MapPin, Star, Users, Clock, Heart, FolderPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useState } from "react";
+import { AddToCollectionModal } from "@/components/collections/AddToCollectionModal";
 
 interface TripCardProps {
   id: string;
@@ -33,6 +35,7 @@ export function TripCard({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [collectionModalOpen, setCollectionModalOpen] = useState(false);
 
   const { data: isFavorited } = useQuery({
     queryKey: ["favorite", id, user?.id],
@@ -79,14 +82,26 @@ export function TripCard({
             loading="lazy"
             onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(destination); }}
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={toggleFavorite}
-          >
-            <Heart className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
-          </Button>
+          <div className="absolute top-2 right-2 flex gap-1">
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCollectionModalOpen(true); }}
+              >
+                <FolderPlus className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={toggleFavorite}
+            >
+              <Heart className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+            </Button>
+          </div>
         </div>
         <div className="p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
@@ -129,6 +144,7 @@ export function TripCard({
           </div>
         </div>
       </div>
+      {user && <AddToCollectionModal tripId={id} open={collectionModalOpen} onOpenChange={setCollectionModalOpen} />}
     </div>
   );
 }
