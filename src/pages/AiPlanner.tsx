@@ -168,8 +168,12 @@ export default function AiPlanner() {
       );
       if (!resp.ok) return null;
       const data = await resp.json();
-      if (data.success && data.content) {
+      if (data.success && data.content && data.content.trim().length > 0) {
         return `📎 [Scraped content from ${url}]:\nTitle: ${data.title || "N/A"}\nDescription: ${data.description || "N/A"}\n\nContent:\n${data.content.slice(0, 8000)}`;
+      }
+      // Success but no content — return description as minimal context
+      if (data.success && data.description) {
+        return `📎 [Link detected: ${url}]\nDescription: ${data.description}`;
       }
       return null;
     } catch {
@@ -196,7 +200,8 @@ export default function AiPlanner() {
       if (scraped) {
         userText = userText + "\n\n" + scraped + "\n\nPlease extract a trip itinerary from this social media post. Create a detailed day-by-day plan based on the destinations, activities, and recommendations mentioned.";
       } else {
-        toast.warning("Couldn't scrape that link — Nala will try her best with just the URL.");
+        toast.warning("Couldn't extract content — Nala will try her best with just the URL.");
+        userText = userText + "\n\nThe user pasted this social media link: " + socialUrl + "\n\nPlease try to create a trip itinerary based on what you know about this destination or content. Ask the user for more details if needed.";
       }
     }
 
