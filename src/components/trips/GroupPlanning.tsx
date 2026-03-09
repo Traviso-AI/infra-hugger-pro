@@ -217,37 +217,56 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const handleInviteByEmail = async () => {
     if (!email.trim() || !user) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("trip_collaborators")
-      .insert({ trip_id: tripId, email: email.trim(), role: "editor", invited_by: user.id })
-      .select()
-      .single();
-    if (error) {
-      toast.error(error.message.includes("duplicate") ? "Already invited" : "Failed to invite");
-    } else {
-      toast.success(`Invited ${email.trim()} — sending email notification`);
-      const token = (data as any)?.invite_token;
+    try {
+      // Check if already invited
+      const { data: existing } = await supabase
+        .from("trip_collaborators")
+        .select("id, invite_token")
+        .eq("trip_id", tripId)
+        .eq("email", email.trim())
+        .maybeSingle();
+
+      if (existing) {
+        const link = `${window.location.origin}/trip/${tripId}?invite=${existing.invite_token}`;
+        setInviteLink(link);
+        toast("Already invited — share the link below", { icon: "📋" });
+        setEmail("");
+        setLoading(false);
+        return;
+      }
+
+      // Insert without .select() to avoid SELECT RLS issues
+      const { error } = await supabase
+        .from("trip_collaborators")
+        .insert({ trip_id: tripId, email: email.trim(), role: "editor", invited_by: user.id });
+
+      if (error) {
+        console.error("Invite insert error:", error);
+        toast.error("Failed to invite — please try generating a shareable link instead");
+        setLoading(false);
+        return;
+      }
+
+      // Fetch the created row separately
+      const { data: created } = await supabase
+        .from("trip_collaborators")
+        .select("invite_token")
+        .eq("trip_id", tripId)
+        .eq("email", email.trim())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const token = created?.invite_token;
       if (token) {
         const link = `${window.location.origin}/trip/${tripId}?invite=${token}`;
         setInviteLink(link);
-
-        // Send invite email via edge function
-        supabase.functions.invoke("send-notification-email", {
-          body: {
-            type: "group_invite",
-            record: {
-              email: email.trim(),
-              trip_id: tripId,
-              invite_token: token,
-              invited_by: user.id,
-            },
-          },
-        }).then(({ error: emailErr }) => {
-          if (emailErr) console.error("Failed to send invite email:", emailErr);
-          else console.log("Invite email sent to", email.trim());
-        });
       }
+      toast.success(`Invited ${email.trim()} — share the link below to let them join`);
       setEmail("");
+    } catch (e) {
+      console.error("Invite error:", e);
+      toast.error("Something went wrong");
     }
     setLoading(false);
   };
