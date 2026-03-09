@@ -117,7 +117,7 @@ function LightboxDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button]:text-white [&>button]:hover:bg-white/20 [&>button]:rounded-full">
+      <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button.absolute]:z-50 [&>button.absolute]:text-white [&>button.absolute]:opacity-100 [&>button.absolute]:h-10 [&>button.absolute]:w-10 [&>button.absolute]:rounded-full [&>button.absolute]:bg-white/20 [&>button.absolute]:hover:bg-white/40 [&>button.absolute]:right-3 [&>button.absolute]:top-3 [&>button.absolute_svg]:h-5 [&>button.absolute_svg]:w-5">
         <div className="relative flex items-center justify-center min-h-[60vh]" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
           {photos.length > 1 && (
             <>
