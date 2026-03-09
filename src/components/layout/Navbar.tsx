@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
 import {
   DropdownMenu,
