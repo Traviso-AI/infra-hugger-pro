@@ -171,7 +171,7 @@ export default function Explore() {
         </div>
       )}
 
-      <h2 className="font-display text-xl font-bold mb-4">All Trips</h2>
+      <h2 className="font-display text-xl font-bold mb-4">🔥 Trending Trips</h2>
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
