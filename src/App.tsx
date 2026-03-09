@@ -29,7 +29,7 @@ import Terms from "./pages/Terms";
 import About from "./pages/About";
 import EditTrip from "./pages/EditTrip";
 import Collections from "./pages/Collections";
-import TravelCalendar from "./pages/TravelCalendar";
+
 import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
