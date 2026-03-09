@@ -225,13 +225,29 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Already invited" : "Failed to invite");
     } else {
-      toast.success(`Invited ${email.trim()}`);
-      setEmail("");
+      toast.success(`Invited ${email.trim()} — sending email notification`);
       const token = (data as any)?.invite_token;
       if (token) {
         const link = `${window.location.origin}/trip/${tripId}?invite=${token}`;
         setInviteLink(link);
+
+        // Send invite email via edge function
+        supabase.functions.invoke("send-notification-email", {
+          body: {
+            type: "group_invite",
+            record: {
+              email: email.trim(),
+              trip_id: tripId,
+              invite_token: token,
+              invited_by: user.id,
+            },
+          },
+        }).then(({ error: emailErr }) => {
+          if (emailErr) console.error("Failed to send invite email:", emailErr);
+          else console.log("Invite email sent to", email.trim());
+        });
       }
+      setEmail("");
     }
     setLoading(false);
   };
