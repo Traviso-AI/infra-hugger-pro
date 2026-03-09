@@ -35,6 +35,7 @@ export function TripCard({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [collectionModalOpen, setCollectionModalOpen] = useState(false);
 
   const { data: isFavorited } = useQuery({
     queryKey: ["favorite", id, user?.id],
