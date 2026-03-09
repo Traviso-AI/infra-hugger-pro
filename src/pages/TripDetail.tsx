@@ -258,6 +258,7 @@ export default function TripDetail() {
           </div>
         </div>
       </div>
+      <ViralSignupBanner />
     </div>
   );
 }
