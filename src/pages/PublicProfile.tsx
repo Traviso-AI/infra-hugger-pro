@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera } from "lucide-react";
+import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera, Instagram, MessageCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ShareProfileModal } from "@/components/sharing/ShareProfileModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { VerifiedBadge } from "@/components/profile/VerifiedBadge";
-import { SocialFeedEmbed } from "@/components/profile/SocialFeedEmbed";
+
 
 export default function PublicProfile() {
   const { username } = useParams();
@@ -208,10 +208,31 @@ export default function PublicProfile() {
         <p className="text-muted-foreground">@{profile.username}</p>
         {profile.bio && <p className="mt-2 max-w-md text-sm text-muted-foreground">{profile.bio}</p>}
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
+        {/* Social icons row */}
+        <div className="mt-3 flex items-center justify-center gap-2">
           {profile.website && (
-            <a href={profile.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent">
-              <Globe className="h-3.5 w-3.5" /> Website
+            <a href={profile.website} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors" title="Website">
+              <Globe className="h-4 w-4" />
+            </a>
+          )}
+          {profile.instagram && (
+            <a href={`https://instagram.com/${profile.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors" title="Instagram">
+              <Instagram className="h-4 w-4" />
+            </a>
+          )}
+          {profile.twitter && (
+            <a href={`https://x.com/${profile.twitter.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors" title="X / Twitter">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+            </a>
+          )}
+          {profile.tiktok && (
+            <a href={`https://tiktok.com/@${profile.tiktok.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors" title="TikTok">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.88-2.88 2.89 2.89 0 0 1 2.88-2.88c.28 0 .56.04.82.12v-3.5a6.37 6.37 0 0 0-.82-.05A6.34 6.34 0 0 0 3.15 15.4 6.34 6.34 0 0 0 9.49 21.7a6.34 6.34 0 0 0 6.34-6.34V8.82a8.22 8.22 0 0 0 4.78 1.52V6.89a4.85 4.85 0 0 1-1.02-.2z" /></svg>
+            </a>
+          )}
+          {profile.whatsapp && (
+            <a href={profile.whatsapp.includes("chat.whatsapp.com") ? `https://${profile.whatsapp.replace(/^https?:\/\//, "")}` : `https://wa.me/${profile.whatsapp.replace(/^https?:\/\//, "").replace(/^wa\.me\//, "")}`} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors" title="WhatsApp">
+              <MessageCircle className="h-4 w-4" />
             </a>
           )}
         </div>
@@ -269,12 +290,6 @@ export default function PublicProfile() {
           )}
         </div>
       </div>
-      {/* Social Feed Links */}
-      {(profile.instagram || profile.twitter || profile.tiktok || profile.whatsapp) && (
-        <div className="mb-8">
-          <SocialFeedEmbed instagram={profile.instagram} twitter={profile.twitter} tiktok={profile.tiktok} whatsapp={profile.whatsapp} />
-        </div>
-      )}
 
       {/* Tabs */}
       <Tabs defaultValue="created" className="w-full">
