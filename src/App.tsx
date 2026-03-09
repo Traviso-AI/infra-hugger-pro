@@ -26,6 +26,7 @@ import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import About from "./pages/About";
+import EditTrip from "./pages/EditTrip";
 
 const queryClient = new QueryClient();
 
