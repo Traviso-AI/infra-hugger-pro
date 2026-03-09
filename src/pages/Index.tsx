@@ -3,14 +3,11 @@ import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles, TrendingUp, Users, ArrowRight, MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
 
 
 export default function Index() {
-  const { user } = useAuth();
-
   const { data: featuredTrips } = useQuery({
     queryKey: ["featured-trips"],
     queryFn: async () => {
@@ -22,28 +19,6 @@ export default function Index() {
         .limit(6);
       return data || [];
     },
-  });
-
-  // Trips from creators the user follows
-  const { data: followingTrips } = useQuery({
-    queryKey: ["homepage-following-trips", user?.id],
-    queryFn: async () => {
-      const { data: follows } = await supabase
-        .from("follows")
-        .select("following_id")
-        .eq("follower_id", user!.id);
-      if (!follows || follows.length === 0) return [];
-      const creatorIds = follows.map((f) => f.following_id);
-      const { data } = await supabase
-        .from("trips")
-        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
-        .eq("is_published", true)
-        .in("creator_id", creatorIds)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      return data || [];
-    },
-    enabled: !!user,
   });
 
   return (
