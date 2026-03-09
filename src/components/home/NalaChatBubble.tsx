@@ -28,14 +28,11 @@ export function NalaChatBubble() {
   const [userMsgCount, setUserMsgCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const gated = userMsgCount >= MAX_FREE_MESSAGES;
+  const gated = !user && userMsgCount >= MAX_FREE_MESSAGES;
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Don't show for logged-in users — they have the full AI Planner
-  if (user) return null;
 
   const sendMessage = async () => {
     if (!input.trim() || loading || gated) return;
