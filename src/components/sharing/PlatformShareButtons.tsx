@@ -18,13 +18,14 @@ interface PlatformShareButtonsProps {
   };
 }
 
-const socialPlatforms: { key: string; label: string; color: string; gradient?: string }[] = [
+const platforms: { key: string; label: string; color: string; gradient?: string }[] = [
   { key: "twitter", label: "X / Twitter", color: "#000000" },
   { key: "facebook", label: "Facebook", color: "#1877F2" },
   { key: "whatsapp", label: "WhatsApp", color: "#25D366" },
   { key: "sms", label: "iMessage", color: "#34C759" },
   { key: "instagram", label: "Instagram", color: "", gradient: "linear-gradient(45deg, #833AB4, #FD1D1D, #FCB045)" },
   { key: "tiktok", label: "TikTok", color: "#010101" },
+  { key: "email", label: "Email", color: "#636366" },
 ];
 
 function PlatformIcon({ platform }: { platform: string }) {
@@ -95,27 +96,21 @@ export function PlatformShareButtons({ link, tripId, captions }: PlatformShareBu
   };
 
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-2 gap-2.5">
-        {socialPlatforms.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => handleShare(p.key)}
-            className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-white text-sm font-medium shadow-sm transition-transform active:scale-95 min-h-[48px]"
-            style={{ background: p.gradient || p.color }}
-          >
-            <PlatformIcon platform={p.key} />
-            {p.label}
-          </button>
-        ))}
-      </div>
-      <button
-        onClick={() => handleShare("email")}
-        className="flex items-center justify-center gap-2 w-full rounded-xl border py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-      >
-        <Mail size={16} />
-        Share via Email
-      </button>
+    <div className="flex flex-wrap justify-center gap-2.5">
+      {platforms.map((p) => (
+        <button
+          key={p.key}
+          onClick={() => handleShare(p.key)}
+          className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-white text-sm font-medium shadow-sm transition-transform active:scale-95 min-h-[48px]"
+          style={{
+            background: p.gradient || p.color,
+            width: "calc(50% - 0.3125rem)",
+          }}
+        >
+          <PlatformIcon platform={p.key} />
+          {p.label}
+        </button>
+      ))}
     </div>
   );
 }
