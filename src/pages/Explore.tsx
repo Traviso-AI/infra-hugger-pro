@@ -19,6 +19,7 @@ export default function Explore() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<ExploreFilters>(defaultFilters);
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
