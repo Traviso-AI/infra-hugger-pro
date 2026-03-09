@@ -9,6 +9,7 @@ interface SocialFeedEmbedProps {
 }
 
 export function SocialFeedEmbed({ instagram, twitter, tiktok, whatsapp }: SocialFeedEmbedProps) {
+
   const [igLoaded, setIgLoaded] = useState(false);
 
   if (!instagram && !twitter && !tiktok && !whatsapp) return null;
