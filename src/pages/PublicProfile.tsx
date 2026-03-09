@@ -96,6 +96,61 @@ export default function PublicProfile() {
     enabled: !!profile?.is_creator,
   });
 
+  // Follower count
+  const { data: followerCount = 0 } = useQuery({
+    queryKey: ["follower-count", profile?.user_id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", profile!.user_id);
+      return count || 0;
+    },
+    enabled: !!profile,
+  });
+
+  // Is current user following this profile?
+  const { data: isFollowing = false } = useQuery({
+    queryKey: ["is-following", user?.id, profile?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user!.id)
+        .eq("following_id", profile!.user_id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user && !!profile && user.id !== profile.user_id,
+  });
+
+  const queryClient = useQueryClient();
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const handleFollow = async () => {
+    if (!user || !profile) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await supabase
+          .from("follows")
+          .delete()
+          .eq("follower_id", user.id)
+          .eq("following_id", profile.user_id);
+      } else {
+        await supabase
+          .from("follows")
+          .insert({ follower_id: user.id, following_id: profile.user_id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["follower-count", profile.user_id] });
+      queryClient.invalidateQueries({ queryKey: ["is-following", user.id, profile.user_id] });
+    } catch (err: any) {
+      toast.error("Something went wrong");
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
