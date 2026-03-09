@@ -153,7 +153,7 @@ export default function AiPlanner() {
     return url;
   };
 
-  const scrapeSocialUrl = async (url: string): Promise<string | null> => {
+  const scrapeSocialUrl = async (url: string): Promise<{ content: string | null; failed: boolean }> => {
     try {
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-social`,
@@ -166,18 +166,23 @@ export default function AiPlanner() {
           body: JSON.stringify({ url }),
         }
       );
-      if (!resp.ok) return null;
+      if (!resp.ok) return { content: null, failed: true };
       const data = await resp.json();
+      
+      // Check if extraction actually failed
+      if (data.extractionFailed || (!data.content && !data.title)) {
+        return { content: null, failed: true };
+      }
+      
       if (data.success && data.content && data.content.trim().length > 0) {
-        return `📎 [Scraped content from ${url}]:\nTitle: ${data.title || "N/A"}\nDescription: ${data.description || "N/A"}\n\nContent:\n${data.content.slice(0, 8000)}`;
+        return {
+          content: `📎 [Extracted content from ${url}]:\nTitle: ${data.title || "N/A"}\nDescription: ${data.description || "N/A"}\n\nContent:\n${data.content.slice(0, 8000)}`,
+          failed: false,
+        };
       }
-      // Success but no content — return description as minimal context
-      if (data.success && data.description) {
-        return `📎 [Link detected: ${url}]\nDescription: ${data.description}`;
-      }
-      return null;
+      return { content: null, failed: true };
     } catch {
-      return null;
+      return { content: null, failed: true };
     }
   };
 
@@ -196,121 +201,15 @@ export default function AiPlanner() {
     const socialUrl = detectSocialUrl(userText);
     if (socialUrl) {
       toast.info("Extracting content from link...");
-      const scraped = await scrapeSocialUrl(socialUrl);
-      if (scraped && !scraped.includes("[Link detected:")) {
+      const { content: scraped, failed } = await scrapeSocialUrl(socialUrl);
+      if (scraped && !failed) {
+        toast.success("Content extracted!");
         userText = userText + "\n\n" + scraped + "\n\nPlease extract a trip itinerary from this social media post. Create a detailed day-by-day plan based on the destinations, activities, and recommendations mentioned.";
       } else {
         toast.info("Couldn't read that link directly — Nala will ask you about it.");
         userText = userText + "\n\n[SYSTEM: The user pasted a social media link (" + socialUrl + ") but we could NOT scrape its content. DO NOT guess or assume what destination or content is in the video. Instead, ask the user: 'I wasn't able to read that link directly! 🐾 Could you tell me what destination or trip the video was about? Just give me the highlights and I'll build you an amazing itinerary!']";
       }
     }
-
-    if (selectedFile) {
-      try {
-        if (selectedFile.type.startsWith("image/")) {
-          imageUrl = await uploadImageToStorage(selectedFile);
-          userText = userText
-            ? `${userText}\n\n📎 [Attached image: ${selectedFile.name}]`
-            : `📎 [Attached image: ${selectedFile.name}] — please read this screenshot and build a trip itinerary from the group chat conversation shown.`;
-        } else {
-          const text = await readTextFile(selectedFile);
-          const prefix = `📎 [Shared conversation from "${selectedFile.name}"]:\n\`\`\`\n${text}\n\`\`\`\n\n`;
-          userText = userText ? `${prefix}${userText}` : `${prefix}Please read this group chat conversation and create a detailed trip itinerary based on what the group is planning.`;
-        }
-      } catch (err: any) {
-        toast.error(err.message || "Failed to process attachment.");
-        setLoading(false);
-        setUploadLoading(false);
-        return;
-      }
-    }
-
-    setUploadLoading(false);
-    clearFile();
-
-    // Create conversation record on first message
-    if (!conversationCreated && user) {
-      await createConversation(conversationId, generateTitle(userText));
-      setConversationCreated(true);
-    } else if (conversationCreated) {
-      touchConversation(conversationId);
-    }
-
-    const userMsg: Message = { role: "user", content: userText };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput("");
-
-    if (user) {
-      await supabase.from("messages").insert({
-        user_id: user.id,
-        conversation_id: conversationId,
-        role: "user",
-        content: userMsg.content,
-      });
-    }
-
-    try {
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-travel-planner`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ messages: newMessages, imageUrl }),
-        }
-      );
-
-      if (!resp.ok) {
-        if (resp.status === 429) { toast.error("Rate limit exceeded, please try again later"); setLoading(false); return; }
-        if (resp.status === 402) { toast.error("AI credits exhausted, please add funds"); setLoading(false); return; }
-        throw new Error("AI request failed");
-      }
-
-      const reader = resp.body?.getReader();
-      if (!reader) throw new Error("No stream");
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let assistantContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIdx;
-        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIdx);
-          buffer = buffer.slice(newlineIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages((prev) => {
-                const last = prev[prev.length - 1];
-                if (last?.role === "assistant") {
-                  return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
-                }
-                return [...prev, { role: "assistant", content: assistantContent }];
-              });
-            }
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
-      }
 
       if (user && assistantContent) {
         await supabase.from("messages").insert({
