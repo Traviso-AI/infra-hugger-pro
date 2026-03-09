@@ -82,14 +82,26 @@ export function TripCard({
             loading="lazy"
             onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(destination); }}
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={toggleFavorite}
-          >
-            <Heart className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
-          </Button>
+          <div className="absolute top-2 right-2 flex gap-1">
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCollectionModalOpen(true); }}
+              >
+                <FolderPlus className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={toggleFavorite}
+            >
+              <Heart className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+            </Button>
+          </div>
         </div>
         <div className="p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
