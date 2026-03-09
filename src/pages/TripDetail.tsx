@@ -104,6 +104,13 @@ export default function TripDetail() {
 
   const creator = trip.profiles as any;
 
+  usePageSEO({
+    title: `${trip.title} — ${trip.destination}`,
+    description: trip.description || `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.`,
+    image: trip.cover_image_url || undefined,
+    url: `${window.location.origin}/trip/${trip.id}`,
+  });
+
   return (
     <div>
       {/* Hero */}
