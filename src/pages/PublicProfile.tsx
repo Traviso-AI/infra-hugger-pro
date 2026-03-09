@@ -269,6 +269,12 @@ export default function PublicProfile() {
           )}
         </div>
       </div>
+      {/* Social Feed Links */}
+      {(profile.instagram || profile.twitter) && (
+        <div className="mb-8">
+          <SocialFeedEmbed instagram={profile.instagram} twitter={profile.twitter} />
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="created" className="w-full">
