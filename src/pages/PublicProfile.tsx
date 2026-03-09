@@ -412,7 +412,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
           <Pencil className="h-3.5 w-3.5" /> Edit Profile
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">Edit Profile</DialogTitle>
         </DialogHeader>
