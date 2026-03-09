@@ -130,6 +130,9 @@ export default function TripDetail() {
                 <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook}>
                   Check Availability →
                 </Button>
+                <div className="mt-2">
+                  <ShareTripModal trip={trip} creator={creator} />
+                </div>
 
                 {creator && (
                   <div className="mt-6 border-t pt-4">
