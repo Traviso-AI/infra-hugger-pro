@@ -82,15 +82,7 @@ export default function BookingSuccess() {
         console.error("Booking save error:", error);
         toast.error("Payment succeeded but booking save failed. Please contact support.");
       } else {
-        // Update trip stats: increment total_bookings and total_revenue
-        await supabase
-          .from("trips")
-          .update({
-            total_bookings: (currentTrip?.total_bookings ?? 0) + 1,
-            total_revenue: (currentTrip?.total_revenue ?? 0) + totalPrice,
-          })
-          .eq("id", tripId);
-
+        // Stats are now updated automatically via database trigger
         setSaved(true);
         toast.success("Booking confirmed!");
       }

@@ -53,6 +53,9 @@ const App = () => (
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/profile/:username" element={<PublicProfile />} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/about" element={<About />} />
               <Route path="*" element={<NotFound />} />
             </Route>
             <Route element={<AppLayoutNoFooter />}>
