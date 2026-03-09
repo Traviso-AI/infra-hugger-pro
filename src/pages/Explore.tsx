@@ -313,11 +313,7 @@ export default function Explore() {
       {viewMode === "map" ? (
         <ExploreMap trips={trips} />
       ) : isLoading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse rounded-xl border bg-muted aspect-[4/5]" />
-          ))}
-        </div>
+        <TripCardSkeletonGrid />
       ) : trips.length > 0 ? (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
