@@ -19,7 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ShareProfileModal } from "@/components/sharing/ShareProfileModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { VerifiedBadge } from "@/components/profile/VerifiedBadge";
-import { SocialFeedEmbed } from "@/components/profile/SocialFeedEmbed";
+
 
 export default function PublicProfile() {
   const { username } = useParams();
