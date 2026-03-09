@@ -187,7 +187,7 @@ export function GroupPlanningPanel({
                 </TabsList>
 
                 <TabsContent value="members" className="mt-0">
-                  <MembersTab tripId={tripId} isOwner={isOwner} />
+                  <MembersTab tripId={tripId} isOwner={isOrganizer} />
                 </TabsContent>
 
                 <TabsContent value="costs" className="mt-0">
