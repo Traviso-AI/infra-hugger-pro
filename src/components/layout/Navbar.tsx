@@ -78,6 +78,9 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => navigate("/collections")}>
                   <FolderOpen className="mr-2 h-4 w-4" /> Collections
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/calendar")}>
+                  <Calendar className="mr-2 h-4 w-4" /> Travel Calendar
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
                   <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
                 </DropdownMenuItem>
