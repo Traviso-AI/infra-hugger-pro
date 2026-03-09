@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Shield, Users, MapPin, BookOpen, DollarSign, Star, Trash2, Eye, EyeOff } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function Admin() {
   const { user } = useAuth();
