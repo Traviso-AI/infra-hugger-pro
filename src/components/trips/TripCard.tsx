@@ -22,11 +22,13 @@ interface TripCardProps {
   creatorUsername?: string | null;
   creatorId?: string | null;
   tags?: string[] | null;
+  maxTags?: number;
 }
 
 export function TripCard({
   id, title, destination, coverImage, durationDays, priceEstimate,
   avgRating, totalBookings, creatorName, creatorAvatar, creatorUsername, creatorId, tags,
+  maxTags = 3,
 }: TripCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
