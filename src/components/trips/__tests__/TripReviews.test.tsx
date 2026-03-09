@@ -1,9 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { TripReviews } from "@/components/trips/TripReviews";
 
-// Mock ReviewForm since it depends on Supabase
 vi.mock("@/components/trips/ReviewForm", () => ({
   ReviewForm: () => <div data-testid="review-form">Review Form</div>,
 }));
@@ -27,41 +26,41 @@ const mockReviews = [
 
 describe("TripReviews", () => {
   it("renders reviews from other users", () => {
-    render(
+    const { getByText } = render(
       <BrowserRouter>
         <TripReviews tripId="trip-1" creatorId="creator-1" userId="user-1" reviews={mockReviews} />
       </BrowserRouter>
     );
-    expect(screen.getByText("Reviews")).toBeInTheDocument();
-    expect(screen.getByText("Amazing trip!")).toBeInTheDocument();
-    expect(screen.getByText("Jane")).toBeInTheDocument();
-    expect(screen.getByText("Bob")).toBeInTheDocument();
+    expect(getByText("Reviews")).toBeInTheDocument();
+    expect(getByText("Amazing trip!")).toBeInTheDocument();
+    expect(getByText("Jane")).toBeInTheDocument();
+    expect(getByText("Bob")).toBeInTheDocument();
   });
 
   it("shows review form for non-creators", () => {
-    render(
+    const { getByTestId } = render(
       <BrowserRouter>
         <TripReviews tripId="trip-1" creatorId="creator-1" userId="user-1" reviews={[]} />
       </BrowserRouter>
     );
-    expect(screen.getByTestId("review-form")).toBeInTheDocument();
+    expect(getByTestId("review-form")).toBeInTheDocument();
   });
 
   it("hides review form for trip creator", () => {
-    render(
+    const { queryByTestId } = render(
       <BrowserRouter>
         <TripReviews tripId="trip-1" creatorId="user-1" userId="user-1" reviews={[]} />
       </BrowserRouter>
     );
-    expect(screen.queryByTestId("review-form")).not.toBeInTheDocument();
+    expect(queryByTestId("review-form")).not.toBeInTheDocument();
   });
 
   it("shows empty state for unauthenticated users", () => {
-    render(
+    const { getByText } = render(
       <BrowserRouter>
         <TripReviews tripId="trip-1" creatorId="creator-1" userId={undefined} reviews={[]} />
       </BrowserRouter>
     );
-    expect(screen.getByText(/No reviews yet/)).toBeInTheDocument();
+    expect(getByText(/No reviews yet/)).toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { TripItinerary } from "@/components/trips/TripItinerary";
 
@@ -43,25 +43,25 @@ const mockDays = [
 
 describe("TripItinerary", () => {
   it("renders day headers and activities", () => {
-    render(
+    const { getByText } = render(
       <BrowserRouter>
         <TripItinerary days={mockDays} canVote={false} />
       </BrowserRouter>
     );
-    expect(screen.getByText("Itinerary")).toBeInTheDocument();
-    expect(screen.getByText(/Arrival Day/)).toBeInTheDocument();
-    expect(screen.getByText("Check into hotel")).toBeInTheDocument();
-    expect(screen.getByText("Welcome dinner")).toBeInTheDocument();
-    expect(screen.getByText("$200")).toBeInTheDocument();
+    expect(getByText("Itinerary")).toBeInTheDocument();
+    expect(getByText(/Arrival Day/)).toBeInTheDocument();
+    expect(getByText("Check into hotel")).toBeInTheDocument();
+    expect(getByText("Welcome dinner")).toBeInTheDocument();
+    expect(getByText("$200")).toBeInTheDocument();
   });
 
   it("shows empty state for days with no activities", () => {
-    render(
+    const { getByText } = render(
       <BrowserRouter>
         <TripItinerary days={mockDays} canVote={false} />
       </BrowserRouter>
     );
-    expect(screen.getByText("No activities planned yet")).toBeInTheDocument();
+    expect(getByText("No activities planned yet")).toBeInTheDocument();
   });
 
   it("returns null when days array is empty", () => {
