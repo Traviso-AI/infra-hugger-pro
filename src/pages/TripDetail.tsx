@@ -239,11 +239,22 @@ export default function TripDetail() {
             )}
 
             {/* Reviews */}
-            {reviews && reviews.length > 0 && (
-              <div>
-                <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
+            <div>
+              <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
+              
+              {/* Review form — show for logged-in users who booked this trip */}
+              {user && trip.creator_id !== user.id && (
+                <div className="mb-4">
+                  <ReviewForm
+                    tripId={trip.id}
+                    existingReview={reviews?.find((r: any) => r.user_id === user.id) || null}
+                  />
+                </div>
+              )}
+
+              {reviews && reviews.length > 0 ? (
                 <div className="space-y-4">
-                  {reviews.map((review: any) => (
+                  {reviews.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
                     <Card key={review.id}>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
@@ -262,8 +273,10 @@ export default function TripDetail() {
                     </Card>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : !user ? (
+                <p className="text-sm text-muted-foreground">No reviews yet. Be the first to book and review!</p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
