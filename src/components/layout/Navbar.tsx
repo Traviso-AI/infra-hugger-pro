@@ -134,6 +134,10 @@ export function Navbar() {
                   <NotificationBell />
                   <span className="text-sm text-muted-foreground">Notifications</span>
                 </div>
+                <div className="flex items-center gap-2 px-3 mt-1">
+                  <ThemeToggle />
+                  <span className="text-sm text-muted-foreground">Theme</span>
+                </div>
                 <div className="border-t mt-2 pt-2">
                   <Button variant="outline" size="sm" className="w-full" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
                     <LogOut className="mr-2 h-4 w-4" /> Sign out
