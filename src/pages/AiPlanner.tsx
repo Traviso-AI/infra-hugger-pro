@@ -143,6 +143,40 @@ export default function AiPlanner() {
       reader.readAsText(file);
     });
 
+  // Detect social media URLs in text
+  const detectSocialUrl = (text: string): string | null => {
+    const urlRegex = /(https?:\/\/)?(www\.)?(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|twitter\.com|x\.com|reddit\.com|threads\.net)[^\s]*/i;
+    const match = text.match(urlRegex);
+    if (!match) return null;
+    let url = match[0];
+    if (!url.startsWith("http")) url = "https://" + url;
+    return url;
+  };
+
+  const scrapeSocialUrl = async (url: string): Promise<string | null> => {
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scrape-social`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ url }),
+        }
+      );
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      if (data.success && data.content) {
+        return `📎 [Scraped content from ${url}]:\nTitle: ${data.title || "N/A"}\nDescription: ${data.description || "N/A"}\n\nContent:\n${data.content.slice(0, 8000)}`;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const sendMessage = async () => {
     const hasText = input.trim().length > 0;
     const hasFile = selectedFile !== null;
@@ -153,6 +187,18 @@ export default function AiPlanner() {
 
     let userText = input.trim();
     let imageUrl: string | undefined;
+
+    // Check for social media URLs
+    const socialUrl = detectSocialUrl(userText);
+    if (socialUrl) {
+      toast.info("Extracting content from link...");
+      const scraped = await scrapeSocialUrl(socialUrl);
+      if (scraped) {
+        userText = userText + "\n\n" + scraped + "\n\nPlease extract a trip itinerary from this social media post. Create a detailed day-by-day plan based on the destinations, activities, and recommendations mentioned.";
+      } else {
+        toast.warning("Couldn't scrape that link — Nala will try her best with just the URL.");
+      }
+    }
 
     if (selectedFile) {
       try {
@@ -344,14 +390,14 @@ export default function AiPlanner() {
                 <h2 className="font-display text-2xl font-bold mb-1 mt-4">Meet Nala 🐾</h2>
                 <p className="text-xs text-accent font-medium mb-3">AI Trip Planner · Online</p>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Your AI travel buddy. Describe your trip idea or <span className="text-accent font-medium">upload a group chat screenshot</span> and Nala will create a complete itinerary.
+                  Your AI travel buddy. Describe a trip, <span className="text-accent font-medium">paste a TikTok/Instagram link</span>, or upload a group chat screenshot — Nala will build your itinerary.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {[
                     "3 days in Tokyo with friends, cherry blossoms and nightlife",
                     "Weekend in Barcelona, food and architecture",
-                    "Miami beach party weekend for 4 people",
-                    "5-day wellness retreat in Bali",
+                    "🔗 Paste a TikTok or Instagram travel link here",
+                    "Find me hotels in Tulum for March 15-20",
                   ].map((suggestion, i) => (
                     <motion.div
                       key={suggestion}

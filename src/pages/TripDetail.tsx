@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music, ArrowLeft } from "lucide-react";
+import { InviteCollaboratorsPanel, ActivityVoteButtons, PaymentSplitPanel } from "@/components/trips/GroupPlanning";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
@@ -33,6 +34,22 @@ export default function TripDetail() {
     const ref = searchParams.get("ref");
     if (ref) sessionStorage.setItem("traviso_referral", ref);
   }, [searchParams]);
+
+  // Accept invite if token present
+  useEffect(() => {
+    const inviteToken = searchParams.get("invite");
+    if (!inviteToken || !user) return;
+    (async () => {
+      const { error } = await supabase
+        .from("trip_collaborators")
+        .update({ user_id: user.id, accepted_at: new Date().toISOString() })
+        .eq("invite_token", inviteToken)
+        .is("accepted_at", null);
+      if (!error) {
+        toast.success("You've joined this trip as a collaborator!");
+      }
+    })();
+  }, [searchParams, user]);
 
   // Track view
   useEffect(() => {
@@ -188,6 +205,14 @@ export default function TripDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Group Planning — only for trip owner or collaborators */}
+            {user && (
+              <>
+                <InviteCollaboratorsPanel tripId={trip.id} isOwner={trip.creator_id === user.id} />
+                <PaymentSplitPanel tripId={trip.id} isOwner={trip.creator_id === user.id} />
+              </>
+            )}
           </div>
 
           {/* Main content */}
@@ -241,6 +266,7 @@ export default function TripDetail() {
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium text-sm">{act.title}</span>
                                         <Badge variant="outline" className="text-xs">{act.type}</Badge>
+                                        {user && <div className="ml-auto"><ActivityVoteButtons activityId={act.id} tripId={trip.id} /></div>}
                                       </div>
                                       {act.description && <p className="text-xs text-muted-foreground mt-0.5">{act.description}</p>}
                                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
