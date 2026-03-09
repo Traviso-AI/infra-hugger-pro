@@ -204,7 +204,11 @@ export default function Leaderboard() {
               </Link>
             ))}
             {(!topCreators || topCreators.length === 0) && (
-              <Card><CardContent className="p-8 text-center text-muted-foreground">No creators yet</CardContent></Card>
+              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-muted/30 px-6 py-14 text-center">
+                <TrendingUp className="h-10 w-10 text-accent/40 mb-3" />
+                <h3 className="font-display text-lg font-semibold mb-1">No creators yet</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">Enable Creator Mode and publish a trip to join the leaderboard.</p>
+              </div>
             )}
           </div>
         </TabsContent>
