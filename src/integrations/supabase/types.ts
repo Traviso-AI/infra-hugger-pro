@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_votes: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          user_id: string
+          vote: number
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+          vote: number
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          vote?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_votes_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "trip_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           check_in: string | null
@@ -338,6 +370,47 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_splits: {
+        Row: {
+          amount: number
+          created_at: string
+          display_name: string | null
+          id: string
+          is_paid: boolean
+          trip_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_paid?: boolean
+          trip_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_paid?: boolean
+          trip_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_splits_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_views: {
         Row: {
           created_at: string
@@ -518,6 +591,50 @@ export type Database = {
             columns: ["trip_day_id"]
             isOneToOne: false
             referencedRelation: "trip_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_collaborators: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string | null
+          id: string
+          invite_token: string | null
+          invited_by: string
+          role: string
+          trip_id: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          invite_token?: string | null
+          invited_by: string
+          role?: string
+          trip_id: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          invite_token?: string | null
+          invited_by?: string
+          role?: string
+          trip_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_collaborators_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
             referencedColumns: ["id"]
           },
         ]
