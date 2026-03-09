@@ -352,7 +352,7 @@ export function getDestinationCover(
   }
 
   const query = encodeURIComponent(searchTerms);
-  return `https://source.unsplash.com/${width}x${height}/?${query}&sig=${h1}`;
+  return `https://images.unsplash.com/photo-1488085061387-422e29b40080?w=${width}&h=${height}&fit=crop&q=80`;
 }
 
 /**
