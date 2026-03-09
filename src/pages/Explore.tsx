@@ -201,7 +201,7 @@ export default function Explore() {
         <p className="mt-2 text-lg text-muted-foreground">Travel like your favorite influencer. Find their itineraries, book their spots.</p>
       </div>
 
-      <div className="relative mb-8 max-w-md">
+      <div className="relative mb-4 max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search destinations or trips..."
@@ -209,6 +209,10 @@ export default function Explore() {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
         />
+      </div>
+
+      <div className="mb-8">
+        <ExploreFilterBar filters={filters} onChange={handleFiltersChange} />
       </div>
 
       {/* From Creators You Follow */}
