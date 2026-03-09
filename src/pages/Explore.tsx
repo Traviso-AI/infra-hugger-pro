@@ -56,6 +56,28 @@ export default function Explore() {
     },
   });
 
+  // Trips from creators the user follows
+  const { data: followingTrips } = useQuery({
+    queryKey: ["explore-following-trips", user?.id],
+    queryFn: async () => {
+      const { data: follows } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user!.id);
+      if (!follows || follows.length === 0) return [];
+      const creatorIds = follows.map((f) => f.following_id);
+      const { data } = await supabase
+        .from("trips")
+        .select("*, profiles!trips_creator_id_profiles_fkey(display_name, avatar_url, username)")
+        .eq("is_published", true)
+        .in("creator_id", creatorIds)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const trips = data?.trips || [];
   const totalPages = Math.ceil((data?.total || 0) / PAGE_SIZE);
 
