@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { NalaChatBubble } from "@/components/home/NalaChatBubble";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 
