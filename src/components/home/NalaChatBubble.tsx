@@ -34,13 +34,13 @@ export function NalaChatBubble() {
   const isTripDetail = location.pathname.startsWith("/trip/");
   const shouldHide = isTripDetail || hiddenRoutes.some(r => location.pathname.startsWith(r));
 
-  if (shouldHide && !open) return null;
-
   const gated = !user && userMsgCount >= MAX_FREE_MESSAGES;
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  if (shouldHide && !open) return null;
 
   const sendMessage = async () => {
     if (!input.trim() || loading || gated) return;
