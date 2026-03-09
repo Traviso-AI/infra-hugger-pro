@@ -21,12 +21,20 @@ const suggestions = [
 
 export function NalaChatBubble() {
   const { user } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [userMsgCount, setUserMsgCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Hide on pages with sticky sidebars that conflict with FAB position
+  const hiddenRoutes = ["/ai-planner", "/booking"];
+  const isTripDetail = location.pathname.startsWith("/trip/");
+  const shouldHide = isTripDetail || hiddenRoutes.some(r => location.pathname.startsWith(r));
+
+  if (shouldHide && !open) return null;
 
   const gated = !user && userMsgCount >= MAX_FREE_MESSAGES;
 
