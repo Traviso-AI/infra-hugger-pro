@@ -235,7 +235,7 @@ export default function Explore() {
         </div>
       )}
 
-      {user && <div className="border-t my-2" />}
+      {user && <div className="my-6" />}
 
       <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
         <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
