@@ -6,7 +6,7 @@ import { NalaAvatar } from "@/components/ai-planner/NalaAvatar";
 import { TypingDots } from "@/components/ai-planner/TypingDots";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
