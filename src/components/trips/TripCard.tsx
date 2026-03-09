@@ -22,11 +22,13 @@ interface TripCardProps {
   creatorUsername?: string | null;
   creatorId?: string | null;
   tags?: string[] | null;
+  maxTags?: number;
 }
 
 export function TripCard({
   id, title, destination, coverImage, durationDays, priceEstimate,
   avgRating, totalBookings, creatorName, creatorAvatar, creatorUsername, creatorId, tags,
+  maxTags = 3,
 }: TripCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -105,7 +107,7 @@ export function TripCard({
           </div>
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {tags.slice(0, 3).map((tag) => (
+              {tags.slice(0, maxTags).map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
               ))}
             </div>
