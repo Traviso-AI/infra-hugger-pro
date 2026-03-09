@@ -21,6 +21,24 @@ export default function TripDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Store referral
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) sessionStorage.setItem("traviso_referral", ref);
+  }, [searchParams]);
+
+  // Track view
+  useEffect(() => {
+    if (!id) return;
+    const ref = searchParams.get("ref");
+    supabase.from("trip_views").insert({
+      trip_id: id,
+      viewer_id: user?.id || null,
+      referral_source: ref || null,
+    }).then(() => {});
+  }, [id]);
 
   const { data: trip, isLoading } = useQuery({
     queryKey: ["trip", id],
