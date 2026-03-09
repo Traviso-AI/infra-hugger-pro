@@ -233,6 +233,10 @@ export default function TripDetail() {
 
             <TripItinerary days={days || []} canVote={canVote} />
 
+            {user && days && days.length > 0 && (
+              <LiveTripTracker tripId={trip.id} days={days} destination={trip.destination} />
+            )}
+
             {allActivities.length > 0 && <ActivityMap activities={allActivities} destination={trip.destination} />}
 
             <TripReviews tripId={trip.id} creatorId={trip.creator_id} userId={user?.id} reviews={reviews || []} />
