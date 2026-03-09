@@ -17,7 +17,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1512813195386-6cf811ad3542",
     "photo-1570737543098-a2ac1a5e57e5",
     "photo-1504019347908-b45f9b0b8e8c",
-    "photo-1518105779142-d975f22f1b0a",
+    "photo-1682687220742-aba13b6e50ba",
     "photo-1547995886-6dc09384c6e6",
     "photo-1682553064442-0b3e5f2e6d10",
     "photo-1653437908893-2ed7a3e5e1f2",
@@ -134,7 +134,7 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1518638150340-f706e86654de",
   ],
   mexico: [
-    "photo-1518105779142-d975f22f1b0a",
+    "photo-1682687220742-aba13b6e50ba",
     "photo-1547995886-6dc09384c6e6",
   ],
   cabo: [
@@ -352,7 +352,7 @@ export function getDestinationCover(
   }
 
   const query = encodeURIComponent(searchTerms);
-  return `https://source.unsplash.com/${width}x${height}/?${query}&sig=${h1}`;
+  return `https://images.unsplash.com/photo-1488085061387-422e29b40080?w=${width}&h=${height}&fit=crop&q=80`;
 }
 
 /**
@@ -363,7 +363,5 @@ export function getDestinationCoverFallback(
   width = 800,
   height = 600
 ): string {
-  const cityName = destination.split(",")[0].trim();
-  const query = encodeURIComponent(`${cityName} travel city`);
-  return `https://source.unsplash.com/${width}x${height}/?${query}`;
+  return `https://images.unsplash.com/photo-1488085061387-422e29b40080?w=${width}&h=${height}&fit=crop&q=80`;
 }
