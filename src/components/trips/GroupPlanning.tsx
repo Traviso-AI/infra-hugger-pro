@@ -4,13 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Users, UserPlus, ThumbsUp, ThumbsDown, DollarSign, Copy, Check,
-  Eye, Pencil, Link2, ChevronDown, ChevronUp, X,
+  Link2, ChevronDown, ChevronUp, X, Wallet,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -34,22 +33,93 @@ interface PaymentSplit {
 }
 
 // =============================================
-// Main Group Planning Panel — Owner & Collaborator view
+// Main Group Planning Panel — Open to ALL logged-in users
 // =============================================
 export function GroupPlanningPanel({
   tripId,
-  isOwner,
-  isCollaborator,
+  bookedPrice,
 }: {
   tripId: string;
-  isOwner: boolean;
-  isCollaborator: boolean;
+  bookedPrice?: number | null;
 }) {
+  const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState("members");
+  const [isInGroup, setIsInGroup] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [groupSize, setGroupSize] = useState(0);
 
-  // Don't render at all if user is neither owner nor collaborator
-  if (!isOwner && !isCollaborator) return null;
+  // Check if user is the trip creator or already in the group
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: trip } = await supabase
+        .from("trips")
+        .select("creator_id")
+        .eq("id", tripId)
+        .single();
+      if (trip?.creator_id === user.id) {
+        setIsOwner(true);
+        setIsInGroup(true);
+      }
+
+      const { data: collab } = await supabase
+        .from("trip_collaborators")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", user.id)
+        .not("accepted_at", "is", null)
+        .maybeSingle();
+      if (collab) setIsInGroup(true);
+
+      const { count } = await supabase
+        .from("trip_collaborators")
+        .select("id", { count: "exact", head: true })
+        .eq("trip_id", tripId)
+        .not("accepted_at", "is", null);
+      setGroupSize(count || 0);
+    })();
+  }, [tripId, user]);
+
+  if (!user) return null;
+
+  const handleStartGroup = async () => {
+    // Trip creator doesn't need a collaborator row — they're automatically the organizer
+    setIsInGroup(true);
+    setIsExpanded(true);
+    toast.success("Group created! Invite friends to plan together.");
+  };
+
+  // Not in group yet — show CTA
+  if (!isInGroup) {
+    return (
+      <Card className="overflow-hidden">
+        <div className="p-4 text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-accent" />
+            </div>
+          </div>
+          <div>
+            <p className="font-display text-sm font-semibold">Plan with Friends</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {groupSize > 0
+                ? `${groupSize} people are already planning this trip`
+                : "Create a group to vote on activities & split costs"}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+            onClick={handleStartGroup}
+          >
+            <Users className="mr-1.5 h-3.5 w-3.5" />
+            {isOwner ? "Start a Group" : "Join Group Planning"}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -65,7 +135,7 @@ export function GroupPlanningPanel({
           <div>
             <p className="font-display text-sm font-semibold">Group Planning</p>
             <p className="text-[11px] text-muted-foreground">
-              {isOwner ? "Invite friends & split costs" : "You're a collaborator"}
+              Invite friends & coordinate
             </p>
           </div>
         </div>
@@ -101,7 +171,7 @@ export function GroupPlanningPanel({
                 </TabsContent>
 
                 <TabsContent value="costs" className="mt-0">
-                  <CostsTab tripId={tripId} isOwner={isOwner} />
+                  <CostsTab tripId={tripId} isOwner={isOwner} bookedPrice={bookedPrice} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -113,13 +183,12 @@ export function GroupPlanningPanel({
 }
 
 // =============================================
-// Members Tab — Invite & manage collaborators
+// Members Tab
 // =============================================
 function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("editor");
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -150,7 +219,7 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("trip_collaborators")
-      .insert({ trip_id: tripId, email: email.trim(), role, invited_by: user.id })
+      .insert({ trip_id: tripId, email: email.trim(), role: "editor", invited_by: user.id })
       .select()
       .single();
     if (error) {
@@ -181,7 +250,7 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
       const token = (data as any)?.invite_token;
       const link = `${window.location.origin}/trip/${tripId}?invite=${token}`;
       setInviteLink(link);
-      toast.success("Invite link created!");
+      toast.success("Invite link created — share it with your friends!");
     }
     setLoading(false);
   };
@@ -208,7 +277,7 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-accent" />
-          {joinedCount} joined
+          {joinedCount + 1} in group {/* +1 for organizer */}
         </span>
         {pendingCount > 0 && (
           <span className="flex items-center gap-1">
@@ -219,132 +288,162 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
       </div>
 
       {/* Member list */}
-      {collaborators.length > 0 ? (
-        <div className="space-y-1.5">
-          {collaborators.map((c) => (
-            <div key={c.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-muted/40">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
-                  {c.email ? c.email[0].toUpperCase() : "?"}
-                </div>
-                <span className="truncate text-xs">{c.email || "Link invite"}</span>
-                {c.role === "editor" ? (
-                  <Pencil className="h-3 w-3 text-muted-foreground shrink-0" />
-                ) : (
-                  <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {c.accepted_at ? (
-                  <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Joined</Badge>
-                ) : (
-                  <Badge variant="outline" className="text-[9px] px-1.5">Pending</Badge>
-                )}
-                {isOwner && (
-                  <button
-                    onClick={() => removeCollaborator(c.id)}
-                    className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+      <div className="space-y-1.5">
+        {/* Organizer — always first */}
+        <div className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-accent/5 border border-accent/10">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
+              👑
             </div>
-          ))}
+            <span className="truncate text-xs font-medium">
+              {isOwner ? "You (organizer)" : "Trip creator"}
+            </span>
+          </div>
+          <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Organizer</Badge>
         </div>
-      ) : (
-        <div className="text-center py-4">
-          <p className="text-xs text-muted-foreground mb-1">No members yet</p>
-          <p className="text-[11px] text-muted-foreground/70">Invite friends to plan together</p>
-        </div>
-      )}
 
-      {/* Invite actions — only for owner */}
-      {isOwner && (
-        <>
-          {!showInviteForm ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => setShowInviteForm(true)}
-            >
-              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-              Invite Someone
-            </Button>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-2.5 pt-1 border-t"
-            >
-              {/* Email invite */}
-              <div className="flex gap-1.5">
-                <Input
-                  placeholder="friend@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="text-xs h-8"
-                  onKeyDown={(e) => e.key === "Enter" && handleInviteByEmail()}
-                />
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className="w-20 text-[10px] h-8"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="viewer">Viewer</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="sm"
-                  onClick={handleInviteByEmail}
-                  disabled={loading || !email.trim()}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                </Button>
+        {collaborators.map((c) => (
+          <div key={c.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-muted/40">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
+                {c.email ? c.email[0].toUpperCase() : "?"}
               </div>
-
-              {/* Or generate link */}
-              <button
-                onClick={handleGenerateLink}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-1.5 text-[11px] text-accent hover:text-accent/80 transition-colors py-1"
-              >
-                <Link2 className="h-3 w-3" />
-                Or generate a shareable link
-              </button>
-
-              {/* Show invite link */}
-              {inviteLink && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 p-2 bg-muted rounded-lg">
-                  <Input value={inviteLink} readOnly className="text-[10px] h-7 bg-transparent border-0 font-mono" />
-                  <Button size="sm" variant="ghost" className="shrink-0 h-7 w-7 p-0" onClick={copyLink}>
-                    {copied ? <Check className="h-3 w-3 text-accent" /> : <Copy className="h-3 w-3" />}
-                  </Button>
-                </motion.div>
+              <span className="truncate text-xs">
+                {c.user_id === user?.id ? "You" : c.email || "Link invite"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {c.accepted_at ? (
+                <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Joined</Badge>
+              ) : (
+                <Badge variant="outline" className="text-[9px] px-1.5">Pending</Badge>
               )}
+              {isOwner && (
+                <button
+                  onClick={() => removeCollaborator(c.id)}
+                  className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
-              <button
-                onClick={() => { setShowInviteForm(false); setInviteLink(null); }}
-                className="w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Cancel
-              </button>
+      {/* Invite actions */}
+      {!showInviteForm ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full text-xs"
+          onClick={() => setShowInviteForm(true)}
+        >
+          <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+          Invite Friends
+        </Button>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-2.5 pt-1 border-t"
+        >
+          {/* Email invite */}
+          <div className="flex gap-1.5">
+            <Input
+              placeholder="friend@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="text-xs h-8"
+              onKeyDown={(e) => e.key === "Enter" && handleInviteByEmail()}
+            />
+            <Button
+              size="sm"
+              onClick={handleInviteByEmail}
+              disabled={loading || !email.trim()}
+              className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
+          {/* Or generate link */}
+          <button
+            onClick={handleGenerateLink}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-1.5 text-[11px] text-accent hover:text-accent/80 transition-colors py-1"
+          >
+            <Link2 className="h-3 w-3" />
+            Or generate a shareable link
+          </button>
+
+          {/* Show invite link */}
+          {inviteLink && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 p-2 bg-muted rounded-lg">
+              <Input value={inviteLink} readOnly className="text-[10px] h-7 bg-transparent border-0 font-mono" />
+              <Button size="sm" variant="ghost" className="shrink-0 h-7 w-7 p-0" onClick={copyLink}>
+                {copied ? <Check className="h-3 w-3 text-accent" /> : <Copy className="h-3 w-3" />}
+              </Button>
             </motion.div>
           )}
-        </>
+
+          <button
+            onClick={() => { setShowInviteForm(false); setInviteLink(null); }}
+            className="w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Cancel
+          </button>
+        </motion.div>
       )}
+
+      {/* Explain what collaborators can do */}
+      <div className="rounded-lg bg-muted/30 p-3 space-y-1.5">
+        <p className="text-[11px] font-medium text-foreground/80">What can group members do?</p>
+        <ul className="text-[10px] text-muted-foreground space-y-0.5">
+          <li>👍 Vote on activities (thumbs up/down)</li>
+          <li>💬 Help decide the final itinerary</li>
+          <li>💰 Split costs after someone books</li>
+        </ul>
+      </div>
     </div>
   );
 }
 
 // =============================================
-// Costs Tab — Split payments
+// Costs Tab — Split AFTER booking (uses actual booked price)
 // =============================================
-function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
+function CostsTab({
+  tripId,
+  isOwner,
+  bookedPrice,
+}: {
+  tripId: string;
+  isOwner: boolean;
+  bookedPrice?: number | null;
+}) {
   const { user } = useAuth();
   const [splits, setSplits] = useState<PaymentSplit[]>([]);
-  const [totalCost, setTotalCost] = useState("");
+  const [customTotal, setCustomTotal] = useState("");
+  const [hasBooking, setHasBooking] = useState(false);
+  const [bookingAmount, setBookingAmount] = useState<number | null>(null);
+
+  // Check if current user has booked this trip
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("id, total_price")
+        .eq("trip_id", tripId)
+        .eq("user_id", user.id)
+        .eq("status", "confirmed")
+        .maybeSingle();
+      if (data) {
+        setHasBooking(true);
+        setBookingAmount(data.total_price);
+      }
+    })();
+  }, [tripId, user]);
 
   const fetchSplits = async () => {
     const { data } = await supabase
@@ -366,10 +465,8 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     return () => { supabase.removeChannel(channel); };
   }, [tripId]);
 
-  const handleGenerateSplits = async () => {
+  const handleSplitCost = async (total: number) => {
     if (!user) return;
-    const total = parseFloat(totalCost);
-    if (isNaN(total) || total <= 0) { toast.error("Enter a valid total"); return; }
 
     const { data: collabs } = await supabase
       .from("trip_collaborators")
@@ -377,16 +474,17 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
       .eq("trip_id", tripId)
       .not("accepted_at", "is", null);
 
+    // Include the booker + all joined collaborators
     const participants = [
-      { user_id: user.id, display_name: "You (organizer)" },
-      ...(collabs || []).filter((c: any) => c.user_id).map((c: any) => ({
+      { user_id: user.id, display_name: "You (paid)" },
+      ...(collabs || []).filter((c: any) => c.user_id && c.user_id !== user.id).map((c: any) => ({
         user_id: c.user_id,
         display_name: c.email || "Member",
       })),
     ];
 
     if (participants.length < 2) {
-      toast.error("Need at least 2 people to split costs. Invite friends first!");
+      toast.error("Need at least 2 people in the group to split costs.");
       return;
     }
 
@@ -394,19 +492,19 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
 
     await supabase.from("payment_splits").delete().eq("trip_id", tripId);
 
-    const inserts = participants.map((p) => ({
+    const inserts = participants.map((p, i) => ({
       trip_id: tripId,
       user_id: p.user_id,
       display_name: p.display_name,
       amount: perPerson,
-      is_paid: false,
+      is_paid: i === 0, // First person (booker) is auto-marked as paid
     }));
 
     const { error } = await supabase.from("payment_splits").insert(inserts);
     if (error) toast.error("Failed to create splits");
     else {
-      toast.success(`Split $${total} between ${participants.length} people`);
-      setTotalCost("");
+      toast.success(`Split $${total.toFixed(0)} between ${participants.length} people`);
+      setCustomTotal("");
     }
   };
 
@@ -418,15 +516,90 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const paidAmount = splits.filter((s) => s.is_paid).reduce((sum, s) => sum + s.amount, 0);
   const paidPercent = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
 
+  // No booking yet — explain the flow
+  if (!hasBooking && splits.length === 0) {
+    return (
+      <div className="text-center py-5 space-y-3">
+        <div className="flex justify-center">
+          <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center">
+            <Wallet className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-medium">Book first, split after</p>
+          <p className="text-[11px] text-muted-foreground mt-1 max-w-[220px] mx-auto">
+            One person books the trip, then splits the actual cost with the group. Everyone settles up via Venmo, Zelle, etc.
+          </p>
+        </div>
+        <div className="rounded-lg bg-muted/40 p-2.5">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <span className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center text-[8px] font-bold text-accent">1</span>
+            Someone books the trip
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1.5">
+            <span className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center text-[8px] font-bold text-accent">2</span>
+            Split the real price with the group
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1.5">
+            <span className="h-5 w-5 rounded-full bg-accent/15 flex items-center justify-center text-[8px] font-bold text-accent">3</span>
+            Track who's paid you back
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {splits.length > 0 ? (
+      {/* If user booked but no splits yet — show split button */}
+      {hasBooking && splits.length === 0 && bookingAmount && (
+        <div className="text-center py-3 space-y-3">
+          <p className="text-xs text-muted-foreground">
+            You booked this trip for <span className="font-semibold text-foreground">${bookingAmount.toLocaleString()}</span>
+          </p>
+          <Button
+            size="sm"
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+            onClick={() => handleSplitCost(bookingAmount)}
+          >
+            <DollarSign className="mr-1.5 h-3.5 w-3.5" />
+            Split ${bookingAmount.toLocaleString()} with Group
+          </Button>
+          <p className="text-[10px] text-muted-foreground">
+            Or enter a custom amount:
+          </p>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              placeholder="Custom amount ($)"
+              value={customTotal}
+              onChange={(e) => setCustomTotal(e.target.value)}
+              className="text-xs h-8"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs shrink-0"
+              onClick={() => {
+                const val = parseFloat(customTotal);
+                if (!isNaN(val) && val > 0) handleSplitCost(val);
+                else toast.error("Enter a valid amount");
+              }}
+            >
+              Split
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Existing splits */}
+      {splits.length > 0 && (
         <>
           {/* Progress bar */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-[11px]">
               <span className="text-muted-foreground">
-                ${paidAmount.toFixed(0)} of ${totalAmount.toFixed(0)} collected
+                ${paidAmount.toFixed(0)} of ${totalAmount.toFixed(0)} settled
               </span>
               <span className="font-medium text-accent">{paidPercent}%</span>
             </div>
@@ -459,7 +632,7 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
                     size="sm"
                     className={`h-6 px-2 text-[10px] ${s.is_paid ? "bg-accent text-accent-foreground" : ""}`}
                     onClick={() => togglePaid(s.id, s.is_paid)}
-                    disabled={!isOwner && s.user_id !== user?.id}
+                    disabled={s.user_id !== user?.id && !isOwner}
                   >
                     {s.is_paid ? "Paid ✓" : "Mark Paid"}
                   </Button>
@@ -468,19 +641,28 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
             ))}
           </div>
 
-          {/* Recalculate option for owner */}
-          {isOwner && (
-            <div className="flex gap-2 pt-1">
+          {/* Info text */}
+          <p className="text-[10px] text-muted-foreground text-center">
+            Settle up via Venmo, Zelle, or cash — then mark as paid
+          </p>
+
+          {/* Recalculate for the person who booked */}
+          {hasBooking && (
+            <div className="flex gap-2 pt-1 border-t">
               <Input
                 type="number"
                 placeholder="New total ($)"
-                value={totalCost}
-                onChange={(e) => setTotalCost(e.target.value)}
+                value={customTotal}
+                onChange={(e) => setCustomTotal(e.target.value)}
                 className="text-xs h-8"
               />
               <Button
                 size="sm"
-                onClick={handleGenerateSplits}
+                onClick={() => {
+                  const val = parseFloat(customTotal);
+                  if (!isNaN(val) && val > 0) handleSplitCost(val);
+                  else toast.error("Enter a valid amount");
+                }}
                 variant="outline"
                 className="h-8 text-xs shrink-0"
               >
@@ -489,48 +671,15 @@ function CostsTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
             </div>
           )}
         </>
-      ) : (
-        <div className="text-center py-4">
-          {isOwner ? (
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Split trip costs evenly</p>
-                <p className="text-[11px] text-muted-foreground/70">
-                  Enter total cost — it'll be divided among all joined members
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Total cost ($)"
-                  value={totalCost}
-                  onChange={(e) => setTotalCost(e.target.value)}
-                  className="text-xs h-9"
-                />
-                <Button
-                  size="sm"
-                  onClick={handleGenerateSplits}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 h-9 px-4"
-                >
-                  Split
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              The trip organizer hasn't set up cost splitting yet.
-            </p>
-          )}
-        </div>
       )}
     </div>
   );
 }
 
 // =============================================
-// Activity Vote Buttons — shown inline on activities
+// Activity Vote Buttons — shown for ANY group member
 // =============================================
-export function ActivityVoteButtons({ activityId, tripId }: { activityId: string; tripId: string }) {
+export function ActivityVoteButtons({ activityId }: { activityId: string }) {
   const { user } = useAuth();
   const [votes, setVotes] = useState({ up: 0, down: 0 });
   const [userVote, setUserVote] = useState<number | null>(null);
@@ -578,7 +727,6 @@ export function ActivityVoteButtons({ activityId, tripId }: { activityId: string
   const total = votes.up + votes.down;
   const net = votes.up - votes.down;
 
-  // Don't show if no votes and not logged in
   if (total === 0 && !user) return null;
 
   return (
@@ -606,6 +754,6 @@ export function ActivityVoteButtons({ activityId, tripId }: { activityId: string
   );
 }
 
-// Legacy exports for backward compatibility
+// Legacy exports
 export const InviteCollaboratorsPanel = GroupPlanningPanel;
 export const PaymentSplitPanel = () => null;

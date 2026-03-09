@@ -46,7 +46,7 @@ export default function TripDetail() {
         .eq("invite_token", inviteToken)
         .is("accepted_at", null);
       if (!error) {
-        toast.success("You've joined this trip as a collaborator!");
+        toast.success("You've joined this trip group! You can now vote on activities.");
       }
     })();
   }, [searchParams, user]);
@@ -75,7 +75,7 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
-  // Check if current user is a collaborator on this trip
+  // Check if current user is a collaborator (accepted)
   const { data: isCollaborator } = useQuery({
     queryKey: ["trip-collaborator", id, user?.id],
     queryFn: async () => {
@@ -118,7 +118,6 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
-  // Collect activity images for the gallery
   const activityImages = useMemo(() => {
     if (!days) return [];
     return days.flatMap((day: any) =>
@@ -128,7 +127,6 @@ export default function TripDetail() {
     );
   }, [days]);
 
-  // Collect all activities with locations for the map
   const allActivities = useMemo(() => {
     if (!days) return [];
     return days.flatMap((day: any) =>
@@ -138,6 +136,9 @@ export default function TripDetail() {
       }))
     );
   }, [days]);
+
+  const isOwner = !!(user && trip && trip.creator_id === user.id);
+  const canVote = isOwner || !!isCollaborator;
 
   usePageSEO({
     title: trip ? `${trip.title} — ${trip.destination}` : "Loading trip...",
@@ -167,7 +168,6 @@ export default function TripDetail() {
 
   return (
     <div>
-      {/* Photo Gallery */}
       <TripPhotoGallery
         coverImage={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? undefined : trip.cover_image_url}
         destination={trip.destination}
@@ -185,7 +185,7 @@ export default function TripDetail() {
           <ArrowLeft className="mr-1 h-4 w-4" /> Back
         </Button>
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Booking sidebar — shown first on mobile, right column on desktop */}
+          {/* Sidebar */}
           <div className="space-y-6 order-first lg:order-last">
             <Card className="lg:sticky lg:top-24">
               <CardContent className="p-6">
@@ -223,13 +223,9 @@ export default function TripDetail() {
               </CardContent>
             </Card>
 
-            {/* Group Planning — only for trip owner or collaborators */}
-            {user && (trip.creator_id === user.id || isCollaborator) && (
-              <GroupPlanningPanel
-                tripId={trip.id}
-                isOwner={trip.creator_id === user.id}
-                isCollaborator={!!isCollaborator}
-              />
+            {/* Group Planning — visible to ALL logged-in users */}
+            {user && (
+              <GroupPlanningPanel tripId={trip.id} />
             )}
           </div>
 
@@ -284,7 +280,11 @@ export default function TripDetail() {
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium text-sm">{act.title}</span>
                                         <Badge variant="outline" className="text-xs">{act.type}</Badge>
-                                        {user && (trip.creator_id === user.id || isCollaborator) && <div className="ml-auto"><ActivityVoteButtons activityId={act.id} tripId={trip.id} /></div>}
+                                        {canVote && (
+                                          <div className="ml-auto">
+                                            <ActivityVoteButtons activityId={act.id} />
+                                          </div>
+                                        )}
                                       </div>
                                       {act.description && <p className="text-xs text-muted-foreground mt-0.5">{act.description}</p>}
                                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
@@ -307,16 +307,12 @@ export default function TripDetail() {
               </div>
             )}
 
-            {/* Activity Map */}
             {allActivities.length > 0 && (
               <ActivityMap activities={allActivities} destination={trip.destination} />
             )}
 
-
             <div>
               <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
-              
-              {/* Review form — show for logged-in users who booked this trip */}
               {user && trip.creator_id !== user.id && (
                 <div className="mb-4">
                   <ReviewForm
@@ -325,7 +321,6 @@ export default function TripDetail() {
                   />
                 </div>
               )}
-
               {reviews && reviews.length > 0 ? (
                 <div className="space-y-4">
                   {reviews.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
