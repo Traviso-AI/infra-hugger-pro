@@ -271,13 +271,17 @@ export function isGenericPlaceholder(url: string | null | undefined): boolean {
 }
 
 function simpleHash(str: string): number {
-  // FNV-1a inspired hash for better distribution
-  let hash = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+  // For UUIDs, extract hex digits directly for excellent distribution
+  const hexChars = str.replace(/[^0-9a-f]/gi, '');
+  if (hexChars.length >= 8) {
+    return parseInt(hexChars.substring(0, 8), 16);
   }
-  return Math.abs(hash | 0);
+  // Fallback for non-UUID strings
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
 }
 
 /**
