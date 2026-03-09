@@ -1,0 +1,9 @@
+{
+  "nav": { "explore": "探索", "leaderboard": "ランキング", "aiPlanner": "AIプランナー", "creatorStudio": "クリエイタースタジオ", "createTrip": "旅行を作成", "dashboard": "ダッシュボード", "collections": "コレクション", "calendar": "カレンダー", "profile": "プロフィール", "signOut": "ログアウト", "logIn": "ログイン", "signUp": "登録", "notifications": "通知", "theme": "テーマ" },
+  "explore": { "title": "旅行を探す", "subtitle": "お気に入りのインフルエンサーのように旅しよう。", "searchPlaceholder": "目的地や旅行を検索...", "filters": "フィルター", "clearFilters": "フィルターをクリア", "fromFollowing": "フォロー中のクリエイター", "trending": "トレンド旅行", "noTrips": "旅行が見つかりません", "mostPopular": "人気順", "newest": "新着順", "highestRated": "高評価順", "shortestTrips": "短い旅行", "longestTrips": "長い旅行", "whosTravel": "誰と旅する？", "duration": "期間", "vibe": "雰囲気", "days": "日" },
+  "dashboard": { "title": "ダッシュボード", "welcomeBack": "おかえりなさい、{{name}}", "createTrip": "旅行を作成", "publishedTrips": "公開旅行", "totalBookings": "合計予約", "revenue": "収益", "myBookings": "マイ予約", "myTrips": "マイ旅行", "myGroups": "グループプラン" },
+  "calendar": { "title": "旅行カレンダー", "subtitle": "旅行、予約、グループプランを一目で。", "bookedTrips": "予約済み旅行", "groupPlans": "グループプラン", "upcoming": "今後の旅行", "noTripsDay": "この日の旅行はありません。", "noUpcoming": "今後の旅行はありません" },
+  "auth": { "login": "ログイン", "signup": "登録", "email": "メール", "password": "パスワード", "fullName": "氏名", "forgotPassword": "パスワードを忘れた？", "noAccount": "アカウントをお持ちでない？", "hasAccount": "アカウントをお持ちの方", "createAccount": "アカウントを作成" },
+  "common": { "back": "戻る", "save": "保存", "cancel": "キャンセル", "delete": "削除", "edit": "編集", "loading": "読み込み中...", "error": "エラーが発生しました", "install": "アプリをインストール", "installDesc": "オフラインで旅程にアクセスするためにTraviso AIをインストール。" },
+  "pwa": { "title": "アプリを入手", "subtitle": "最高の体験のためにTraviso AIをインストール", "benefit1": "旅行中にオフラインで旅程にアクセス", "benefit2": "高速読み込みとネイティブ感", "benefit3": "ホーム画面に数秒で追加", "installButton": "Traviso AIをインストール", "iosInstructions": "共有ボタン→「ホーム画面に追加」をタップ", "alreadyInstalled": "アプリはインストール済みです！" }
+}

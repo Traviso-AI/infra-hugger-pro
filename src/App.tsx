@@ -28,6 +28,8 @@ import Terms from "./pages/Terms";
 import About from "./pages/About";
 import EditTrip from "./pages/EditTrip";
 import Collections from "./pages/Collections";
+import TravelCalendar from "./pages/TravelCalendar";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +56,9 @@ const App = () => (
               <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
               <Route path="/booking/:tripId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
               <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+              <Route path="/calendar" element={<ProtectedRoute><TravelCalendar /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/install" element={<Install />} />
               <Route path="/profile/:username" element={<PublicProfile />} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
               <Route path="/privacy" element={<Privacy />} />

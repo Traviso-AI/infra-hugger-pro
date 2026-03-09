@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil, FolderOpen } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil, FolderOpen, Calendar } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { TripCard } from "@/components/trips/TripCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
@@ -100,7 +100,23 @@ export default function Dashboard() {
       {/* My Group Plans */}
       <MyGroups />
 
-      {/* Stats */}
+      {/* Travel Calendar CTA */}
+      <div className="mb-6">
+        <Card className="bg-accent/5 border-accent/20">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-8 w-8 text-accent" />
+              <div>
+                <h3 className="font-medium">Travel Calendar</h3>
+                <p className="text-sm text-muted-foreground">See all your upcoming trips, bookings, and group plans</p>
+              </div>
+            </div>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link to="/calendar">View Calendar</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
         {[
           { label: "Published Trips", value: publishedCount, icon: MapPin },

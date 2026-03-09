@@ -1,0 +1,9 @@
+{
+  "nav": { "explore": "탐색", "leaderboard": "순위표", "aiPlanner": "AI 플래너", "creatorStudio": "크리에이터 스튜디오", "createTrip": "여행 만들기", "dashboard": "대시보드", "collections": "컬렉션", "calendar": "캘린더", "profile": "프로필", "signOut": "로그아웃", "logIn": "로그인", "signUp": "회원가입", "notifications": "알림", "theme": "테마" },
+  "explore": { "title": "여행 탐색", "subtitle": "좋아하는 인플루언서처럼 여행하세요.", "searchPlaceholder": "목적지 또는 여행 검색...", "filters": "필터", "clearFilters": "필터 초기화", "fromFollowing": "팔로우 중인 크리에이터", "trending": "트렌딩 여행", "noTrips": "여행을 찾을 수 없습니다", "mostPopular": "인기순", "newest": "최신순", "highestRated": "평점순", "shortestTrips": "짧은 여행", "longestTrips": "긴 여행", "whosTravel": "누구와 여행하나요?", "duration": "기간", "vibe": "분위기", "days": "일" },
+  "dashboard": { "title": "대시보드", "welcomeBack": "돌아오셨군요, {{name}}", "createTrip": "여행 만들기", "publishedTrips": "게시된 여행", "totalBookings": "총 예약", "revenue": "수익", "myBookings": "내 예약", "myTrips": "내 여행", "myGroups": "그룹 계획" },
+  "calendar": { "title": "여행 캘린더", "subtitle": "여행, 예약, 그룹 계획을 한눈에.", "bookedTrips": "예약된 여행", "groupPlans": "그룹 계획", "upcoming": "다가오는 여행", "noTripsDay": "이 날 여행이 없습니다.", "noUpcoming": "다가오는 여행이 없습니다" },
+  "auth": { "login": "로그인", "signup": "회원가입", "email": "이메일", "password": "비밀번호", "fullName": "이름", "forgotPassword": "비밀번호를 잊으셨나요?", "noAccount": "계정이 없으신가요?", "hasAccount": "이미 계정이 있으신가요?", "createAccount": "계정 만들기" },
+  "common": { "back": "뒤로", "save": "저장", "cancel": "취소", "delete": "삭제", "edit": "편집", "loading": "로딩 중...", "error": "오류가 발생했습니다", "install": "앱 설치", "installDesc": "오프라인으로 일정에 접근하려면 Traviso AI를 설치하세요." },
+  "pwa": { "title": "앱 다운로드", "subtitle": "최고의 경험을 위해 Traviso AI를 설치하세요", "benefit1": "여행 중 오프라인으로 일정 접근", "benefit2": "빠른 로딩과 네이티브 앱 느낌", "benefit3": "홈 화면에 몇 초 만에 추가", "installButton": "Traviso AI 설치", "iosInstructions": "공유 버튼 → '홈 화면에 추가' 탭", "alreadyInstalled": "앱이 이미 설치되어 있습니다!" }
+}
