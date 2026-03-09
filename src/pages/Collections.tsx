@@ -6,12 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, FolderOpen, Trash2, MapPin } from "lucide-react";
+import { Plus, FolderOpen, Trash2, MapPin, Share2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { TripCard } from "@/components/trips/TripCard";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ShareCollectionModal } from "@/components/sharing/ShareCollectionModal";
 
 export default function Collections() {
   const { user } = useAuth();
@@ -20,6 +22,7 @@ export default function Collections() {
   const [newDesc, setNewDesc] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "collection" | "item"; id: string; name: string } | null>(null);
 
   const { data: collections } = useQuery({
     queryKey: ["collections", user?.id],
@@ -73,8 +76,9 @@ export default function Collections() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collections"] });
-      if (selectedCollection) setSelectedCollection(null);
+      if (selectedCollection === deleteTarget?.id) setSelectedCollection(null);
       toast.success("Collection deleted");
+      setDeleteTarget(null);
     },
   });
 
@@ -86,6 +90,7 @@ export default function Collections() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collection-items"] });
       toast.success("Trip removed from collection");
+      setDeleteTarget(null);
     },
   });
 
@@ -170,7 +175,7 @@ export default function Collections() {
                       size="sm"
                       variant="destructive"
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                      onClick={(e) => { e.preventDefault(); removeItem.mutate(item.id); }}
+                      onClick={(e) => { e.preventDefault(); setDeleteTarget({ type: "item", id: item.id, name: trip.title }); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -211,14 +216,17 @@ export default function Collections() {
                           )}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => { e.stopPropagation(); deleteCollection.mutate(col.id); }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <ShareCollectionModal collectionId={col.id} collectionName={col.name} />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: "collection", id: col.id, name: col.name }); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -237,6 +245,21 @@ export default function Collections() {
           )}
         </>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={deleteTarget?.type === "collection" ? "Delete collection?" : "Remove trip?"}
+        description={
+          deleteTarget?.type === "collection"
+            ? `"${deleteTarget.name}" and all its saved trips will be permanently deleted.`
+            : `"${deleteTarget?.name}" will be removed from this collection.`
+        }
+        confirmLabel={deleteTarget?.type === "collection" ? "Delete Collection" : "Remove"}
+        onConfirm={() => {
+          if (deleteTarget?.type === "collection") deleteCollection.mutate(deleteTarget.id);
+          else if (deleteTarget) removeItem.mutate(deleteTarget.id);
+        }}
+      />
     </div>
   );
 }

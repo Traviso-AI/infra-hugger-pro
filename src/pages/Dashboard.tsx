@@ -63,23 +63,27 @@ export default function Dashboard() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
         {[
-          { label: "Published Trips", value: publishedCount, icon: MapPin },
-          { label: "Total Bookings", value: totalBookings, icon: BookOpen },
-          { label: "Revenue", value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign },
-          { label: "My Bookings", value: myBookings?.length || 0, icon: Eye },
-        ].map(({ label, value, icon: Icon }) => (
-          <Card key={label}>
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                <Icon className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+          { label: "Published Trips", value: publishedCount, icon: MapPin, emptyHint: "Create & publish a trip" },
+          { label: "Total Bookings", value: totalBookings, icon: BookOpen, emptyHint: "Share trips to get bookings" },
+          { label: "Revenue", value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign, emptyHint: "Earn from bookings", isEmpty: totalRevenue === 0 },
+          { label: "My Bookings", value: myBookings?.length || 0, icon: Eye, emptyHint: "Book a trip to get started" },
+        ].map(({ label, value, icon: Icon, emptyHint, isEmpty }) => {
+          const showEmpty = isEmpty !== undefined ? isEmpty : value === 0;
+          return (
+            <Card key={label}>
+              <CardContent className="flex items-center gap-4 p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                  <Icon className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{showEmpty ? "—" : value}</p>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  {showEmpty && <p className="text-[10px] text-accent mt-0.5">{emptyHint}</p>}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Creator Analytics */}

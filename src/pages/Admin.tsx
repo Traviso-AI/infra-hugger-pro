@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Shield, Users, MapPin, BookOpen, DollarSign, Star, Trash2, Eye, EyeOff } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function Admin() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const { data: isAdmin, isLoading: checkingRole } = useQuery({
     queryKey: ["is-admin", user?.id],
@@ -142,7 +145,7 @@ export default function Admin() {
                     <Button variant="ghost" size="icon" onClick={() => toggleFeatured(trip.id, trip.is_featured)}>
                       <Star className={`h-4 w-4 ${trip.is_featured ? "fill-sunset text-sunset" : ""}`} />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteTrip(trip.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: trip.id, title: trip.title })}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -195,6 +198,19 @@ export default function Admin() {
           </div>
         </TabsContent>
       </Tabs>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete trip?"
+        description={`"${deleteTarget?.title}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel="Delete Trip"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteTrip(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }
