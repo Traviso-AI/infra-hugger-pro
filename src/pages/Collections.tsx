@@ -245,6 +245,21 @@ export default function Collections() {
           )}
         </>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={deleteTarget?.type === "collection" ? "Delete collection?" : "Remove trip?"}
+        description={
+          deleteTarget?.type === "collection"
+            ? `"${deleteTarget.name}" and all its saved trips will be permanently deleted.`
+            : `"${deleteTarget?.name}" will be removed from this collection.`
+        }
+        confirmLabel={deleteTarget?.type === "collection" ? "Delete Collection" : "Remove"}
+        onConfirm={() => {
+          if (deleteTarget?.type === "collection") deleteCollection.mutate(deleteTarget.id);
+          else if (deleteTarget) removeItem.mutate(deleteTarget.id);
+        }}
+      />
     </div>
   );
 }

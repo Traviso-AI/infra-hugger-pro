@@ -145,7 +145,7 @@ export default function Admin() {
                     <Button variant="ghost" size="icon" onClick={() => toggleFeatured(trip.id, trip.is_featured)}>
                       <Star className={`h-4 w-4 ${trip.is_featured ? "fill-sunset text-sunset" : ""}`} />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteTrip(trip.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: trip.id, title: trip.title })}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
