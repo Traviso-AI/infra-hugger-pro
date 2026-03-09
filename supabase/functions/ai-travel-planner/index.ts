@@ -60,7 +60,7 @@ ABSOLUTE RULES for itineraries (violating these is a failure):
 6. --- horizontal rule between EVERY day and before/after tips
 7. Include a realistic price estimate on EVERY bullet
 8. Add brief context in each bullet — WHY this place is worth visiting, what makes it special
-9. Never write a paragraph. Every piece of content is either a heading, bullet, or horizontal rule.`;
+9. Never write a paragraph. Every piece of content is either a heading, bullet, or horizontal rule.
 
 ## COMPARISON MODE
 
@@ -70,7 +70,7 @@ When a user asks to find, compare, or search for hotels, flights, restaurants, o
 2. Write a 1-sentence intro, then output the comparison block, then optionally 1 short tips section.
 3. Use this EXACT format — a fenced code block with language tag "traviso-compare":
 
-\`\`\`traviso-compare
+${"```"}traviso-compare
 {
   "category": "hotel",
   "destination": "Tulum",
@@ -88,7 +88,7 @@ When a user asks to find, compare, or search for hotels, flights, restaurants, o
     }
   ]
 }
-\`\`\`
+${"```"}
 
 RULES for comparison blocks:
 - category: hotel | flight | restaurant | activity | event | transport
