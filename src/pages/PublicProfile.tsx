@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Globe, Trophy, Pencil, Sparkles } from "lucide-react";
+import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function PublicProfile() {
   const { username } = useParams();
@@ -95,6 +96,61 @@ export default function PublicProfile() {
     enabled: !!profile?.is_creator,
   });
 
+  // Follower count
+  const { data: followerCount = 0 } = useQuery({
+    queryKey: ["follower-count", profile?.user_id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", profile!.user_id);
+      return count || 0;
+    },
+    enabled: !!profile,
+  });
+
+  // Is current user following this profile?
+  const { data: isFollowing = false } = useQuery({
+    queryKey: ["is-following", user?.id, profile?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", user!.id)
+        .eq("following_id", profile!.user_id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user && !!profile && user.id !== profile.user_id,
+  });
+
+  const queryClient = useQueryClient();
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const handleFollow = async () => {
+    if (!user || !profile) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await supabase
+          .from("follows")
+          .delete()
+          .eq("follower_id", user.id)
+          .eq("following_id", profile.user_id);
+      } else {
+        await supabase
+          .from("follows")
+          .insert({ follower_id: user.id, following_id: profile.user_id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["follower-count", profile.user_id] });
+      queryClient.invalidateQueries({ queryKey: ["is-following", user.id, profile.user_id] });
+    } catch (err: any) {
+      toast.error("Something went wrong");
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -152,6 +208,11 @@ export default function PublicProfile() {
             <p className="font-display text-2xl font-bold">{tripsTakenCount}</p>
             <p className="text-xs text-muted-foreground">Trips Taken</p>
           </div>
+          <div className="h-8 w-px bg-border" />
+          <div className="text-center">
+            <p className="font-display text-2xl font-bold">{followerCount}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </div>
           {rank && (
             <>
               <div className="h-8 w-px bg-border" />
@@ -165,7 +226,22 @@ export default function PublicProfile() {
           )}
         </div>
 
-        {isOwnProfile && <EditProfileDialog profile={profile} onSaved={refreshProfile} />}
+        <div className="mt-4 flex items-center gap-2">
+          {isOwnProfile ? (
+            <EditProfileDialog profile={profile} onSaved={refreshProfile} />
+          ) : user && user.id !== profile.user_id ? (
+            <Button
+              variant={isFollowing ? "outline" : "default"}
+              size="sm"
+              className={isFollowing ? "gap-2" : "gap-2 bg-accent text-accent-foreground hover:bg-accent/90"}
+              onClick={handleFollow}
+              disabled={followLoading}
+            >
+              {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+              {isFollowing ? "Unfollow" : "Follow"}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {/* Tabs */}
