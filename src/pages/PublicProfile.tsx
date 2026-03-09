@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus } from "lucide-react";
+import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -320,6 +320,30 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [isCreator, setIsCreator] = useState(profile.is_creator || false);
   const [saving, setSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please upload an image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${profile.user_id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      setAvatarUrl(publicUrl);
+      toast.success("Avatar uploaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSave = async () => {
     const wasCreator = profile.is_creator;
@@ -327,7 +351,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ bio, website, display_name: displayName, is_creator: isCreator })
+        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null })
         .eq("user_id", profile.user_id);
       if (error) throw error;
       await onSaved();
@@ -356,6 +380,25 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
           <DialogTitle className="font-display">Edit Profile</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative group">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={avatarUrl || ""} />
+                <AvatarFallback className="bg-accent text-accent-foreground text-2xl">
+                  {displayName?.[0]?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <label className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                {uploadingAvatar ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <Camera className="h-5 w-5 text-white" />
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">Click photo to change</p>
+          </div>
           <div className="space-y-2">
             <Label>Display Name</Label>
             <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
