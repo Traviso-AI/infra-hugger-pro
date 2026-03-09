@@ -35,21 +35,53 @@ export default function TripDetail() {
     if (ref) sessionStorage.setItem("traviso_referral", ref);
   }, [searchParams]);
 
-  // Accept invite if token present
+  // Accept invite if token present — token now lives on group_organizers
   useEffect(() => {
     const inviteToken = searchParams.get("invite");
-    if (!inviteToken || !user) return;
+    if (!inviteToken || !user || !id) return;
     (async () => {
+      // Verify the token belongs to this trip's group
+      const { data: org } = await supabase
+        .from("group_organizers")
+        .select("id, trip_id")
+        .eq("trip_id", id)
+        .eq("invite_token", inviteToken)
+        .maybeSingle();
+      if (!org) return;
+
+      // Check if already a collaborator
+      const { data: existing } = await supabase
+        .from("trip_collaborators")
+        .select("id")
+        .eq("trip_id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (existing) {
+        // Already joined — update accepted_at if not set
+        await supabase
+          .from("trip_collaborators")
+          .update({ accepted_at: new Date().toISOString() })
+          .eq("id", existing.id)
+          .is("accepted_at", null);
+        toast.success("You're already in this group!");
+        return;
+      }
+
+      // Create a collaborator entry for this user
       const { error } = await supabase
         .from("trip_collaborators")
-        .update({ user_id: user.id, accepted_at: new Date().toISOString() })
-        .eq("invite_token", inviteToken)
-        .is("accepted_at", null);
+        .insert({
+          trip_id: id,
+          user_id: user.id,
+          invited_by: org.id, // reference the organizer
+          role: "editor",
+          accepted_at: new Date().toISOString(),
+        });
       if (!error) {
-        toast.success("You've joined this trip group! You can now vote on activities.");
+        toast.success("You've joined this trip group! You can now vote, chat, and plan together.");
       }
     })();
-  }, [searchParams, user]);
+  }, [searchParams, user, id]);
 
   // Track view
   useEffect(() => {

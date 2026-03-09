@@ -273,46 +273,23 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     try {
       const trimmed = email.trim().toLowerCase();
 
-      // Try insert — unique constraint will catch duplicates
       const { error } = await supabase
         .from("trip_collaborators")
         .insert({ trip_id: tripId, email: trimmed, role: "editor", invited_by: user.id });
 
       if (error) {
-        // Duplicate — just fetch existing
         if (error.code === "23505") {
-          const { data: existing } = await supabase
-            .from("trip_collaborators")
-            .select("invite_token")
-            .eq("trip_id", tripId)
-            .eq("email", trimmed)
-            .maybeSingle();
-          if (existing?.invite_token) {
-            setInviteLink(`${window.location.origin}/trip/${tripId}?invite=${existing.invite_token}`);
-          }
-          toast("Already invited — share the link below", { icon: "📋" });
-          setEmail("");
-          setLoading(false);
-          return;
+          toast("Already invited", { icon: "📋" });
+        } else {
+          console.error("Invite insert error:", error);
+          toast.error("Failed to invite");
         }
-        console.error("Invite insert error:", error);
-        toast.error("Failed to invite");
+        setEmail("");
         setLoading(false);
         return;
       }
 
-      // Fetch token for the new invite
-      const { data: created } = await supabase
-        .from("trip_collaborators")
-        .select("invite_token")
-        .eq("trip_id", tripId)
-        .eq("email", trimmed)
-        .maybeSingle();
-
-      if (created?.invite_token) {
-        setInviteLink(`${window.location.origin}/trip/${tripId}?invite=${created.invite_token}`);
-      }
-      toast.success(`Invited ${trimmed} — share the link below`);
+      toast.success(`Invited ${trimmed}`);
       setEmail("");
       await fetchCollaborators();
     } catch (e) {
@@ -322,35 +299,30 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     setLoading(false);
   };
 
+  // Generate link now reads from group_organizers — no new rows created
   const handleGenerateLink = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("trip_collaborators")
-        .insert({ trip_id: tripId, role: "editor", invited_by: user.id });
-      if (error) {
-        console.error("Generate link error:", error);
-        toast.error("Failed to create invite link");
-        setLoading(false);
-        return;
-      }
-      const { data: created } = await supabase
-        .from("trip_collaborators")
+      // Fetch the reusable invite token from group_organizers
+      const { data: org } = await supabase
+        .from("group_organizers")
         .select("invite_token")
         .eq("trip_id", tripId)
-        .eq("invited_by", user.id)
-        .is("email", null)
-        .order("created_at", { ascending: false })
+        .order("created_at")
         .limit(1)
         .maybeSingle();
-      if (created?.invite_token) {
-        setInviteLink(`${window.location.origin}/trip/${tripId}?invite=${created.invite_token}`);
-        toast.success("Invite link created!");
+
+      if (org?.invite_token) {
+        const link = `${window.location.origin}/trip/${tripId}?invite=${org.invite_token}`;
+        setInviteLink(link);
+        await navigator.clipboard.writeText(link);
+        setCopied(true);
+        toast.success("Link copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
       } else {
-        toast.error("Couldn't retrieve link — try again");
+        toast.error("No group found — start a group first");
       }
-      await fetchCollaborators();
     } catch (e) {
       console.error("Generate link error:", e);
       toast.error("Something went wrong");
