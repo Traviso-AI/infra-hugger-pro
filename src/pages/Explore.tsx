@@ -290,9 +290,25 @@ export default function Explore() {
         </div>
       )}
 
-      <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-        <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl font-bold flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
+        </h2>
+        <div className="flex rounded-lg border overflow-hidden">
+          <button
+            onClick={() => setViewMode("grid")}
+            className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors ${viewMode === "grid" ? "bg-accent text-white" : "hover:bg-muted"}`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" /> Grid
+          </button>
+          <button
+            onClick={() => setViewMode("map")}
+            className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors ${viewMode === "map" ? "bg-accent text-white" : "hover:bg-muted"}`}
+          >
+            <MapIcon className="h-3.5 w-3.5" /> Map
+          </button>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
