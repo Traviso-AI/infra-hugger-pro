@@ -197,6 +197,10 @@ export default function PublicProfile() {
         </Avatar>
         <div className="flex items-center gap-2">
           <h1 className="font-display text-3xl font-bold">{profile.display_name}</h1>
+          <VerifiedBadge
+            isVerified={profile.is_creator && tripsCreatedCount >= 3}
+            isTopCreator={!!rank && rank <= 10}
+          />
           {profile.is_creator && (
             <Badge className="bg-accent text-accent-foreground text-xs">Creator</Badge>
           )}
