@@ -113,18 +113,36 @@ export default function TripDetail() {
 
   const creator = trip.profiles as any;
 
+  // Collect activity images for the gallery
+  const activityImages = useMemo(() => {
+    if (!days) return [];
+    return days.flatMap((day: any) =>
+      (day.trip_activities || [])
+        .filter((a: any) => a.image_url)
+        .map((a: any) => a.image_url as string)
+    );
+  }, [days]);
+
+  // Collect all activities with locations for the map
+  const allActivities = useMemo(() => {
+    if (!days) return [];
+    return days.flatMap((day: any) =>
+      (day.trip_activities || []).map((a: any) => ({
+        ...a,
+        day_number: day.day_number,
+      }))
+    );
+  }, [days]);
+
   return (
     <div>
-      {/* Hero */}
-      <div className="relative h-64 md:h-96 bg-muted">
-        <img
-          src={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? getDestinationCover(trip.destination, 1200, 600, trip.id) : trip.cover_image_url}
-          alt={trip.title}
-          className="h-full w-full object-cover"
-          onError={(e) => { e.currentTarget.src = getDestinationCoverFallback(trip.destination); }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-      </div>
+      {/* Photo Gallery */}
+      <TripPhotoGallery
+        coverImage={(!trip.cover_image_url || isGenericPlaceholder(trip.cover_image_url)) ? undefined : trip.cover_image_url}
+        destination={trip.destination}
+        tripId={trip.id}
+        activityImages={activityImages}
+      />
 
       <div className="container -mt-16 relative pb-16">
         <Button
