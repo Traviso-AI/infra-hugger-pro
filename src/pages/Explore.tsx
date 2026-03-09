@@ -28,14 +28,6 @@ export default function Explore() {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
   }, []);
 
-  useEffect(() => {
-    const el = carouselRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    return () => el.removeEventListener("scroll", updateScrollState);
-  }, [updateScrollState, allFollowingTrips, search]);
-
   const scrollCarousel = (offset: number) => {
     const el = carouselRef.current;
     if (!el) return;
