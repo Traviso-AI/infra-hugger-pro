@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music, ArrowLeft } from "lucide-react";
+import { InviteCollaboratorsPanel, ActivityVoteButtons, PaymentSplitPanel } from "@/components/trips/GroupPlanning";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
