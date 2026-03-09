@@ -111,11 +111,7 @@ export default function TripDetail() {
     url: trip ? `${window.location.origin}/trip/${trip.id}` : undefined,
   });
 
-  if (isLoading) return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-    </div>
-  );
+  if (isLoading) return <TripDetailSkeleton />;
 
   if (!trip) return (
     <div className="container py-16 text-center">
