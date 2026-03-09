@@ -274,18 +274,37 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const handleGenerateLink = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("trip_collaborators")
-      .insert({ trip_id: tripId, role: "editor", invited_by: user.id })
-      .select()
-      .single();
-    if (error) {
-      toast.error("Failed to create invite link");
-    } else {
-      const token = (data as any)?.invite_token;
-      const link = `${window.location.origin}/trip/${tripId}?invite=${token}`;
-      setInviteLink(link);
-      toast.success("Invite link created — share it with your friends!");
+    try {
+      const { error } = await supabase
+        .from("trip_collaborators")
+        .insert({ trip_id: tripId, role: "editor", invited_by: user.id });
+      if (error) {
+        console.error("Generate link insert error:", error);
+        toast.error("Failed to create invite link");
+        setLoading(false);
+        return;
+      }
+      // Fetch the latest link invite (no email, most recent)
+      const { data: created } = await supabase
+        .from("trip_collaborators")
+        .select("invite_token")
+        .eq("trip_id", tripId)
+        .eq("invited_by", user.id)
+        .is("email", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const token = created?.invite_token;
+      if (token) {
+        const link = `${window.location.origin}/trip/${tripId}?invite=${token}`;
+        setInviteLink(link);
+        toast.success("Invite link created — share it with your friends!");
+      } else {
+        toast.error("Link created but couldn't retrieve it — try again");
+      }
+    } catch (e) {
+      console.error("Generate link error:", e);
+      toast.error("Something went wrong");
     }
     setLoading(false);
   };
