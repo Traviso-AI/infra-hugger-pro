@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { toast } from "sonner";
 
 export default function Dashboard() {
