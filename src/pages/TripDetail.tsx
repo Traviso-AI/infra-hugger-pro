@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { ReviewForm } from "@/components/trips/ReviewForm";
+import { TripPhotoGallery } from "@/components/trips/TripPhotoGallery";
+import { ActivityMap } from "@/components/trips/ActivityMap";
 import { usePageSEO } from "@/hooks/usePageSEO";
 import { useEffect, useMemo } from "react";
 
