@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music, ArrowLeft } from "lucide-react";
-import { InviteCollaboratorsPanel, ActivityVoteButtons, PaymentSplitPanel } from "@/components/trips/GroupPlanning";
+import { GroupPlanningPanel, ActivityVoteButtons } from "@/components/trips/GroupPlanning";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
@@ -73,6 +73,23 @@ export default function TripDetail() {
       return data;
     },
     enabled: !!id,
+  });
+
+  // Check if current user is a collaborator on this trip
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["trip-collaborator", id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("trip_collaborators")
+        .select("id")
+        .eq("trip_id", id!)
+        .eq("user_id", user.id)
+        .not("accepted_at", "is", null)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && !!user,
   });
 
   const { data: days } = useQuery({
@@ -207,11 +224,12 @@ export default function TripDetail() {
             </Card>
 
             {/* Group Planning — only for trip owner or collaborators */}
-            {user && (
-              <>
-                <InviteCollaboratorsPanel tripId={trip.id} isOwner={trip.creator_id === user.id} />
-                <PaymentSplitPanel tripId={trip.id} isOwner={trip.creator_id === user.id} />
-              </>
+            {user && (trip.creator_id === user.id || isCollaborator) && (
+              <GroupPlanningPanel
+                tripId={trip.id}
+                isOwner={trip.creator_id === user.id}
+                isCollaborator={!!isCollaborator}
+              />
             )}
           </div>
 
@@ -266,7 +284,7 @@ export default function TripDetail() {
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium text-sm">{act.title}</span>
                                         <Badge variant="outline" className="text-xs">{act.type}</Badge>
-                                        {user && <div className="ml-auto"><ActivityVoteButtons activityId={act.id} tripId={trip.id} /></div>}
+                                        {user && (trip.creator_id === user.id || isCollaborator) && <div className="ml-auto"><ActivityVoteButtons activityId={act.id} tripId={trip.id} /></div>}
                                       </div>
                                       {act.description && <p className="text-xs text-muted-foreground mt-0.5">{act.description}</p>}
                                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
