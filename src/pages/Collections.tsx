@@ -175,7 +175,7 @@ export default function Collections() {
                       size="sm"
                       variant="destructive"
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                      onClick={(e) => { e.preventDefault(); removeItem.mutate(item.id); }}
+                      onClick={(e) => { e.preventDefault(); setDeleteTarget({ type: "item", id: item.id, name: trip.title }); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
