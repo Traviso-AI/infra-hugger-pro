@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { Input } from "@/components/ui/input";
-import { Search, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Users, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { useState, useRef } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
@@ -171,7 +171,9 @@ export default function Explore() {
         </div>
       )}
 
-      <h2 className="font-display text-xl font-bold mb-4">🔥 Trending Trips</h2>
+      <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+        <TrendingUp className="h-5 w-5 text-accent" /> Trending Trips
+      </h2>
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
