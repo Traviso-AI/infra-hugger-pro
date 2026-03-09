@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen, Calendar } from "lucide-react";
+import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen, Plane, Download } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -73,19 +73,22 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <User className="mr-2 h-4 w-4" /> Dashboard
+                  <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/my-trips")}>
+                  <Plane className="mr-2 h-4 w-4" /> My Trips
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/collections")}>
                   <FolderOpen className="mr-2 h-4 w-4" /> Collections
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/calendar")}>
-                  <Calendar className="mr-2 h-4 w-4" /> Travel Calendar
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
                   <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/install")}>
+                  <Download className="mr-2 h-4 w-4" /> Install App
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
@@ -130,13 +133,16 @@ export function Navbar() {
                   <Plus className="h-4 w-4 text-muted-foreground" /> {profile?.is_creator ? "Creator Studio" : "Create Trip"}
                 </Link>
                 <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <User className="h-4 w-4 text-muted-foreground" /> Dashboard
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" /> Dashboard
+                </Link>
+                <Link to="/my-trips" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Plane className="h-4 w-4 text-muted-foreground" /> My Trips
                 </Link>
                 <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
                   <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
                 </Link>
-                <Link to="/calendar" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <Calendar className="h-4 w-4 text-muted-foreground" /> Travel Calendar
+                <Link to="/install" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Download className="h-4 w-4 text-muted-foreground" /> Install App
                 </Link>
                 <div className="flex items-center gap-2 mt-2 px-3">
                   <NotificationBell />
