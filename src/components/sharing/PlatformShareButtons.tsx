@@ -18,7 +18,7 @@ interface PlatformShareButtonsProps {
   };
 }
 
-const platforms = [
+const platforms: { key: string; label: string; color: string; gradient?: string }[] = [
   { key: "twitter", label: "X / Twitter", color: "#000000" },
   { key: "facebook", label: "Facebook", color: "#1877F2" },
   { key: "whatsapp", label: "WhatsApp", color: "#25D366" },
@@ -26,7 +26,7 @@ const platforms = [
   { key: "instagram", label: "Instagram", color: "", gradient: "linear-gradient(45deg, #833AB4, #FD1D1D, #FCB045)" },
   { key: "tiktok", label: "TikTok", color: "#010101" },
   { key: "email", label: "Email", color: "#636366" },
-] as const;
+];
 
 function PlatformIcon({ platform }: { platform: string }) {
   const size = 18;
