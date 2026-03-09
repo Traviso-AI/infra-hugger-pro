@@ -443,6 +443,14 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
             <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
           </div>
           <div className="space-y-2">
+            <Label>Instagram</Label>
+            <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@yourusername" />
+          </div>
+          <div className="space-y-2">
+            <Label>X / Twitter</Label>
+            <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="@yourusername" />
+          </div>
+          <div className="space-y-2">
             <Label>Website</Label>
             <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
           </div>
