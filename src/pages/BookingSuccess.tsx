@@ -52,10 +52,10 @@ export default function BookingSuccess() {
         return;
       }
 
-      // Fetch current trip stats for increment
+      // Fetch trip info for display
       const { data: currentTrip } = await supabase
         .from("trips")
-        .select("commission_rate, destination, total_bookings, total_revenue")
+        .select("commission_rate, destination")
         .eq("id", tripId)
         .single();
 
