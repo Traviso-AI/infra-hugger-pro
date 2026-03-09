@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { ExploreFilterBar, ExploreFilters, defaultFilters } from "@/components/trips/ExploreFilterBar";
 import { SearchAutocomplete } from "@/components/explore/SearchAutocomplete";
-import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
+import { ExploreMap } from "@/components/explore/ExploreMap";
+import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus, Map as MapIcon, LayoutGrid } from "lucide-react";
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
