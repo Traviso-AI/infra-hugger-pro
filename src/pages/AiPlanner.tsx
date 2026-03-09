@@ -413,7 +413,7 @@ export default function AiPlanner() {
                       ))}
                     </div>
                   ) : msg.role === "assistant" ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : (
