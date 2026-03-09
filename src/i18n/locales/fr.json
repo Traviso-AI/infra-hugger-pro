@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "explore": "Explorer",
+    "leaderboard": "Classement",
+    "aiPlanner": "Planificateur IA",
+    "creatorStudio": "Studio Créateur",
+    "createTrip": "Créer un Voyage",
+    "dashboard": "Tableau de bord",
+    "collections": "Collections",
+    "calendar": "Calendrier",
+    "profile": "Profil",
+    "signOut": "Déconnexion",
+    "logIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "notifications": "Notifications",
+    "theme": "Thème"
+  },
+  "explore": {
+    "title": "Explorer les Voyages",
+    "subtitle": "Voyagez comme votre influenceur préféré. Trouvez leurs itinéraires, réservez leurs spots.",
+    "searchPlaceholder": "Rechercher destinations ou voyages...",
+    "filters": "Filtres",
+    "clearFilters": "Effacer les filtres",
+    "fromFollowing": "Des Créateurs que Vous Suivez",
+    "followPrompt": "Suivez des créateurs pour voir leurs voyages ici",
+    "trending": "Voyages Tendance",
+    "noTrips": "Aucun voyage trouvé",
+    "mostPopular": "Plus Populaire",
+    "newest": "Plus Récent",
+    "highestRated": "Mieux Noté",
+    "shortestTrips": "Voyages Courts",
+    "longestTrips": "Voyages Longs",
+    "whosTravel": "Qui voyage ?",
+    "duration": "Durée",
+    "vibe": "Ambiance",
+    "days": "jours"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcomeBack": "Bienvenue, {{name}}",
+    "createTrip": "Créer un Voyage",
+    "publishedTrips": "Voyages Publiés",
+    "totalBookings": "Total Réservations",
+    "revenue": "Revenus",
+    "myBookings": "Mes Réservations",
+    "myTrips": "Mes Voyages",
+    "myGroups": "Mes Plans de Groupe"
+  },
+  "calendar": {
+    "title": "Calendrier de Voyage",
+    "subtitle": "Vos voyages, réservations et plans de groupe en un coup d'œil.",
+    "bookedTrips": "Voyages Réservés",
+    "groupPlans": "Plans de Groupe",
+    "upcoming": "Prochains Voyages",
+    "noTripsDay": "Aucun voyage ce jour.",
+    "noUpcoming": "Aucun prochain voyage"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "signup": "S'inscrire",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "fullName": "Nom complet",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "createAccount": "Créer votre compte"
+  },
+  "common": {
+    "back": "Retour",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "install": "Installer l'App",
+    "installDesc": "Installez Traviso AI pour accéder hors ligne à vos itinéraires."
+  },
+  "pwa": {
+    "title": "Obtenez l'App",
+    "subtitle": "Installez Traviso AI pour la meilleure expérience",
+    "benefit1": "Accédez aux itinéraires hors ligne en voyage",
+    "benefit2": "Chargement plus rapide et sensation native",
+    "benefit3": "Ajoutez à votre écran d'accueil en secondes",
+    "installButton": "Installer Traviso AI",
+    "iosInstructions": "Appuyez sur Partager, puis 'Ajouter à l'écran d'accueil'",
+    "alreadyInstalled": "L'app est déjà installée !"
+  }
+}
