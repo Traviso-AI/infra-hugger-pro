@@ -96,27 +96,21 @@ export function PlatformShareButtons({ link, tripId, captions }: PlatformShareBu
   };
 
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-2 gap-2.5">
-        {socialPlatforms.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => handleShare(p.key)}
-            className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-white text-sm font-medium shadow-sm transition-transform active:scale-95 min-h-[48px]"
-            style={{ background: p.gradient || p.color }}
-          >
-            <PlatformIcon platform={p.key} />
-            {p.label}
-          </button>
-        ))}
-      </div>
-      <button
-        onClick={() => handleShare("email")}
-        className="flex items-center justify-center gap-2 w-full rounded-xl border py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-      >
-        <Mail size={16} />
-        Share via Email
-      </button>
+    <div className="flex flex-wrap justify-center gap-2.5">
+      {platforms.map((p) => (
+        <button
+          key={p.key}
+          onClick={() => handleShare(p.key)}
+          className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-white text-sm font-medium shadow-sm transition-transform active:scale-95 min-h-[48px]"
+          style={{
+            background: p.gradient || p.color,
+            width: "calc(50% - 0.3125rem)",
+          }}
+        >
+          <PlatformIcon platform={p.key} />
+          {p.label}
+        </button>
+      ))}
     </div>
   );
 }
