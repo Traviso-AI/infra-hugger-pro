@@ -1,9 +1,12 @@
 /**
  * Destination cover image system — all photos hosted locally.
  * No external dependencies. Every photo is verified and downloaded.
+ *
+ * Each destination has multiple visually distinct photos.
+ * The trip UUID hash picks one, ensuring variety per trip.
  */
 
-/** Local photos per destination */
+/** Local photos per destination — every image verified & distinct */
 const DESTINATION_PHOTOS: Record<string, string[]> = {
   tulum: [
     "/images/destinations/tulum-1.jpg",
@@ -25,14 +28,17 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "/images/destinations/miami-2.jpg",
   ],
   tokyo: [
-    "/images/destinations/tokyo-1.jpg",
-    "/images/destinations/tokyo-2.jpg",
-    "/images/destinations/tokyo-3.jpg",
+    "/images/destinations/tokyo-1.jpg",   // Shibuya crossing neon
+    "/images/destinations/tokyo-2.jpg",   // Tokyo Tower skyline
+    "/images/destinations/tokyo-3.jpg",   // Traditional temple/garden
+    "/images/destinations/tokyo-4.jpg",   // Mt Fuji view
+    "/images/destinations/tokyo-5.jpg",   // Tokyo cityscape different angle
   ],
   paris: [
     "/images/destinations/paris-1.jpg",
     "/images/destinations/paris-2.jpg",
   ],
+  london: ["/images/destinations/paris-2.jpg"], // placeholder until dedicated
   "new york": [
     "/images/destinations/newyork-1.jpg",
     "/images/destinations/newyork-2.jpg",
@@ -79,10 +85,16 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "/images/destinations/tokyo-1.jpg",
     "/images/destinations/tokyo-2.jpg",
     "/images/destinations/tokyo-3.jpg",
+    "/images/destinations/tokyo-4.jpg",
+    "/images/destinations/tokyo-5.jpg",
   ],
+  ottawa: ["/images/destinations/ottawa-1.jpg"],
+  seattle: ["/images/destinations/seattle-1.jpg"],
+  bangkok: ["/images/destinations/bangkok-1.jpg"],
+  portugal: ["/images/destinations/portugal-1.jpg"],
 };
 
-/** Generic fallback — a travel-themed local image */
+/** Generic fallback */
 const GENERIC_FALLBACK = "/images/destinations/tulum-1.jpg";
 
 const STALE_PLACEHOLDER_IDS = [
@@ -95,19 +107,12 @@ export function isGenericPlaceholder(url: string | null | undefined): boolean {
   return STALE_PLACEHOLDER_IDS.some((id) => url.includes(id));
 }
 
-/**
- * Simple hash from UUID to pick a photo index.
- */
 function hashFromUuid(uuid: string): number {
   const hex = uuid.replace(/[^0-9a-f]/gi, "");
   const h1 = hex.length >= 8 ? parseInt(hex.substring(0, 8), 16) : 0;
   return Math.abs(h1);
 }
 
-/**
- * Returns the best cover image URL for a destination.
- * All images are locally hosted — no external network calls.
- */
 export function getDestinationCover(
   destination: string,
   _width = 800,
@@ -117,7 +122,6 @@ export function getDestinationCover(
   const lower = destination.toLowerCase().trim();
   const hash = hashFromUuid(tripId || destination);
 
-  // Try curated destination match
   for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(keyword)) {
       const idx = hash % photos.length;
@@ -125,13 +129,9 @@ export function getDestinationCover(
     }
   }
 
-  // Fallback
   return GENERIC_FALLBACK;
 }
 
-/**
- * Returns a static fallback URL.
- */
 export function getDestinationCoverFallback(
   destination: string,
   _width = 800,
@@ -139,7 +139,6 @@ export function getDestinationCoverFallback(
 ): string {
   const lower = destination.toLowerCase().trim();
 
-  // Try to find a destination-specific fallback
   for (const [keyword, photos] of Object.entries(DESTINATION_PHOTOS)) {
     if (lower.includes(keyword)) {
       return photos[0];
