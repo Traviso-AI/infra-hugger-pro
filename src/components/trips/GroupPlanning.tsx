@@ -277,12 +277,11 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
         .from("trip_collaborators")
         .insert({ trip_id: tripId, role: "editor", invited_by: user.id });
       if (error) {
-        console.error("Generate link insert error:", error);
+        console.error("Generate link error:", error);
         toast.error("Failed to create invite link");
         setLoading(false);
         return;
       }
-      // Fetch the latest link invite (no email, most recent)
       const { data: created } = await supabase
         .from("trip_collaborators")
         .select("invite_token")
@@ -292,14 +291,13 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      const token = created?.invite_token;
-      if (token) {
-        const link = `${window.location.origin}/trip/${tripId}?invite=${token}`;
-        setInviteLink(link);
-        toast.success("Invite link created — share it with your friends!");
+      if (created?.invite_token) {
+        setInviteLink(`${window.location.origin}/trip/${tripId}?invite=${created.invite_token}`);
+        toast.success("Invite link created!");
       } else {
-        toast.error("Link created but couldn't retrieve it — try again");
+        toast.error("Couldn't retrieve link — try again");
       }
+      await fetchCollaborators();
     } catch (e) {
       console.error("Generate link error:", e);
       toast.error("Something went wrong");
@@ -316,8 +314,14 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   };
 
   const removeCollaborator = async (id: string) => {
-    await supabase.from("trip_collaborators").delete().eq("id", id);
+    const { error } = await supabase.from("trip_collaborators").delete().eq("id", id);
+    if (error) {
+      console.error("Remove error:", error);
+      toast.error("Failed to remove");
+      return;
+    }
     toast.success("Removed");
+    await fetchCollaborators();
   };
 
   const joinedCount = collaborators.filter(c => c.accepted_at).length;
