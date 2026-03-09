@@ -327,15 +327,15 @@ export default function TripDetail() {
                                       <Icon className="h-4 w-4 text-accent" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 flex-wrap">
+                                      <div className="flex items-center gap-2">
                                         <span className="font-medium text-sm">{act.title}</span>
                                         <Badge variant="outline" className="text-xs">{act.type}</Badge>
+                                        {canVote && (
+                                          <div className="ml-auto shrink-0">
+                                            <ActivityVoteButtons activityId={act.id} />
+                                          </div>
+                                        )}
                                       </div>
-                                      {canVote && (
-                                        <div className="mt-1">
-                                          <ActivityVoteButtons activityId={act.id} />
-                                        </div>
-                                      )}
                                       {act.description && <p className="text-xs text-muted-foreground mt-0.5">{act.description}</p>}
                                       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
                                         {act.location && <span>{act.location}</span>}
