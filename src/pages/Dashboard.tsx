@@ -209,19 +209,23 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Saved Trips */}
-      <div className="mb-8">
-        <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-          <Heart className="h-5 w-5 text-red-500" /> Saved Trips
-        </h2>
-        {myFavorites && myFavorites.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {myFavorites.map((fav: any) => {
-              const trip = fav.trips;
-              if (!trip) return null;
-              return (
+      {/* Following Feed + Saved Trips */}
+      <Tabs defaultValue="following" className="mb-8">
+        <TabsList>
+          <TabsTrigger value="following" className="gap-2">
+            <Users className="h-4 w-4" /> Following
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="gap-2">
+            <Heart className="h-4 w-4" /> Saved
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="following" className="mt-4">
+          {followingTrips && followingTrips.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {followingTrips.map((trip: any) => (
                 <TripCard
-                  key={fav.id}
+                  key={trip.id}
                   id={trip.id}
                   title={trip.title}
                   destination={trip.destination}
@@ -232,22 +236,61 @@ export default function Dashboard() {
                   totalBookings={trip.total_bookings}
                   creatorName={trip.profiles?.display_name}
                   creatorAvatar={trip.profiles?.avatar_url}
+                  creatorUsername={trip.profiles?.username}
+                  creatorId={trip.creator_id}
                   tags={trip.tags}
                 />
-              );
-            })}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
-              <Button asChild variant="outline">
-                <Link to="/explore">Explore Trips</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+                <p className="text-muted-foreground mb-4">Follow creators to see their latest trips here</p>
+                <Button asChild variant="outline">
+                  <Link to="/explore">Discover Creators</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="saved" className="mt-4">
+          {myFavorites && myFavorites.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {myFavorites.map((fav: any) => {
+                const trip = fav.trips;
+                if (!trip) return null;
+                return (
+                  <TripCard
+                    key={fav.id}
+                    id={trip.id}
+                    title={trip.title}
+                    destination={trip.destination}
+                    coverImage={trip.cover_image_url}
+                    durationDays={trip.duration_days}
+                    priceEstimate={trip.price_estimate}
+                    avgRating={trip.avg_rating}
+                    totalBookings={trip.total_bookings}
+                    creatorName={trip.profiles?.display_name}
+                    creatorAvatar={trip.profiles?.avatar_url}
+                    tags={trip.tags}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
+                <Button asChild variant="outline">
+                  <Link to="/explore">Explore Trips</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
