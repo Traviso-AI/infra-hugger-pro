@@ -91,14 +91,11 @@ serve(async (req) => {
           .join("\n\n---\n\n");
         console.log(`[scrape-social] Search fallback found ${results.length} results`);
       } else {
-        console.error("[scrape-social] Search fallback also failed:", searchData);
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Could not extract content from this link. Try pasting the post text directly.",
-          }),
-          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        console.log("[scrape-social] Search fallback also returned no results, returning URL-only context");
+        // Return success with minimal context so the AI can still try
+        markdown = "";
+        title = "";
+        description = `Social media post from: ${formattedUrl}`;
       }
     }
 
