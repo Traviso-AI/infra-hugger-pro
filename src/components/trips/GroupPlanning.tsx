@@ -189,6 +189,7 @@ export function GroupPlanningPanel({
 function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [creatorName, setCreatorName] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -203,6 +204,21 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
       .order("created_at");
     setCollaborators((data as Collaborator[]) || []);
   };
+
+  // Fetch trip creator name
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("trips")
+        .select("creator_id, profiles!trips_creator_id_profiles_fkey(display_name)")
+        .eq("id", tripId)
+        .single();
+      if (data) {
+        const profile = data.profiles as any;
+        setCreatorName(profile?.display_name || "Trip creator");
+      }
+    })();
+  }, [tripId]);
 
   useEffect(() => {
     fetchCollaborators();
