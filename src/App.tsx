@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout, AppLayoutNoFooter } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -29,52 +30,53 @@ import Terms from "./pages/Terms";
 import About from "./pages/About";
 import EditTrip from "./pages/EditTrip";
 import Collections from "./pages/Collections";
-
 import Install from "./pages/Install";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/trip/:id" element={<TripDetail />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/my-trips" element={<ProtectedRoute><MyTrips /></ProtectedRoute>} />
-              <Route path="/create-trip" element={<ProtectedRoute><CreateTrip /></ProtectedRoute>} />
-              <Route path="/edit-trip/:id" element={<ProtectedRoute><EditTrip /></ProtectedRoute>} />
-              <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
-              <Route path="/booking/:tripId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
-              <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/install" element={<Install />} />
-              <Route path="/profile/:username" element={<PublicProfile />} />
-              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/about" element={<About />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-            <Route element={<AppLayoutNoFooter />}>
-              <Route path="/ai-planner" element={<ProtectedRoute><AiPlanner /></ProtectedRoute>} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/explore" element={<ErrorBoundary><Explore /></ErrorBoundary>} />
+                <Route path="/leaderboard" element={<ErrorBoundary><Leaderboard /></ErrorBoundary>} />
+                <Route path="/trip/:id" element={<ErrorBoundary><TripDetail /></ErrorBoundary>} />
+                <Route path="/dashboard" element={<ProtectedRoute><ErrorBoundary><Dashboard /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/my-trips" element={<ProtectedRoute><ErrorBoundary><MyTrips /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/create-trip" element={<ProtectedRoute><ErrorBoundary><CreateTrip /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/edit-trip/:id" element={<ProtectedRoute><ErrorBoundary><EditTrip /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/booking/success" element={<ProtectedRoute><BookingSuccess /></ProtectedRoute>} />
+                <Route path="/booking/:tripId" element={<ProtectedRoute><ErrorBoundary><Booking /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/collections" element={<ProtectedRoute><ErrorBoundary><Collections /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><ErrorBoundary><Profile /></ErrorBoundary></ProtectedRoute>} />
+                <Route path="/install" element={<Install />} />
+                <Route path="/profile/:username" element={<ErrorBoundary><PublicProfile /></ErrorBoundary>} />
+                <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/about" element={<About />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+              <Route element={<AppLayoutNoFooter />}>
+                <Route path="/ai-planner" element={<ProtectedRoute><ErrorBoundary><AiPlanner /></ErrorBoundary></ProtectedRoute>} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
