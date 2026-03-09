@@ -228,14 +228,13 @@ export default function Dashboard() {
             })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
-              <Button asChild variant="outline">
-                <Link to="/explore">Explore Trips</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Heart}
+            title="No saved trips"
+            description="Heart trips you love while browsing to save them here for later."
+            actionLabel="Explore Trips"
+            actionHref="/explore"
+          />
         )}
       </div>
 
