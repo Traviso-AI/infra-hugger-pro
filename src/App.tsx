@@ -23,6 +23,9 @@ import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
