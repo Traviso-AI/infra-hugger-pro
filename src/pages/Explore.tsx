@@ -175,8 +175,9 @@ export default function Explore() {
                   </div>
                 ))}
               </div>
-              {/* Fade hint — shifted right to avoid clipping heart buttons */}
-              <div className="absolute right-0 top-0 bottom-4 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+              {/* Fade hints on both edges */}
+              <div className="absolute left-0 top-0 bottom-4 w-10 bg-gradient-to-r from-background to-transparent pointer-events-none z-[1]" />
+              <div className="absolute right-0 top-0 bottom-4 w-10 bg-gradient-to-l from-background to-transparent pointer-events-none z-[1]" />
               {/* Arrow buttons */}
               <button
                 onClick={() => scrollCarousel(-300)}
