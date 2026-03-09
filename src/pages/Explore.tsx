@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
+import { ExploreFilterBar, ExploreFilters, defaultFilters } from "@/components/trips/ExploreFilterBar";
 import { Input } from "@/components/ui/input";
 import { Search, Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus } from "lucide-react";
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
@@ -16,6 +17,7 @@ export default function Explore() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<ExploreFilters>(defaultFilters);
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
