@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 export default function Admin() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const { data: isAdmin, isLoading: checkingRole } = useQuery({
     queryKey: ["is-admin", user?.id],
