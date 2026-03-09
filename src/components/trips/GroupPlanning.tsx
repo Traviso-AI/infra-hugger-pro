@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Users, UserPlus, ThumbsUp, ThumbsDown, DollarSign, Copy, Check,
-  Link2, ChevronDown, ChevronUp, X, Wallet,
+  Link2, ChevronDown, ChevronUp, X, Wallet, MessageCircle, Send,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
