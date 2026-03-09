@@ -270,9 +270,9 @@ export default function PublicProfile() {
         </div>
       </div>
       {/* Social Feed Links */}
-      {(profile.instagram || profile.twitter) && (
+      {(profile.instagram || profile.twitter || profile.tiktok || profile.whatsapp) && (
         <div className="mb-8">
-          <SocialFeedEmbed instagram={profile.instagram} twitter={profile.twitter} />
+          <SocialFeedEmbed instagram={profile.instagram} twitter={profile.twitter} tiktok={profile.tiktok} whatsapp={profile.whatsapp} />
         </div>
       )}
 
@@ -353,6 +353,8 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [instagram, setInstagram] = useState(profile.instagram || "");
   const [twitter, setTwitter] = useState(profile.twitter || "");
+  const [tiktok, setTiktok] = useState(profile.tiktok || "");
+  const [whatsapp, setWhatsapp] = useState(profile.whatsapp || "");
   const [isCreator, setIsCreator] = useState(profile.is_creator || false);
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
@@ -386,7 +388,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null, instagram: instagram || null, twitter: twitter || null })
+        .update({ bio, website, display_name: displayName, is_creator: isCreator, avatar_url: avatarUrl || null, instagram: instagram || null, twitter: twitter || null, tiktok: tiktok || null, whatsapp: whatsapp || null })
         .eq("user_id", profile.user_id);
       if (error) throw error;
       await onSaved();
@@ -410,7 +412,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
           <Pencil className="h-3.5 w-3.5" /> Edit Profile
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">Edit Profile</DialogTitle>
         </DialogHeader>
@@ -443,16 +445,14 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
             <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
           </div>
           <div className="space-y-2">
-            <Label>Instagram</Label>
-            <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@yourusername" />
-          </div>
-          <div className="space-y-2">
-            <Label>X / Twitter</Label>
-            <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="@yourusername" />
-          </div>
-          <div className="space-y-2">
-            <Label>Website</Label>
-            <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Social & Links</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle" className="text-sm" />
+              <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="X / Twitter @handle" className="text-sm" />
+              <Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok @handle" className="text-sm" />
+              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp number" className="text-sm" />
+            </div>
+            <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website https://..." className="text-sm" />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>

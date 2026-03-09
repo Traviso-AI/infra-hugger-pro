@@ -376,12 +376,14 @@ export type Database = {
           id: string
           instagram: string | null
           is_creator: boolean | null
+          tiktok: string | null
           total_earnings: number | null
           twitter: string | null
           updated_at: string
           user_id: string
           username: string | null
           website: string | null
+          whatsapp: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -391,12 +393,14 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_creator?: boolean | null
+          tiktok?: string | null
           total_earnings?: number | null
           twitter?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
           website?: string | null
+          whatsapp?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -406,12 +410,14 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_creator?: boolean | null
+          tiktok?: string | null
           total_earnings?: number | null
           twitter?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
           website?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
