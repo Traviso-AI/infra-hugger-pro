@@ -374,32 +374,55 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}
-            >
-              {msg.role === "assistant" && <NalaAvatar />}
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  msg.role === "user"
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-card border"
-                }`}
+          {messages.map((msg, i) => {
+            const hasComparison = msg.role === "assistant" && msg.content.includes("```traviso-compare");
+            const parsed = hasComparison ? parseComparisonBlocks(msg.content) : null;
+
+            const handleComparisonSelect = (opt: ComparisonOption) => {
+              setInput(`I'd like to go with "${opt.name}" (${opt.price}). Please add it to my itinerary.`);
+            };
+
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}
               >
-                {msg.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                {msg.role === "assistant" && <NalaAvatar />}
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    msg.role === "user"
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-card border"
+                  }`}
+                >
+                  {msg.role === "assistant" && parsed ? (
+                    <div className="prose prose-sm max-w-none dark:prose-invert space-y-3">
+                      {parsed.textParts.map((text, j) => (
+                        <div key={`text-${j}`}>
+                          {text.trim() && <ReactMarkdown>{text}</ReactMarkdown>}
+                          {j < parsed.comparisons.length && parsed.comparisons[j] && (
+                            <ComparisonCard
+                              data={parsed.comparisons[j]!}
+                              onSelect={handleComparisonSelect}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : msg.role === "assistant" ? (
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
 
           {loading && (
             <motion.div
