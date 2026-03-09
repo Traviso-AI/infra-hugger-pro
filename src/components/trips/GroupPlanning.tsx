@@ -500,6 +500,151 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
 }
 
 // =============================================
+// Group Chat Tab — Real-time messaging
+// =============================================
+interface GroupMessage {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+}
+
+function GroupChatTab({ tripId }: { tripId: string }) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<GroupMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const { data } = await supabase
+        .from("group_messages")
+        .select("*")
+        .eq("trip_id", tripId)
+        .order("created_at", { ascending: true })
+        .limit(100);
+      if (data) {
+        setMessages(data as GroupMessage[]);
+        const userIds = [...new Set(data.map((m: any) => m.user_id))];
+        if (userIds.length > 0) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, avatar_url")
+            .in("user_id", userIds);
+          if (profs) {
+            const map: Record<string, { display_name: string; avatar_url: string | null }> = {};
+            profs.forEach((p: any) => { map[p.user_id] = p; });
+            setProfiles(map);
+          }
+        }
+      }
+    };
+    fetchMessages();
+
+    const channel = supabase
+      .channel(`group-chat-${tripId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "group_messages",
+        filter: `trip_id=eq.${tripId}`,
+      }, async (payload) => {
+        const msg = payload.new as GroupMessage;
+        setMessages((prev) => [...prev, msg]);
+        if (!profiles[msg.user_id]) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, avatar_url")
+            .eq("user_id", msg.user_id)
+            .maybeSingle();
+          if (prof) {
+            setProfiles((prev) => ({ ...prev, [prof.user_id]: prof }));
+          }
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [tripId]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || !user || sending) return;
+    setSending(true);
+    const { error } = await supabase
+      .from("group_messages")
+      .insert({ trip_id: tripId, user_id: user.id, content: newMessage.trim() });
+    if (error) {
+      toast.error("Failed to send message");
+      console.error("Chat send error:", error);
+    }
+    setNewMessage("");
+    setSending(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div
+        ref={scrollRef}
+        className="h-52 overflow-y-auto space-y-2 rounded-lg border bg-muted/20 p-2"
+      >
+        {messages.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-[11px] text-muted-foreground">No messages yet. Say hi to your group! 👋</p>
+          </div>
+        ) : (
+          messages.map((msg) => {
+            const isMe = msg.user_id === user?.id;
+            const profile = profiles[msg.user_id];
+            return (
+              <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
+                  {profile?.display_name?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div className={`max-w-[75%] ${isMe ? "text-right" : ""}`}>
+                  <p className="text-[10px] text-muted-foreground mb-0.5">
+                    {isMe ? "You" : profile?.display_name || "User"}
+                  </p>
+                  <div className={`rounded-lg px-2.5 py-1.5 text-xs ${isMe ? "bg-accent text-accent-foreground" : "bg-muted"}`}>
+                    {msg.content}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="flex gap-1.5">
+        <Input
+          placeholder="Type a message..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+          className="text-xs h-8"
+        />
+        <Button
+          size="sm"
+          onClick={handleSend}
+          disabled={sending || !newMessage.trim()}
+          className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// =============================================
 // Costs Tab — Split AFTER booking (uses actual booked price)
 // =============================================
 function CostsTab({
