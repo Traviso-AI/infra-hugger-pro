@@ -436,7 +436,7 @@ export default function AiPlanner() {
       </div>
 
       {/* Input */}
-      <div className="border-t bg-card px-4 py-3">
+      <div className="border-t bg-card px-3 sm:px-4 py-2 sm:py-3 pb-[env(safe-area-inset-bottom,8px)]">
         <div className="container max-w-3xl space-y-2">
           <AnimatePresence>
             {selectedFile && (
@@ -465,7 +465,7 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1.5 sm:gap-2 items-end">
             <ChatHistoryDrawer
               conversations={conversations}
               activeId={conversationId}
@@ -477,7 +477,7 @@ export default function AiPlanner() {
               onOpenChange={setDrawerOpen}
             />
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,text/plain" className="hidden" onChange={handleFileSelect} />
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 min-w-[40px]" onClick={() => fileInputRef.current?.click()} disabled={loading} title="Attach image or text file">
               {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
             </Button>
             <Textarea
@@ -488,7 +488,7 @@ export default function AiPlanner() {
               className="min-h-[40px] max-h-32 resize-none text-sm py-2.5 leading-5"
               rows={1}
             />
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-10 w-10" size="icon" onClick={sendMessage} disabled={!canSend}>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-10 w-10 min-w-[40px]" size="icon" onClick={sendMessage} disabled={!canSend}>
               <Send className="h-4 w-4" />
             </Button>
           </div>

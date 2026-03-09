@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -75,19 +76,21 @@ export default function Dashboard() {
     }
   };
   return (
-    <div className="container py-8 md:py-12">
-      <div className="flex items-center justify-between mb-8">
+    <div className="container px-4 py-6 md:py-12">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
         <div>
-          <h1 className="font-display text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {profile?.display_name || "Traveler"}</p>
+          <h1 className="font-display text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground text-sm">Welcome back, {profile?.display_name || "Traveler"}</p>
         </div>
-        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 w-full sm:w-auto">
           <Link to="/create-trip"><Plus className="mr-2 h-4 w-4" /> Create Trip</Link>
         </Button>
       </div>
 
+      <OnboardingChecklist />
+
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
         {[
           { label: "Published Trips", value: publishedCount, icon: MapPin },
           { label: "Total Bookings", value: totalBookings, icon: BookOpen },
