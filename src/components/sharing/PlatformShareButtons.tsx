@@ -97,19 +97,22 @@ export function PlatformShareButtons({ link, tripId, captions }: PlatformShareBu
 
   return (
     <div className="grid grid-cols-2 gap-2.5">
-      {platforms.map((p) => (
-        <button
-          key={p.key}
-          onClick={() => handleShare(p.key)}
-          className="flex items-center gap-2.5 rounded-xl px-4 py-3 text-white text-sm font-medium shadow-sm transition-transform active:scale-95 min-h-[48px]"
-          style={{
-            background: p.gradient || p.color,
-          }}
-        >
-          <PlatformIcon platform={p.key} />
-          {p.label}
-        </button>
-      ))}
+      {platforms.map((p, i) => {
+        const isLast = i === platforms.length - 1 && platforms.length % 2 !== 0;
+        return (
+          <button
+            key={p.key}
+            onClick={() => handleShare(p.key)}
+            className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-white text-sm font-medium shadow-sm transition-transform active:scale-95 min-h-[48px] ${isLast ? "col-span-2" : ""}`}
+            style={{
+              background: p.gradient || p.color,
+            }}
+          >
+            <PlatformIcon platform={p.key} />
+            {p.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
