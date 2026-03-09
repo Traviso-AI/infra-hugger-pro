@@ -107,7 +107,7 @@ export function TripCard({
           </div>
           {tags && tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {tags.slice(0, 3).map((tag) => (
+              {tags.slice(0, maxTags).map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
               ))}
             </div>
