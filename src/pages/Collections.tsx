@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, FolderOpen, Trash2, MapPin } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -178,14 +179,13 @@ export default function Collections() {
               })}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground mb-4">No trips in this collection yet. Browse and add trips from the Explore page!</p>
-                <Button asChild variant="outline">
-                  <Link to="/explore">Explore Trips</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={MapPin}
+              title="Collection is empty"
+              description="Add trips from the Explore page to start building this collection."
+              actionLabel="Explore Trips"
+              actionHref="/explore"
+            />
           )}
         </div>
       ) : (
@@ -225,17 +225,15 @@ export default function Collections() {
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Create collections to organize your saved trips — "Summer 2026", "Honeymoon Ideas", "Solo Adventures"
-                </p>
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Create Your First Collection
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={FolderOpen}
+              title="No collections yet"
+              description="Organize your saved trips into themed collections like 'Summer 2026' or 'Honeymoon Ideas'."
+              actionLabel="Create Your First Collection"
+              onAction={() => setDialogOpen(true)}
+              secondaryLabel="Explore Trips"
+              secondaryHref="/explore"
+            />
           )}
         </>
       )}

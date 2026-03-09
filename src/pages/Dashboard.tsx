@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil, FolderOpen } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { TripCard } from "@/components/trips/TripCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { CreatorAnalytics } from "@/components/dashboard/CreatorAnalytics";
@@ -152,14 +153,13 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">You haven't created any trips yet</p>
-              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link to="/create-trip">Create Your First Trip</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Plus}
+            title="No trips yet"
+            description="Create your first trip itinerary and share it with the world. Start earning when others book your recommendations."
+            actionLabel="Create Your First Trip"
+            actionHref="/create-trip"
+          />
         )}
       </div>
 
@@ -190,14 +190,13 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No bookings yet — explore trips and book your next adventure!</p>
-              <Button asChild variant="outline">
-                <Link to="/explore">Browse Trips</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={MapPin}
+            title="No bookings yet"
+            description="Browse curated trips from top creators and book your next adventure."
+            actionLabel="Explore Trips"
+            actionHref="/explore"
+          />
         )}
       </div>
 
@@ -230,14 +229,13 @@ export default function Dashboard() {
             })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No saved trips yet. Browse the marketplace and heart trips you love!</p>
-              <Button asChild variant="outline">
-                <Link to="/explore">Explore Trips</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Heart}
+            title="No saved trips"
+            description="Heart trips you love while browsing to save them here for later."
+            actionLabel="Explore Trips"
+            actionHref="/explore"
+          />
         )}
       </div>
 

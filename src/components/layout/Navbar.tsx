@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -53,7 +54,8 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
+          <ThemeToggle />
           {user && <NotificationBell />}
           {user ? (
             <DropdownMenu>
@@ -131,6 +133,10 @@ export function Navbar() {
                 <div className="flex items-center gap-2 mt-2 px-3">
                   <NotificationBell />
                   <span className="text-sm text-muted-foreground">Notifications</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 mt-1">
+                  <ThemeToggle />
+                  <span className="text-sm text-muted-foreground">Theme</span>
                 </div>
                 <div className="border-t mt-2 pt-2">
                   <Button variant="outline" size="sm" className="w-full" onClick={() => { handleSignOut(); setMobileOpen(false); }}>

@@ -5,7 +5,9 @@ import { TripCard } from "@/components/trips/TripCard";
 import { ExploreFilterBar, ExploreFilters, defaultFilters } from "@/components/trips/ExploreFilterBar";
 import { SearchAutocomplete } from "@/components/explore/SearchAutocomplete";
 import { ExploreMap } from "@/components/explore/ExploreMap";
-import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Users, ChevronLeft, ChevronRight, TrendingUp, UserPlus, Map as MapIcon, LayoutGrid, Compass } from "lucide-react";
+import { TripCardSkeletonGrid } from "@/components/skeletons/TripCardSkeleton";
+import { EmptyState } from "@/components/EmptyState";
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
@@ -313,11 +315,7 @@ export default function Explore() {
       {viewMode === "map" ? (
         <ExploreMap trips={trips} />
       ) : isLoading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="animate-pulse rounded-xl border bg-muted aspect-[4/5]" />
-          ))}
-        </div>
+        <TripCardSkeletonGrid />
       ) : trips.length > 0 ? (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -377,9 +375,13 @@ export default function Explore() {
           )}
         </>
       ) : (
-        <div className="rounded-xl border-2 border-dashed bg-muted/50 p-12 text-center">
-          <p className="text-muted-foreground">No trips found. Try a different search or check back later!</p>
-        </div>
+        <EmptyState
+          icon={Compass}
+          title="No trips found"
+          description="Try adjusting your search or filters. New trips are added daily by creators around the world."
+          actionLabel="Clear Filters"
+          onAction={() => { setSearch(""); setFilters(defaultFilters); }}
+        />
       )}
     </div>
   );
