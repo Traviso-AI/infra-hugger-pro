@@ -35,7 +35,12 @@ serve(async (req) => {
 
     console.log("[scrape-social] Scraping URL:", formattedUrl);
 
-    const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    // Try direct scrape first
+    let markdown = "";
+    let title = "";
+    let description = "";
+
+    const scrapeResp = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -49,19 +54,54 @@ serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
+    const scrapeData = await scrapeResp.json();
 
-    if (!response.ok) {
-      console.error("[scrape-social] Firecrawl error:", response.status, data);
-      return new Response(
-        JSON.stringify({ success: false, error: data.error || `Scrape failed (${response.status})` }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (scrapeResp.ok && scrapeData.success !== false) {
+      markdown = scrapeData.data?.markdown || scrapeData.markdown || "";
+      title = scrapeData.data?.metadata?.title || scrapeData.metadata?.title || "";
+      description = scrapeData.data?.metadata?.description || scrapeData.metadata?.description || "";
+    } else {
+      // Firecrawl doesn't support this site (e.g. TikTok, Instagram) — fall back to search
+      console.log("[scrape-social] Direct scrape failed, falling back to search for:", formattedUrl);
+
+      const searchResp = await fetch("https://api.firecrawl.dev/v1/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: formattedUrl,
+          limit: 3,
+          scrapeOptions: { formats: ["markdown"] },
+        }),
+      });
+
+      const searchData = await searchResp.json();
+
+      if (searchResp.ok && searchData.data && searchData.data.length > 0) {
+        const results = searchData.data;
+        title = results[0]?.title || results[0]?.metadata?.title || "";
+        description = results[0]?.description || results[0]?.metadata?.description || "";
+        markdown = results
+          .map((r: any, i: number) => {
+            const t = r.title || r.metadata?.title || `Result ${i + 1}`;
+            const content = r.markdown || r.description || "";
+            return `## ${t}\n\n${content}`;
+          })
+          .join("\n\n---\n\n");
+        console.log(`[scrape-social] Search fallback found ${results.length} results`);
+      } else {
+        console.error("[scrape-social] Search fallback also failed:", searchData);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Could not extract content from this link. Try pasting the post text directly.",
+          }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
-
-    const markdown = data.data?.markdown || data.markdown || "";
-    const title = data.data?.metadata?.title || data.metadata?.title || "";
-    const description = data.data?.metadata?.description || data.metadata?.description || "";
 
     console.log(`[scrape-social] Scraped ${markdown.length} chars, title: "${title}"`);
 
