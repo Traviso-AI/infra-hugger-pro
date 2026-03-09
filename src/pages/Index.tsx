@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, TrendingUp, Users, ArrowRight, MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
-import { TryNalaWidget } from "@/components/home/TryNalaWidget";
+
 
 
 export default function Index() {
@@ -191,8 +191,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Try Nala Widget */}
-      <TryNalaWidget />
+      {/* Try Nala removed — now a floating bubble in AppLayout */}
 
       {/* CTA */}
       <section className="bg-primary py-16 md:py-24">

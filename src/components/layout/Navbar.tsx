@@ -48,6 +48,9 @@ export function Navbar() {
               <Link to="/ai-planner" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 AI Planner
               </Link>
+              <Link to="/my-trips" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                My Trips
+              </Link>
               <Link to="/create-trip" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {profile?.is_creator ? "Creator Studio" : "Create Trip"}
               </Link>
