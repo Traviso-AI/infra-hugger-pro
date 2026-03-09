@@ -1,17 +1,18 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send } from "lucide-react";
+import { Plus, MapPin, Eye, DollarSign, BookOpen, Heart, Send, Pencil } from "lucide-react";
 import { TripCard } from "@/components/trips/TripCard";
 import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: myTrips } = useQuery({
     queryKey: ["my-trips", user?.id],
@@ -129,6 +130,9 @@ export default function Dashboard() {
                           <Send className="mr-1 h-3 w-3" /> Publish
                         </Button>
                       )}
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/edit-trip/${trip.id}`); }}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
                       {trip.price_estimate && (
                         <span className="text-sm font-medium">${trip.price_estimate}</span>
                       )}

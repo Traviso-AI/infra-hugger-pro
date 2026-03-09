@@ -33,10 +33,10 @@ export function Footer() {
           <div>
             <h4 className="font-sans text-sm font-semibold mb-3">Company</h4>
             <div className="flex flex-col gap-2">
-              <Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link>
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link>
               <a href="mailto:hello@traviso.ai" className="text-sm text-muted-foreground hover:text-foreground">Contact</a>
-              <Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</Link>
-              <Link to="/explore" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</Link>
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</Link>
+              <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</Link>
             </div>
           </div>
         </div>

@@ -5,12 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music } from "lucide-react";
+import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music, ArrowLeft } from "lucide-react";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
-import { useEffect } from "react";
+import { ReviewForm } from "@/components/trips/ReviewForm";
+import { usePageSEO } from "@/hooks/usePageSEO";
+import { useEffect, useMemo } from "react";
 
 const typeIcons: Record<string, any> = {
   flight: Plane, hotel: Hotel, restaurant: Utensils,
@@ -102,6 +104,13 @@ export default function TripDetail() {
 
   const creator = trip.profiles as any;
 
+  usePageSEO({
+    title: `${trip.title} — ${trip.destination}`,
+    description: trip.description || `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.`,
+    image: trip.cover_image_url || undefined,
+    url: `${window.location.origin}/trip/${trip.id}`,
+  });
+
   return (
     <div>
       {/* Hero */}
@@ -116,6 +125,14 @@ export default function TripDetail() {
       </div>
 
       <div className="container -mt-16 relative pb-16">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> Back
+        </Button>
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Booking sidebar — shown first on mobile, right column on desktop */}
           <div className="space-y-6 order-first lg:order-last">
@@ -230,11 +247,22 @@ export default function TripDetail() {
             )}
 
             {/* Reviews */}
-            {reviews && reviews.length > 0 && (
-              <div>
-                <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
+            <div>
+              <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
+              
+              {/* Review form — show for logged-in users who booked this trip */}
+              {user && trip.creator_id !== user.id && (
+                <div className="mb-4">
+                  <ReviewForm
+                    tripId={trip.id}
+                    existingReview={reviews?.find((r: any) => r.user_id === user.id) || null}
+                  />
+                </div>
+              )}
+
+              {reviews && reviews.length > 0 ? (
                 <div className="space-y-4">
-                  {reviews.map((review: any) => (
+                  {reviews.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
                     <Card key={review.id}>
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-2">
@@ -253,8 +281,10 @@ export default function TripDetail() {
                     </Card>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : !user ? (
+                <p className="text-sm text-muted-foreground">No reviews yet. Be the first to book and review!</p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
