@@ -152,14 +152,13 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">You haven't created any trips yet</p>
-              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Link to="/create-trip">Create Your First Trip</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Plus}
+            title="No trips yet"
+            description="Create your first trip itinerary and share it with the world. Start earning when others book your recommendations."
+            actionLabel="Create Your First Trip"
+            actionHref="/create-trip"
+          />
         )}
       </div>
 
