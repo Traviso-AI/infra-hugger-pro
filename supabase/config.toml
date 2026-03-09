@@ -11,3 +11,11 @@ project_id = "hmogswuliehwbmcyzfie"
     verify_jwt = false
   [functions.send-notification-email]
     verify_jwt = false
+  [functions.scrape-social]
+    verify_jwt = false
+  [functions.backfill-itineraries]
+    verify_jwt = false
+  [functions.generate-itinerary]
+    verify_jwt = false
+  [functions.export-data]
+    verify_jwt = false
