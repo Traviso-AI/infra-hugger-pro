@@ -131,8 +131,8 @@ const DESTINATION_PHOTOS: Record<string, string[]> = {
     "photo-1518638150340-f706e86654de",
   ],
   mexico: [
-    "photo-1682553064442-0b3e5f2e6d10",
-    "photo-1547995886-6dc09384c6e6",
+    "/images/destinations/tulum-1.jpg",
+    "/images/destinations/tulum-2.jpg",
   ],
   cabo: [
     "photo-1510097467424-192d713fd8b2",
