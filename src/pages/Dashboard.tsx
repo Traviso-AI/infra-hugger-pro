@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { TripCard } from "@/components/trips/TripCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { CreatorAnalytics } from "@/components/dashboard/CreatorAnalytics";
+import { MyGroups } from "@/components/dashboard/MyGroups";
 import { toast } from "sonner";
 
 export default function Dashboard() {
