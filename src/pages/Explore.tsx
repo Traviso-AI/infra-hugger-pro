@@ -122,7 +122,7 @@ export default function Explore() {
       {/* From Creators You Follow — horizontal carousel */}
       {user && followingTrips && followingTrips.length > 0 && !search && (
         <div className="mb-10 relative">
-          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+          <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
             <Users className="h-5 w-5 text-accent" /> From Creators You Follow
           </h2>
           <div className="relative group">
