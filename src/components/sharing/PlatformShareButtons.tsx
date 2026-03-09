@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { } from "react";
 import { Copy, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
