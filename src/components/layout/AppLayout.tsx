@@ -32,6 +32,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      <NalaChatBubble />
       <WelcomeModal
         open={showWelcome}
         onClose={() => setShowWelcome(false)}
