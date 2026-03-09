@@ -224,17 +224,15 @@ export default function Collections() {
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  Create collections to organize your saved trips — "Summer 2026", "Honeymoon Ideas", "Solo Adventures"
-                </p>
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => setDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Create Your First Collection
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={FolderOpen}
+              title="No collections yet"
+              description="Organize your saved trips into themed collections like 'Summer 2026' or 'Honeymoon Ideas'."
+              actionLabel="Create Your First Collection"
+              onAction={() => setDialogOpen(true)}
+              secondaryLabel="Explore Trips"
+              secondaryHref="/explore"
+            />
           )}
         </>
       )}
