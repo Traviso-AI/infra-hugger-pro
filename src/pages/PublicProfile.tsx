@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera } from "lucide-react";
+import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera, Instagram, MessageCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
