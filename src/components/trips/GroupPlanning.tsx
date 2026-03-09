@@ -134,7 +134,7 @@ export function GroupPlanningPanel({
             onClick={handleStartGroup}
           >
             <Users className="mr-1.5 h-3.5 w-3.5" />
-            {isOwner ? "Start a Group" : "Join Group Planning"}
+            Start a Group
           </Button>
         </div>
       </Card>
