@@ -46,71 +46,75 @@ export function ComparisonCard({ data, onSelect }: ComparisonCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full rounded-xl border bg-card overflow-hidden"
+      className="w-full rounded-xl border bg-card overflow-hidden my-3"
     >
       {/* Header */}
-      <div className="px-4 py-3 bg-muted/50 border-b flex items-center gap-2">
-        <Icon className="h-4 w-4 text-accent" />
-        <span className="text-sm font-semibold">
-          {categoryLabel[data.category?.toLowerCase()] || `Compare ${data.category}`}
-        </span>
-        {data.destination && (
-          <Badge variant="outline" className="text-[10px] ml-auto">
-            <MapPin className="h-2.5 w-2.5 mr-0.5" />
-            {data.destination}
-          </Badge>
-        )}
-        {data.dates && (
-          <Badge variant="outline" className="text-[10px]">
-            <Clock className="h-2.5 w-2.5 mr-0.5" />
-            {data.dates}
-          </Badge>
-        )}
+      <div className="px-3 sm:px-4 py-2.5 bg-muted/50 border-b flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-accent" />
+          <span className="text-sm font-semibold">
+            {categoryLabel[data.category?.toLowerCase()] || `Compare ${data.category}`}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 ml-auto">
+          {data.destination && (
+            <Badge variant="outline" className="text-[10px]">
+              <MapPin className="h-2.5 w-2.5 mr-0.5" />
+              {data.destination}
+            </Badge>
+          )}
+          {data.dates && (
+            <Badge variant="outline" className="text-[10px]">
+              <Clock className="h-2.5 w-2.5 mr-0.5" />
+              {data.dates}
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {/* Options grid */}
+      {/* Options */}
       <div className="divide-y">
         {data.options.map((opt, i) => {
           const isExpanded = expandedIdx === i;
           return (
-            <div key={i} className="relative">
-              {opt.recommended && (
-                <div className="absolute top-2 right-2 z-10">
-                  <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5">
-                    ⭐ Recommended
-                  </Badge>
-                </div>
-              )}
-
+            <div key={i}>
               <button
-                className="w-full text-left px-4 py-3 hover:bg-muted/30 transition-colors"
+                className="w-full text-left px-3 sm:px-4 py-3 hover:bg-muted/30 transition-colors"
                 onClick={() => setExpandedIdx(isExpanded ? null : i)}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate pr-20">{opt.name}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      {opt.rating && (
-                        <span className="flex items-center gap-0.5">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          {opt.rating}
-                        </span>
-                      )}
-                      {opt.location && (
-                        <span className="flex items-center gap-0.5">
-                          <MapPin className="h-3 w-3" />
-                          {opt.location}
-                        </span>
-                      )}
-                      {opt.duration && (
-                        <span className="flex items-center gap-0.5">
-                          <Clock className="h-3 w-3" />
-                          {opt.duration}
-                        </span>
-                      )}
-                    </div>
+                {/* Row 1: Name + recommended badge */}
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-sm font-medium truncate flex-1">{opt.name}</p>
+                  {opt.recommended && (
+                    <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0 shrink-0 leading-tight">
+                      ⭐ Pick
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Row 2: Meta + Price */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 text-xs text-muted-foreground flex-wrap min-w-0">
+                    {opt.rating && (
+                      <span className="flex items-center gap-0.5 shrink-0">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        {opt.rating}
+                      </span>
+                    )}
+                    {opt.location && (
+                      <span className="flex items-center gap-0.5 truncate">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{opt.location}</span>
+                      </span>
+                    )}
+                    {opt.duration && (
+                      <span className="flex items-center gap-0.5 shrink-0">
+                        <Clock className="h-3 w-3" />
+                        {opt.duration}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-bold text-accent">{opt.price}</span>
                     {isExpanded ? (
                       <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
@@ -126,7 +130,7 @@ export function ComparisonCard({ data, onSelect }: ComparisonCardProps) {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="px-4 pb-3 overflow-hidden"
+                  className="px-3 sm:px-4 pb-3 overflow-hidden"
                 >
                   {opt.highlights && opt.highlights.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-3">
@@ -146,7 +150,7 @@ export function ComparisonCard({ data, onSelect }: ComparisonCardProps) {
                       onSelect?.(opt);
                     }}
                   >
-                    Select {opt.name}
+                    Select this option
                   </Button>
                 </motion.div>
               )}
