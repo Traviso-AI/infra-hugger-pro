@@ -19,7 +19,17 @@ export default function Explore() {
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const scrollCarousel = (offset: number) => {
-    carouselRef.current?.scrollBy({ left: offset, behavior: "smooth" });
+    const el = carouselRef.current;
+    if (!el) return;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 10;
+    const atStart = el.scrollLeft <= 10;
+    if (offset > 0 && atEnd) {
+      el.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (offset < 0 && atStart) {
+      el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+    } else {
+      el.scrollBy({ left: offset, behavior: "smooth" });
+    }
   };
 
   // Reset to page 1 when search changes
