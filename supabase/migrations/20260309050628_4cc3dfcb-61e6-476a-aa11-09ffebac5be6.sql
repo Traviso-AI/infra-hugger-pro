@@ -1,0 +1,1 @@
+UPDATE public.trips SET avg_rating = 0;
