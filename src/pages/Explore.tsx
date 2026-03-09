@@ -373,9 +373,13 @@ export default function Explore() {
           )}
         </>
       ) : (
-        <div className="rounded-xl border-2 border-dashed bg-muted/50 p-12 text-center">
-          <p className="text-muted-foreground">No trips found. Try a different search or check back later!</p>
-        </div>
+        <EmptyState
+          icon={Compass}
+          title="No trips found"
+          description="Try adjusting your search or filters. New trips are added daily by creators around the world."
+          actionLabel="Clear Filters"
+          onAction={() => { setSearch(""); setFilters(defaultFilters); }}
+        />
       )}
     </div>
   );
