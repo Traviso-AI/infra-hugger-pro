@@ -65,15 +65,23 @@ export default function Booking() {
     const items: { title: string; type: string; price: number }[] = [];
     allActivities?.forEach((day: any) =>
       day.trip_activities?.forEach((act: any) => {
-        // Generate a mock price if none exists, based on type
+        // Deterministic price based on title hash if none exists
         let price = act.price_estimate;
         if (!price || price <= 0) {
+          // Simple string hash for deterministic pricing
+          let hash = 0;
+          const str = act.title || act.id || '';
+          for (let c = 0; c < str.length; c++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(c);
+            hash |= 0;
+          }
+          hash = Math.abs(hash);
           const t = act.type?.toLowerCase();
-          if (t === "flight") price = 280 + Math.floor(Math.random() * 200);
-          else if (t === "hotel") price = 120 + Math.floor(Math.random() * 150);
-          else if (t === "restaurant") price = 25 + Math.floor(Math.random() * 50);
-          else if (t === "transport") price = 15 + Math.floor(Math.random() * 30);
-          else price = 40 + Math.floor(Math.random() * 80);
+          if (t === "flight") price = 280 + (hash % 200);
+          else if (t === "hotel") price = 120 + (hash % 150);
+          else if (t === "restaurant") price = 25 + (hash % 50);
+          else if (t === "transport") price = 15 + (hash % 30);
+          else price = 40 + (hash % 80);
         }
         items.push({ title: act.title, type: act.type?.toLowerCase() || "activity", price });
       })

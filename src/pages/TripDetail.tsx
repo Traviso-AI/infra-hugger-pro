@@ -116,6 +116,14 @@ export default function TripDetail() {
       </div>
 
       <div className="container -mt-16 relative pb-16">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4 -ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> Back
+        </Button>
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Booking sidebar — shown first on mobile, right column on desktop */}
           <div className="space-y-6 order-first lg:order-last">
