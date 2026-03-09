@@ -469,8 +469,8 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
               <Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle" className="h-9 text-sm" />
               <Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="X @handle" className="h-9 text-sm" />
               <Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok @handle" className="h-9 text-sm" />
-              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp wa.me link" className="h-9 text-sm" />
-              <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website URL" className="h-9 text-sm col-span-2" />
+              <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp URL" className="h-9 text-sm" />
+              <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website URL" className="h-9 text-sm" />
             </div>
           </div>
 
