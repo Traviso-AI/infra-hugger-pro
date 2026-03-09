@@ -221,7 +221,7 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchCollaborators = async () => {
     const { data } = await supabase
