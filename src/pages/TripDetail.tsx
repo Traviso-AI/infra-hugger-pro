@@ -266,7 +266,12 @@ export default function TripDetail() {
               </div>
             )}
 
-            {/* Reviews */}
+            {/* Activity Map */}
+            {allActivities.length > 0 && (
+              <ActivityMap activities={allActivities} destination={trip.destination} />
+            )}
+
+
             <div>
               <h2 className="font-display text-2xl font-bold mb-4">Reviews</h2>
               
