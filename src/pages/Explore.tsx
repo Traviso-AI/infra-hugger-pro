@@ -116,7 +116,7 @@ export default function Explore() {
 
       {/* From Creators You Follow */}
       {user && followingTrips && followingTrips.length > 0 && !search && (
-        <div className="mb-10">
+        <div className="mb-10 rounded-xl border bg-accent/5 p-6">
           <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
             <Users className="h-5 w-5 text-accent" /> From Creators You Follow
           </h2>
@@ -142,6 +142,8 @@ export default function Explore() {
           </div>
         </div>
       )}
+
+      <h2 className="font-display text-xl font-bold mb-4">All Trips</h2>
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
