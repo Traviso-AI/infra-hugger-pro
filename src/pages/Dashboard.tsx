@@ -90,6 +90,11 @@ export default function Dashboard() {
 
       <OnboardingChecklist />
 
+      {/* Creator Analytics */}
+      <div className="mb-6 md:mb-8">
+        <CreatorAnalytics />
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
         {[
