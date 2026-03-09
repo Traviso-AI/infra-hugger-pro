@@ -76,8 +76,9 @@ export default function Collections() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collections"] });
-      if (selectedCollection) setSelectedCollection(null);
+      if (selectedCollection === deleteTarget?.id) setSelectedCollection(null);
       toast.success("Collection deleted");
+      setDeleteTarget(null);
     },
   });
 
@@ -89,6 +90,7 @@ export default function Collections() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collection-items"] });
       toast.success("Trip removed from collection");
+      setDeleteTarget(null);
     },
   });
 
