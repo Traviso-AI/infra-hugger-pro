@@ -362,14 +362,14 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
 
       {/* Member list */}
       <div className="space-y-1.5">
-        {/* Current user as organizer — always first */}
+        {/* Trip creator / organizer — always first */}
         <div className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-accent/5 border border-accent/10">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
               👑
             </div>
             <span className="truncate text-xs font-medium">
-              You (organizer)
+              {isOwner ? "You" : creatorName || "Trip creator"}
             </span>
           </div>
           <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Organizer</Badge>
@@ -377,15 +377,17 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
 
         {collaborators.map((c) => {
           const canRemove = isOwner || c.invited_by === user?.id;
+          // Determine display name
+          const displayName = c.user_id === user?.id
+            ? "You"
+            : c.email || "Link invite";
           return (
             <div key={c.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-muted/40">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
-                  {c.email ? c.email[0].toUpperCase() : "?"}
+                  {c.email ? c.email[0].toUpperCase() : displayName[0]?.toUpperCase() || "?"}
                 </div>
-                <span className="truncate text-xs">
-                  {c.user_id === user?.id ? "You" : c.email || "Link invite"}
-                </span>
+                <span className="truncate text-xs">{displayName}</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {c.accepted_at ? (
