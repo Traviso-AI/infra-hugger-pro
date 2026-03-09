@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music } from "lucide-react";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
+import { ShareTripModal } from "@/components/sharing/ShareTripModal";
+import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
+import { useEffect } from "react";
 
 const typeIcons: Record<string, any> = {
   flight: Plane, hotel: Hotel, restaurant: Utensils,
@@ -18,6 +21,24 @@ export default function TripDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Store referral
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) sessionStorage.setItem("traviso_referral", ref);
+  }, [searchParams]);
+
+  // Track view
+  useEffect(() => {
+    if (!id) return;
+    const ref = searchParams.get("ref");
+    supabase.from("trip_views").insert({
+      trip_id: id,
+      viewer_id: user?.id || null,
+      referral_source: ref || null,
+    }).then(() => {});
+  }, [id]);
 
   const { data: trip, isLoading } = useQuery({
     queryKey: ["trip", id],
@@ -109,6 +130,9 @@ export default function TripDetail() {
                 <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={handleBook}>
                   Check Availability →
                 </Button>
+                <div className="mt-2">
+                  <ShareTripModal trip={trip} creator={creator} />
+                </div>
 
                 {creator && (
                   <div className="mt-6 border-t pt-4">
@@ -234,6 +258,7 @@ export default function TripDetail() {
           </div>
         </div>
       </div>
+      <ViralSignupBanner />
     </div>
   );
 }

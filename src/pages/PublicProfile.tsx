@@ -13,9 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareProfileModal } from "@/components/sharing/ShareProfileModal";
+import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 
 export default function PublicProfile() {
   const { username } = useParams();
@@ -43,6 +45,16 @@ export default function PublicProfile() {
   });
 
   const isOwnProfile = user && profile && user.id === profile.user_id;
+
+  // Track profile view
+  useEffect(() => {
+    if (!profile?.user_id) return;
+    if (user?.id === profile.user_id) return; // don't track own views
+    supabase.from("profile_views").insert({
+      profile_id: profile.user_id,
+      viewer_id: user?.id || null,
+    }).then(() => {});
+  }, [profile?.user_id]);
 
   const { data: createdTrips } = useQuery({
     queryKey: ["profile-trips-created", profile?.user_id],
@@ -228,19 +240,27 @@ export default function PublicProfile() {
 
         <div className="mt-4 flex items-center gap-2">
           {isOwnProfile ? (
-            <EditProfileDialog profile={profile} onSaved={refreshProfile} />
+            <>
+              <EditProfileDialog profile={profile} onSaved={refreshProfile} />
+              <ShareProfileModal profile={profile} tripsCreatedCount={tripsCreatedCount} tripsTakenCount={tripsTakenCount} rank={rank} />
+            </>
           ) : user && user.id !== profile.user_id ? (
-            <Button
-              variant={isFollowing ? "outline" : "default"}
-              size="sm"
-              className={isFollowing ? "gap-2" : "gap-2 bg-accent text-accent-foreground hover:bg-accent/90"}
-              onClick={handleFollow}
-              disabled={followLoading}
-            >
-              {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-              {isFollowing ? "Unfollow" : "Follow"}
-            </Button>
-          ) : null}
+            <>
+              <Button
+                variant={isFollowing ? "outline" : "default"}
+                size="sm"
+                className={isFollowing ? "gap-2" : "gap-2 bg-accent text-accent-foreground hover:bg-accent/90"}
+                onClick={handleFollow}
+                disabled={followLoading}
+              >
+                {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                {isFollowing ? "Unfollow" : "Follow"}
+              </Button>
+              <ShareProfileModal profile={profile} tripsCreatedCount={tripsCreatedCount} tripsTakenCount={tripsTakenCount} rank={rank} />
+            </>
+          ) : (
+            <ShareProfileModal profile={profile} tripsCreatedCount={tripsCreatedCount} tripsTakenCount={tripsTakenCount} rank={rank} />
+          )}
         </div>
       </div>
 
@@ -309,6 +329,7 @@ export default function PublicProfile() {
           )}
         </TabsContent>
       </Tabs>
+      <ViralSignupBanner />
     </div>
   );
 }
