@@ -83,6 +83,27 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
+  // Collect activity images for the gallery
+  const activityImages = useMemo(() => {
+    if (!days) return [];
+    return days.flatMap((day: any) =>
+      (day.trip_activities || [])
+        .filter((a: any) => a.image_url)
+        .map((a: any) => a.image_url as string)
+    );
+  }, [days]);
+
+  // Collect all activities with locations for the map
+  const allActivities = useMemo(() => {
+    if (!days) return [];
+    return days.flatMap((day: any) =>
+      (day.trip_activities || []).map((a: any) => ({
+        ...a,
+        day_number: day.day_number,
+      }))
+    );
+  }, [days]);
+
   usePageSEO({
     title: trip ? `${trip.title} — ${trip.destination}` : "Loading trip...",
     description: trip?.description || (trip ? `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.` : undefined),
@@ -112,27 +133,6 @@ export default function TripDetail() {
   };
 
   const creator = trip.profiles as any;
-
-  // Collect activity images for the gallery
-  const activityImages = useMemo(() => {
-    if (!days) return [];
-    return days.flatMap((day: any) =>
-      (day.trip_activities || [])
-        .filter((a: any) => a.image_url)
-        .map((a: any) => a.image_url as string)
-    );
-  }, [days]);
-
-  // Collect all activities with locations for the map
-  const allActivities = useMemo(() => {
-    if (!days) return [];
-    return days.flatMap((day: any) =>
-      (day.trip_activities || []).map((a: any) => ({
-        ...a,
-        day_number: day.day_number,
-      }))
-    );
-  }, [days]);
 
   return (
     <div>
