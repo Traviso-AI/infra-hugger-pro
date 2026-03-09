@@ -177,17 +177,24 @@ export function GroupPlanningPanel({
           >
             <div className="border-t px-4 pb-4 pt-2">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full grid grid-cols-2 h-9 mb-3">
+                <TabsList className="w-full grid grid-cols-3 h-9 mb-3">
                   <TabsTrigger value="members" className="text-xs gap-1.5">
                     <Users className="h-3 w-3" /> Members
                   </TabsTrigger>
+                  <TabsTrigger value="chat" className="text-xs gap-1.5">
+                    <MessageCircle className="h-3 w-3" /> Chat
+                  </TabsTrigger>
                   <TabsTrigger value="costs" className="text-xs gap-1.5">
-                    <DollarSign className="h-3 w-3" /> Split Costs
+                    <DollarSign className="h-3 w-3" /> Costs
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="members" className="mt-0">
                   <MembersTab tripId={tripId} isOwner={isOrganizer} />
+                </TabsContent>
+
+                <TabsContent value="chat" className="mt-0">
+                  <GroupChatTab tripId={tripId} />
                 </TabsContent>
 
                 <TabsContent value="costs" className="mt-0">
