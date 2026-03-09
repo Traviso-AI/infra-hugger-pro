@@ -396,8 +396,8 @@ export default function AiPlanner() {
                   {[
                     "3 days in Tokyo with friends, cherry blossoms and nightlife",
                     "Weekend in Barcelona, food and architecture",
-                    "Miami beach party weekend for 4 people",
-                    "5-day wellness retreat in Bali",
+                    "🔗 Paste a TikTok or Instagram travel link here",
+                    "Find me hotels in Tulum for March 15-20",
                   ].map((suggestion, i) => (
                     <motion.div
                       key={suggestion}
