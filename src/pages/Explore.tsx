@@ -114,30 +114,31 @@ export default function Explore() {
         />
       </div>
 
-      {/* From Creators You Follow */}
+      {/* From Creators You Follow — horizontal carousel */}
       {user && followingTrips && followingTrips.length > 0 && !search && (
-        <div className="mb-10 rounded-xl border bg-accent/5 p-6">
-          <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+        <div className="mb-10">
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
             <Users className="h-5 w-5 text-accent" /> From Creators You Follow
           </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 snap-x snap-mandatory scrollbar-hide">
             {followingTrips.map((trip: any) => (
-              <TripCard
-                key={trip.id}
-                id={trip.id}
-                title={trip.title}
-                destination={trip.destination}
-                coverImage={trip.cover_image_url}
-                durationDays={trip.duration_days}
-                priceEstimate={trip.price_estimate}
-                avgRating={trip.avg_rating}
-                totalBookings={trip.total_bookings}
-                creatorName={trip.profiles?.display_name}
-                creatorAvatar={trip.profiles?.avatar_url}
-                creatorUsername={trip.profiles?.username}
-                creatorId={trip.creator_id}
-                tags={trip.tags}
-              />
+              <div key={trip.id} className="min-w-[260px] max-w-[280px] snap-start flex-shrink-0">
+                <TripCard
+                  id={trip.id}
+                  title={trip.title}
+                  destination={trip.destination}
+                  coverImage={trip.cover_image_url}
+                  durationDays={trip.duration_days}
+                  priceEstimate={trip.price_estimate}
+                  avgRating={trip.avg_rating}
+                  totalBookings={trip.total_bookings}
+                  creatorName={trip.profiles?.display_name}
+                  creatorAvatar={trip.profiles?.avatar_url}
+                  creatorUsername={trip.profiles?.username}
+                  creatorId={trip.creator_id}
+                  tags={trip.tags}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -153,7 +154,7 @@ export default function Explore() {
         </div>
       ) : trips.length > 0 ? (
         <>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
             {trips.map((trip: any) => (
               <TripCard
                 key={trip.id}
