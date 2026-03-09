@@ -392,7 +392,7 @@ function EditProfileDialog({ profile, onSaved }: { profile: any; onSaved: () => 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-4 gap-2">
+        <Button variant="outline" size="sm" className="gap-2">
           <Pencil className="h-3.5 w-3.5" /> Edit Profile
         </Button>
       </DialogTrigger>
