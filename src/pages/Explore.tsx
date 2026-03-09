@@ -117,6 +117,19 @@ export default function Explore() {
     );
   }, [allFollowingTrips, search]);
 
+  // Track carousel scroll position for smart fades
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    // Small delay to let DOM update after filtered trips change
+    const timer = setTimeout(updateScrollState, 100);
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", updateScrollState);
+    };
+  }, [updateScrollState, filteredFollowingTrips]);
+
   const trips = data?.trips || [];
   const totalPages = Math.ceil((data?.total || 0) / PAGE_SIZE);
 
