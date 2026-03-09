@@ -75,6 +75,23 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
+  // Check if current user is a collaborator on this trip
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["trip-collaborator", id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from("trip_collaborators")
+        .select("id")
+        .eq("trip_id", id!)
+        .eq("user_id", user.id)
+        .not("accepted_at", "is", null)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && !!user,
+  });
+
   const { data: days } = useQuery({
     queryKey: ["trip-days", id],
     queryFn: async () => {
