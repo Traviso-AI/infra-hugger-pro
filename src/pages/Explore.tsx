@@ -114,6 +114,35 @@ export default function Explore() {
         />
       </div>
 
+      {/* From Creators You Follow */}
+      {user && followingTrips && followingTrips.length > 0 && !search && (
+        <div className="mb-10">
+          <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5 text-accent" /> From Creators You Follow
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {followingTrips.map((trip: any) => (
+              <TripCard
+                key={trip.id}
+                id={trip.id}
+                title={trip.title}
+                destination={trip.destination}
+                coverImage={trip.cover_image_url}
+                durationDays={trip.duration_days}
+                priceEstimate={trip.price_estimate}
+                avgRating={trip.avg_rating}
+                totalBookings={trip.total_bookings}
+                creatorName={trip.profiles?.display_name}
+                creatorAvatar={trip.profiles?.avatar_url}
+                creatorUsername={trip.profiles?.username}
+                creatorId={trip.creator_id}
+                tags={trip.tags}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
