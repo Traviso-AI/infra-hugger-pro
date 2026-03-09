@@ -197,11 +197,11 @@ export default function AiPlanner() {
     if (socialUrl) {
       toast.info("Extracting content from link...");
       const scraped = await scrapeSocialUrl(socialUrl);
-      if (scraped) {
+      if (scraped && !scraped.includes("[Link detected:")) {
         userText = userText + "\n\n" + scraped + "\n\nPlease extract a trip itinerary from this social media post. Create a detailed day-by-day plan based on the destinations, activities, and recommendations mentioned.";
       } else {
-        toast.warning("Couldn't extract content — Nala will try her best with just the URL.");
-        userText = userText + "\n\nThe user pasted this social media link: " + socialUrl + "\n\nPlease try to create a trip itinerary based on what you know about this destination or content. Ask the user for more details if needed.";
+        toast.info("Couldn't read that link directly — Nala will ask you about it.");
+        userText = userText + "\n\n[SYSTEM: The user pasted a social media link (" + socialUrl + ") but we could NOT scrape its content. DO NOT guess or assume what destination or content is in the video. Instead, ask the user: 'I wasn't able to read that link directly! 🐾 Could you tell me what destination or trip the video was about? Just give me the highlights and I'll build you an amazing itinerary!']";
       }
     }
 
