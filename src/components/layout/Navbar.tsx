@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen, Calendar } from "lucide-react";
+import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen, Plane, Download } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
