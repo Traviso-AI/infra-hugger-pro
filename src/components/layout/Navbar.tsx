@@ -73,19 +73,22 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <User className="mr-2 h-4 w-4" /> Dashboard
+                  <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/my-trips")}>
+                  <Plane className="mr-2 h-4 w-4" /> My Trips
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/collections")}>
                   <FolderOpen className="mr-2 h-4 w-4" /> Collections
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/calendar")}>
-                  <Calendar className="mr-2 h-4 w-4" /> Travel Calendar
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
                   <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/install")}>
+                  <Download className="mr-2 h-4 w-4" /> Install App
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
