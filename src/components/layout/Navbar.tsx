@@ -135,6 +135,9 @@ export function Navbar() {
                 <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
                   <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
                 </Link>
+                <Link to="/calendar" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Calendar className="h-4 w-4 text-muted-foreground" /> Travel Calendar
+                </Link>
                 <div className="flex items-center gap-2 mt-2 px-3">
                   <NotificationBell />
                   <span className="text-sm text-muted-foreground">Notifications</span>
@@ -142,6 +145,10 @@ export function Navbar() {
                 <div className="flex items-center gap-2 px-3 mt-1">
                   <ThemeToggle />
                   <span className="text-sm text-muted-foreground">Theme</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 mt-1">
+                  <LanguageSwitcher />
+                  <span className="text-sm text-muted-foreground">Language</span>
                 </div>
                 <div className="border-t mt-2 pt-2">
                   <Button variant="outline" size="sm" className="w-full" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
