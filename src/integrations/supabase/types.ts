@@ -23,6 +23,7 @@ export type Database = {
           guests: number | null
           hotel_id: string | null
           id: string
+          referral_username: string | null
           status: string
           stripe_payment_id: string | null
           total_price: number | null
@@ -38,6 +39,7 @@ export type Database = {
           guests?: number | null
           hotel_id?: string | null
           id?: string
+          referral_username?: string | null
           status?: string
           stripe_payment_id?: string | null
           total_price?: number | null
@@ -53,6 +55,7 @@ export type Database = {
           guests?: number | null
           hotel_id?: string | null
           id?: string
+          referral_username?: string | null
           status?: string
           stripe_payment_id?: string | null
           total_price?: number | null
@@ -233,6 +236,35 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_views: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_views_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -410,6 +442,73 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trip_days_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_shares: {
+        Row: {
+          created_at: string
+          id: string
+          platform: string
+          sharer_id: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          platform: string
+          sharer_id?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: string
+          sharer_id?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_shares_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_views: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          referral_source: string | null
+          trip_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          referral_source?: string | null
+          trip_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          referral_source?: string | null
+          trip_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_views_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
