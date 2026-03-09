@@ -20,6 +20,7 @@ interface Collaborator {
   email: string | null;
   role: string;
   invite_token: string;
+  invited_by: string;
   accepted_at: string | null;
   created_at: string;
 }
