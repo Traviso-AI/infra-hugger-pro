@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { TripCard } from "@/components/trips/TripCard";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { CreatorAnalytics } from "@/components/dashboard/CreatorAnalytics";
+import { MyGroups } from "@/components/dashboard/MyGroups";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -95,6 +96,9 @@ export default function Dashboard() {
       <div className="mb-6 md:mb-8">
         <CreatorAnalytics />
       </div>
+
+      {/* My Group Plans */}
+      <MyGroups />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-6 md:mb-8">
