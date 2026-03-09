@@ -46,6 +46,16 @@ export default function PublicProfile() {
 
   const isOwnProfile = user && profile && user.id === profile.user_id;
 
+  // Track profile view
+  useEffect(() => {
+    if (!profile?.user_id) return;
+    if (user?.id === profile.user_id) return; // don't track own views
+    supabase.from("profile_views").insert({
+      profile_id: profile.user_id,
+      viewer_id: user?.id || null,
+    }).then(() => {});
+  }, [profile?.user_id]);
+
   const { data: createdTrips } = useQuery({
     queryKey: ["profile-trips-created", profile?.user_id],
     queryFn: async () => {
