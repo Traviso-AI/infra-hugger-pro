@@ -198,6 +198,19 @@ export default function Admin() {
           </div>
         </TabsContent>
       </Tabs>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete trip?"
+        description={`"${deleteTarget?.title}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel="Delete Trip"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteTrip(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }
