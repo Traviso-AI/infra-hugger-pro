@@ -70,12 +70,6 @@ export default function Explore() {
       if (search) {
         countQuery = countQuery.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
       }
-      if (filters.minPrice > 0) {
-        countQuery = countQuery.gte("price_estimate", filters.minPrice);
-      }
-      if (filters.maxPrice < 10000) {
-        countQuery = countQuery.lte("price_estimate", filters.maxPrice);
-      }
       if (filters.minDuration > 1) {
         countQuery = countQuery.gte("duration_days", filters.minDuration);
       }
@@ -84,6 +78,10 @@ export default function Explore() {
       }
       if (filters.selectedTags.length > 0) {
         countQuery = countQuery.overlaps("tags", filters.selectedTags);
+      }
+      // Traveler type tags are stored as regular tags
+      if (filters.travelerTypes.length > 0) {
+        countQuery = countQuery.overlaps("tags", filters.travelerTypes);
       }
 
       const { count } = await countQuery;
@@ -95,9 +93,9 @@ export default function Explore() {
       let orderCol = "total_bookings";
       let ascending = false;
       if (filters.sortBy === "newest") { orderCol = "created_at"; ascending = false; }
-      else if (filters.sortBy === "price-low") { orderCol = "price_estimate"; ascending = true; }
-      else if (filters.sortBy === "price-high") { orderCol = "price_estimate"; ascending = false; }
       else if (filters.sortBy === "rating") { orderCol = "avg_rating"; ascending = false; }
+      else if (filters.sortBy === "duration-short") { orderCol = "duration_days"; ascending = true; }
+      else if (filters.sortBy === "duration-long") { orderCol = "duration_days"; ascending = false; }
 
       let query = supabase
         .from("trips")
@@ -109,12 +107,6 @@ export default function Explore() {
       if (search) {
         query = query.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
       }
-      if (filters.minPrice > 0) {
-        query = query.gte("price_estimate", filters.minPrice);
-      }
-      if (filters.maxPrice < 10000) {
-        query = query.lte("price_estimate", filters.maxPrice);
-      }
       if (filters.minDuration > 1) {
         query = query.gte("duration_days", filters.minDuration);
       }
@@ -123,6 +115,9 @@ export default function Explore() {
       }
       if (filters.selectedTags.length > 0) {
         query = query.overlaps("tags", filters.selectedTags);
+      }
+      if (filters.travelerTypes.length > 0) {
+        query = query.overlaps("tags", filters.travelerTypes);
       }
 
       const { data: trips } = await query;
