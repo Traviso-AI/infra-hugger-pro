@@ -13,9 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MapPin, Globe, Trophy, Pencil, Sparkles, Users, UserPlus, UserMinus, Camera } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareProfileModal } from "@/components/sharing/ShareProfileModal";
+import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 
 export default function PublicProfile() {
   const { username } = useParams();
