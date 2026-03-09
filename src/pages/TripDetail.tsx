@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Star, Users, Calendar, Plane, Hotel, Utensils, Activity, Bus, Music } from "lucide-react";
 import { getDestinationCover, getDestinationCoverFallback, isGenericPlaceholder } from "@/lib/destination-covers";
 import { toast } from "sonner";
+import { ShareTripModal } from "@/components/sharing/ShareTripModal";
+import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
+import { useEffect } from "react";
 
 const typeIcons: Record<string, any> = {
   flight: Plane, hotel: Hotel, restaurant: Utensils,
