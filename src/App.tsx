@@ -15,6 +15,7 @@ import Explore from "./pages/Explore";
 import TripDetail from "./pages/TripDetail";
 import CreateTrip from "./pages/CreateTrip";
 import Dashboard from "./pages/Dashboard";
+import MyTrips from "./pages/MyTrips";
 import AiPlanner from "./pages/AiPlanner";
 import Leaderboard from "./pages/Leaderboard";
 import Booking from "./pages/Booking";
