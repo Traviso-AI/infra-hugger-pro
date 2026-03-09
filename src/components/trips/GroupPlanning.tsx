@@ -191,7 +191,7 @@ export function GroupPlanningPanel({
                 </TabsContent>
 
                 <TabsContent value="costs" className="mt-0">
-                  <CostsTab tripId={tripId} isOwner={isOwner} bookedPrice={bookedPrice} />
+                  <CostsTab tripId={tripId} isOwner={isOrganizer} bookedPrice={bookedPrice} />
                 </TabsContent>
               </Tabs>
             </div>
