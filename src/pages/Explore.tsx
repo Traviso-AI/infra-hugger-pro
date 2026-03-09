@@ -107,12 +107,6 @@ export default function Explore() {
       if (search) {
         query = query.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
       }
-      if (filters.minPrice > 0) {
-        query = query.gte("price_estimate", filters.minPrice);
-      }
-      if (filters.maxPrice < 10000) {
-        query = query.lte("price_estimate", filters.maxPrice);
-      }
       if (filters.minDuration > 1) {
         query = query.gte("duration_days", filters.minDuration);
       }
@@ -121,6 +115,9 @@ export default function Explore() {
       }
       if (filters.selectedTags.length > 0) {
         query = query.overlaps("tags", filters.selectedTags);
+      }
+      if (filters.travelerTypes.length > 0) {
+        query = query.overlaps("tags", filters.travelerTypes);
       }
 
       const { data: trips } = await query;
