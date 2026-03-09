@@ -27,6 +27,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import About from "./pages/About";
 import EditTrip from "./pages/EditTrip";
+import Collections from "./pages/Collections";
 
 const queryClient = new QueryClient();
 
