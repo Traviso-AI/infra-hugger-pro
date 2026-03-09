@@ -208,7 +208,8 @@ export function GroupPlanningPanel({
 function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
   const { user } = useAuth();
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const [creatorName, setCreatorName] = useState<string | null>(null);
+  const [organizerName, setOrganizerName] = useState<string | null>(null);
+  const [organizerIsMe, setOrganizerIsMe] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -224,20 +225,30 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
     setCollaborators((data as Collaborator[]) || []);
   };
 
-  // Fetch trip creator name
+  // Fetch the group organizer's name
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("trips")
-        .select("creator_id, profiles!trips_creator_id_profiles_fkey(display_name)")
-        .eq("id", tripId)
-        .single();
-      if (data) {
-        const profile = data.profiles as any;
-        setCreatorName(profile?.display_name || "Trip creator");
+      const { data: org } = await supabase
+        .from("group_organizers")
+        .select("user_id")
+        .eq("trip_id", tripId)
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      if (!org) return;
+      if (org.user_id === user?.id) {
+        setOrganizerIsMe(true);
+        setOrganizerName("You");
+      } else {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", org.user_id)
+          .maybeSingle();
+        setOrganizerName(profile?.display_name || "Organizer");
       }
     })();
-  }, [tripId]);
+  }, [tripId, user]);
 
   useEffect(() => {
     fetchCollaborators();
