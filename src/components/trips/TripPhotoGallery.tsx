@@ -118,53 +118,58 @@ function LightboxDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-4xl p-0 bg-black/95 border-none [&>button]:hidden">
-        <button
-          onClick={onClose}
-          className="absolute right-3 top-3 z-50 h-10 w-10 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+          className="fixed left-[50%] top-[50%] z-50 w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] p-0 bg-black/95 border-none rounded-lg shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
         >
-          <X className="h-5 w-5 text-white" />
-        </button>
-        <div className="relative flex items-center justify-center min-h-[60vh]" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-          {photos.length > 1 && (
-            <>
-              <button
-                onClick={() => onNavigate(-1)}
-                className="absolute left-4 z-10 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <ChevronLeft className="h-6 w-6 text-white" />
-              </button>
-              <button
-                onClick={() => onNavigate(1)}
-                className="absolute right-4 z-10 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-              >
-                <ChevronRight className="h-6 w-6 text-white" />
-              </button>
-            </>
-          )}
-
-          <img
-            src={photos[activeIndex]}
-            alt={`Photo ${activeIndex + 1}`}
-            className="max-h-[80vh] max-w-full object-contain"
-          />
-
-          {photos.length > 1 && (
-            <div className="absolute bottom-4 flex gap-1.5">
-              {photos.map((_, i) => (
+          <button
+            onClick={onClose}
+            className="absolute right-3 top-3 z-50 h-10 w-10 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+          >
+            <X className="h-5 w-5 text-white" />
+          </button>
+          <div className="relative flex items-center justify-center min-h-[60vh]" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            {photos.length > 1 && (
+              <>
                 <button
-                  key={i}
-                  onClick={() => onNavigate(i - activeIndex)}
-                  className={cn(
-                    "h-2 w-2 rounded-full transition-colors",
-                    i === activeIndex ? "bg-white" : "bg-white/40"
-                  )}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </DialogContent>
+                  onClick={() => onNavigate(-1)}
+                  className="absolute left-4 z-10 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6 text-white" />
+                </button>
+                <button
+                  onClick={() => onNavigate(1)}
+                  className="absolute right-4 z-10 h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6 text-white" />
+                </button>
+              </>
+            )}
+
+            <img
+              src={photos[activeIndex]}
+              alt={`Photo ${activeIndex + 1}`}
+              className="max-h-[80vh] max-w-full object-contain"
+            />
+
+            {photos.length > 1 && (
+              <div className="absolute bottom-4 flex gap-1.5">
+                {photos.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onNavigate(i - activeIndex)}
+                    className={cn(
+                      "h-2 w-2 rounded-full transition-colors",
+                      i === activeIndex ? "bg-white" : "bg-white/40"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }
