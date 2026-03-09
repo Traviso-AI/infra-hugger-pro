@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { ReviewForm } from "@/components/trips/ReviewForm";
+import { usePageSEO } from "@/hooks/usePageSEO";
 import { useEffect, useMemo } from "react";
 
 const typeIcons: Record<string, any> = {
