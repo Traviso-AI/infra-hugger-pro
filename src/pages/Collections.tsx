@@ -216,14 +216,17 @@ export default function Collections() {
                           )}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => { e.stopPropagation(); deleteCollection.mutate(col.id); }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <ShareCollectionModal collectionId={col.id} collectionName={col.name} />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: "collection", id: col.id, name: col.name }); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
