@@ -116,30 +116,52 @@ export default function Explore() {
 
       {/* From Creators You Follow — horizontal carousel */}
       {user && followingTrips && followingTrips.length > 0 && !search && (
-        <div className="mb-10">
+        <div className="mb-10 relative">
           <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
             <Users className="h-5 w-5 text-accent" /> From Creators You Follow
           </h2>
-          <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 snap-x snap-mandatory scrollbar-hide">
-            {followingTrips.map((trip: any) => (
-              <div key={trip.id} className="min-w-[260px] max-w-[280px] snap-start flex-shrink-0">
-                <TripCard
-                  id={trip.id}
-                  title={trip.title}
-                  destination={trip.destination}
-                  coverImage={trip.cover_image_url}
-                  durationDays={trip.duration_days}
-                  priceEstimate={trip.price_estimate}
-                  avgRating={trip.avg_rating}
-                  totalBookings={trip.total_bookings}
-                  creatorName={trip.profiles?.display_name}
-                  creatorAvatar={trip.profiles?.avatar_url}
-                  creatorUsername={trip.profiles?.username}
-                  creatorId={trip.creator_id}
-                  tags={trip.tags}
-                />
-              </div>
-            ))}
+          <div className="relative group">
+            <div
+              ref={carouselRef}
+              className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 snap-x snap-mandatory scrollbar-hide scroll-smooth"
+            >
+              {followingTrips.map((trip: any) => (
+                <div key={trip.id} className="min-w-[260px] max-w-[280px] snap-start flex-shrink-0">
+                  <TripCard
+                    id={trip.id}
+                    title={trip.title}
+                    destination={trip.destination}
+                    coverImage={trip.cover_image_url}
+                    durationDays={trip.duration_days}
+                    priceEstimate={trip.price_estimate}
+                    avgRating={trip.avg_rating}
+                    totalBookings={trip.total_bookings}
+                    creatorName={trip.profiles?.display_name}
+                    creatorAvatar={trip.profiles?.avatar_url}
+                    creatorUsername={trip.profiles?.username}
+                    creatorId={trip.creator_id}
+                    tags={trip.tags}
+                  />
+                </div>
+              ))}
+            </div>
+            {/* Fade hint on right edge */}
+            <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+            {/* Arrow buttons */}
+            <button
+              onClick={() => scrollCarousel(-300)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => scrollCarousel(300)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 h-9 w-9 rounded-full bg-background border shadow-md flex items-center justify-center hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       )}
