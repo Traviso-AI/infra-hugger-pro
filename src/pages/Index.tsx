@@ -137,45 +137,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* From Creators You Follow */}
-      {user && followingTrips && followingTrips.length > 0 && (
-        <section className="py-16 md:py-24 bg-muted/30">
-          <div className="container">
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <h2 className="font-display text-3xl font-bold flex items-center gap-2">
-                  <Users className="h-7 w-7 text-accent" /> From Creators You Follow
-                </h2>
-                <p className="mt-1 text-muted-foreground">Latest itineraries from your favorite creators</p>
-              </div>
-              <Button asChild variant="ghost" className="hidden sm:flex">
-                <Link to="/dashboard">See all <ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {followingTrips.map((trip: any) => (
-                <TripCard
-                  key={trip.id}
-                  id={trip.id}
-                  title={trip.title}
-                  destination={trip.destination}
-                  coverImage={trip.cover_image_url}
-                  durationDays={trip.duration_days}
-                  priceEstimate={trip.price_estimate}
-                  avgRating={trip.avg_rating}
-                  totalBookings={trip.total_bookings}
-                  creatorName={trip.profiles?.display_name}
-                  creatorAvatar={trip.profiles?.avatar_url}
-                  creatorUsername={trip.profiles?.username}
-                  creatorId={trip.creator_id}
-                  tags={trip.tags}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Featured Trips */}
       <section className="py-16 md:py-24">
         <div className="container">

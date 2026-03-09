@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { TripCard } from "@/components/trips/TripCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { useState } from "react";
 import {
   Pagination, PaginationContent, PaginationItem,
@@ -12,6 +13,7 @@ import {
 const PAGE_SIZE = 24;
 
 export default function Explore() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
