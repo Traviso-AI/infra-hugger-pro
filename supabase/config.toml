@@ -9,3 +9,5 @@ project_id = "hmogswuliehwbmcyzfie"
     verify_jwt = false
   [functions.extract-trip]
     verify_jwt = false
+  [functions.send-notification-email]
+    verify_jwt = false

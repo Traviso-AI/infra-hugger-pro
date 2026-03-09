@@ -240,6 +240,24 @@ export default function Dashboard() {
           </Card>
         )}
       </div>
+
+      {/* Collections CTA */}
+      <div className="mb-8">
+        <Card className="bg-accent/5 border-accent/20">
+          <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5">
+            <div className="flex items-center gap-3">
+              <FolderOpen className="h-8 w-8 text-accent" />
+              <div>
+                <h3 className="font-medium">Organize your saved trips</h3>
+                <p className="text-sm text-muted-foreground">Create collections like "Summer 2026" or "Honeymoon Ideas"</p>
+              </div>
+            </div>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link to="/collections">View Collections</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

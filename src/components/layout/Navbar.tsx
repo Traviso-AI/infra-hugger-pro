@@ -125,6 +125,9 @@ export function Navbar() {
                 <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
                   <User className="h-4 w-4 text-muted-foreground" /> Dashboard
                 </Link>
+                <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
+                </Link>
                 <div className="flex items-center gap-2 mt-2 px-3">
                   <NotificationBell />
                   <span className="text-sm text-muted-foreground">Notifications</span>

@@ -144,6 +144,7 @@ export function TripCard({
           </div>
         </div>
       </div>
+      {user && <AddToCollectionModal tripId={id} open={collectionModalOpen} onOpenChange={setCollectionModalOpen} />}
     </div>
   );
 }
