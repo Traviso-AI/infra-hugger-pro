@@ -258,7 +258,7 @@ export default function TripDetail() {
 
               {/* Group Planning — visible to ALL logged-in users */}
               {user && (
-                <GroupPlanningPanel tripId={trip.id} />
+                <GroupPlanningPanel tripId={trip.id} autoExpand={searchParams.get("tab") === "group"} />
               )}
             </div>
           </div>

@@ -39,12 +39,14 @@ interface PaymentSplit {
 export function GroupPlanningPanel({
   tripId,
   bookedPrice,
+  autoExpand = false,
 }: {
   tripId: string;
   bookedPrice?: number | null;
+  autoExpand?: boolean;
 }) {
   const { user } = useAuth();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(autoExpand);
   const [activeTab, setActiveTab] = useState("members");
   const [isInGroup, setIsInGroup] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
