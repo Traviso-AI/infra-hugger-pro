@@ -72,8 +72,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           query: formattedUrl,
-          limit: 3,
-          scrapeOptions: { formats: ["markdown"] },
+          limit: 5,
         }),
       });
 
