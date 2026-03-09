@@ -129,6 +129,9 @@ export default function Dashboard() {
                           <Send className="mr-1 h-3 w-3" /> Publish
                         </Button>
                       )}
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/edit-trip/${trip.id}`); }}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
                       {trip.price_estimate && (
                         <span className="text-sm font-medium">${trip.price_estimate}</span>
                       )}
