@@ -446,77 +446,53 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
         })}
       </div>
 
-      {/* Invite actions */}
-      {!showInviteForm ? (
+      {/* Invite actions — always visible */}
+      <div className="space-y-2 pt-1 border-t">
+        <div className="flex gap-1.5">
+          <Input
+            placeholder="friend@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="text-xs h-8"
+            onKeyDown={(e) => e.key === "Enter" && handleInviteByEmail()}
+          />
+          <Button
+            size="sm"
+            onClick={handleInviteByEmail}
+            disabled={loading || !email.trim()}
+            className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
         <Button
           variant="outline"
           size="sm"
           className="w-full text-xs"
-          onClick={() => setShowInviteForm(true)}
+          onClick={handleGenerateLink}
+          disabled={loading}
         >
-          <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-          Invite Friends
+          <Link2 className="mr-1.5 h-3.5 w-3.5" />
+          Generate Invite Link
         </Button>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-2.5 pt-1 border-t"
-        >
-          {/* Email invite */}
-          <div className="flex gap-1.5">
-            <Input
-              placeholder="friend@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="text-xs h-8"
-              onKeyDown={(e) => e.key === "Enter" && handleInviteByEmail()}
-            />
-            <Button
-              size="sm"
-              onClick={handleInviteByEmail}
-              disabled={loading || !email.trim()}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 h-8 px-2.5"
-            >
-              <UserPlus className="h-3.5 w-3.5" />
+
+        {inviteLink && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 p-2 bg-muted rounded-lg">
+            <Input value={inviteLink} readOnly className="text-[10px] h-7 bg-transparent border-0 font-mono" />
+            <Button size="sm" variant="ghost" className="shrink-0 h-7 w-7 p-0" onClick={copyLink}>
+              {copied ? <Check className="h-3 w-3 text-accent" /> : <Copy className="h-3 w-3" />}
             </Button>
-          </div>
-
-          {/* Or generate link */}
-          <button
-            onClick={handleGenerateLink}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-1.5 text-[11px] text-accent hover:text-accent/80 transition-colors py-1"
-          >
-            <Link2 className="h-3 w-3" />
-            Or generate a shareable link
-          </button>
-
-          {/* Show invite link */}
-          {inviteLink && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-1.5 p-2 bg-muted rounded-lg">
-              <Input value={inviteLink} readOnly className="text-[10px] h-7 bg-transparent border-0 font-mono" />
-              <Button size="sm" variant="ghost" className="shrink-0 h-7 w-7 p-0" onClick={copyLink}>
-                {copied ? <Check className="h-3 w-3 text-accent" /> : <Copy className="h-3 w-3" />}
-              </Button>
-            </motion.div>
-          )}
-
-          <button
-            onClick={() => { setShowInviteForm(false); setInviteLink(null); }}
-            className="w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Cancel
-          </button>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </div>
 
       {/* Explain what collaborators can do */}
       <div className="rounded-lg bg-muted/30 p-3 space-y-1.5">
         <p className="text-[11px] font-medium text-foreground/80">What can group members do?</p>
         <ul className="text-[10px] text-muted-foreground space-y-0.5">
           <li>👍 Vote on activities (thumbs up/down)</li>
-          <li>💬 Help decide the final itinerary</li>
+          <li>💬 Chat with your group in real-time</li>
           <li>💰 Split costs after someone books</li>
         </ul>
       </div>
