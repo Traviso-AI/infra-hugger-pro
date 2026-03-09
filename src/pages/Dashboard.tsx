@@ -189,14 +189,13 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No bookings yet — explore trips and book your next adventure!</p>
-              <Button asChild variant="outline">
-                <Link to="/explore">Browse Trips</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={MapPin}
+            title="No bookings yet"
+            description="Browse curated trips from top creators and book your next adventure."
+            actionLabel="Explore Trips"
+            actionHref="/explore"
+          />
         )}
       </div>
 
