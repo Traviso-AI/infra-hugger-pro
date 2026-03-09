@@ -81,6 +81,13 @@ export default function TripDetail() {
     enabled: !!id,
   });
 
+  usePageSEO({
+    title: trip ? `${trip.title} — ${trip.destination}` : "Loading trip...",
+    description: trip?.description || (trip ? `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.` : undefined),
+    image: trip?.cover_image_url || undefined,
+    url: trip ? `${window.location.origin}/trip/${trip.id}` : undefined,
+  });
+
   if (isLoading) return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
@@ -103,13 +110,6 @@ export default function TripDetail() {
   };
 
   const creator = trip.profiles as any;
-
-  usePageSEO({
-    title: `${trip.title} — ${trip.destination}`,
-    description: trip.description || `${trip.duration_days}-day trip to ${trip.destination}. Book this curated itinerary on Traviso AI.`,
-    image: trip.cover_image_url || undefined,
-    url: `${window.location.origin}/trip/${trip.id}`,
-  });
 
   return (
     <div>
