@@ -207,9 +207,9 @@ export default function TripDetail() {
         </Button>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="order-first lg:order-last">
+          <div className="order-first lg:order-last lg:sticky lg:top-24 self-start space-y-6">
             <TripSidebar trip={trip} creator={creator} onBook={handleBook} searchParams={searchParams} user={user} />
-            {user && <div className="mt-6"><GroupPlanningPanel tripId={trip.id} autoExpand={searchParams.get("tab") === "group"} /></div>}
+            {user && <GroupPlanningPanel tripId={trip.id} autoExpand={searchParams.get("tab") === "group"} />}
           </div>
 
           <div className="lg:col-span-2 space-y-8 order-last lg:order-first">
