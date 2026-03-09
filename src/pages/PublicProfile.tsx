@@ -240,19 +240,27 @@ export default function PublicProfile() {
 
         <div className="mt-4 flex items-center gap-2">
           {isOwnProfile ? (
-            <EditProfileDialog profile={profile} onSaved={refreshProfile} />
+            <>
+              <EditProfileDialog profile={profile} onSaved={refreshProfile} />
+              <ShareProfileModal profile={profile} tripsCreatedCount={tripsCreatedCount} tripsTakenCount={tripsTakenCount} rank={rank} />
+            </>
           ) : user && user.id !== profile.user_id ? (
-            <Button
-              variant={isFollowing ? "outline" : "default"}
-              size="sm"
-              className={isFollowing ? "gap-2" : "gap-2 bg-accent text-accent-foreground hover:bg-accent/90"}
-              onClick={handleFollow}
-              disabled={followLoading}
-            >
-              {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-              {isFollowing ? "Unfollow" : "Follow"}
-            </Button>
-          ) : null}
+            <>
+              <Button
+                variant={isFollowing ? "outline" : "default"}
+                size="sm"
+                className={isFollowing ? "gap-2" : "gap-2 bg-accent text-accent-foreground hover:bg-accent/90"}
+                onClick={handleFollow}
+                disabled={followLoading}
+              >
+                {isFollowing ? <UserMinus className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                {isFollowing ? "Unfollow" : "Follow"}
+              </Button>
+              <ShareProfileModal profile={profile} tripsCreatedCount={tripsCreatedCount} tripsTakenCount={tripsTakenCount} rank={rank} />
+            </>
+          ) : (
+            <ShareProfileModal profile={profile} tripsCreatedCount={tripsCreatedCount} tripsTakenCount={tripsTakenCount} rank={rank} />
+          )}
         </div>
       </div>
 
