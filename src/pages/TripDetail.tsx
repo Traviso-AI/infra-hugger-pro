@@ -224,11 +224,12 @@ export default function TripDetail() {
             </Card>
 
             {/* Group Planning — only for trip owner or collaborators */}
-            {user && (
-              <>
-                <InviteCollaboratorsPanel tripId={trip.id} isOwner={trip.creator_id === user.id} />
-                <PaymentSplitPanel tripId={trip.id} isOwner={trip.creator_id === user.id} />
-              </>
+            {user && (trip.creator_id === user.id || isCollaborator) && (
+              <GroupPlanningPanel
+                tripId={trip.id}
+                isOwner={trip.creator_id === user.id}
+                isCollaborator={!!isCollaborator}
+              />
             )}
           </div>
 
