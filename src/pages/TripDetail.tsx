@@ -11,6 +11,7 @@ import { TripReviews } from "@/components/trips/TripReviews";
 import { GroupPlanningPanel } from "@/components/trips/GroupPlanning";
 import { TripPhotoGallery } from "@/components/trips/TripPhotoGallery";
 import { ActivityMap } from "@/components/trips/ActivityMap";
+import { LiveTripTracker } from "@/components/trips/LiveTripTracker";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
 import { TripDetailSkeleton } from "@/components/skeletons/TripDetailSkeleton";
 import { isGenericPlaceholder } from "@/lib/destination-covers";
