@@ -20,6 +20,7 @@ interface Collaborator {
   email: string | null;
   role: string;
   invite_token: string;
+  invited_by: string;
   accepted_at: string | null;
   created_at: string;
 }
@@ -345,46 +346,49 @@ function MembersTab({ tripId, isOwner }: { tripId: string; isOwner: boolean }) {
 
       {/* Member list */}
       <div className="space-y-1.5">
-        {/* Organizer — always first */}
+        {/* Current user as organizer — always first */}
         <div className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-accent/5 border border-accent/10">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
               👑
             </div>
             <span className="truncate text-xs font-medium">
-              {isOwner ? "You (organizer)" : "Trip creator"}
+              You (organizer)
             </span>
           </div>
           <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Organizer</Badge>
         </div>
 
-        {collaborators.map((c) => (
-          <div key={c.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-muted/40">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
-                {c.email ? c.email[0].toUpperCase() : "?"}
+        {collaborators.map((c) => {
+          const canRemove = isOwner || c.invited_by === user?.id;
+          return (
+            <div key={c.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg bg-muted/40">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-6 w-6 rounded-full bg-accent/15 flex items-center justify-center text-[10px] font-medium text-accent shrink-0">
+                  {c.email ? c.email[0].toUpperCase() : "?"}
+                </div>
+                <span className="truncate text-xs">
+                  {c.user_id === user?.id ? "You" : c.email || "Link invite"}
+                </span>
               </div>
-              <span className="truncate text-xs">
-                {c.user_id === user?.id ? "You" : c.email || "Link invite"}
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {c.accepted_at ? (
+                  <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Joined</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[9px] px-1.5">Pending</Badge>
+                )}
+                {canRemove && (
+                  <button
+                    onClick={() => removeCollaborator(c.id)}
+                    className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {c.accepted_at ? (
-                <Badge className="text-[9px] bg-accent/15 text-accent border-0 px-1.5">Joined</Badge>
-              ) : (
-                <Badge variant="outline" className="text-[9px] px-1.5">Pending</Badge>
-              )}
-              {isOwner && (
-                <button
-                  onClick={() => removeCollaborator(c.id)}
-                  className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Invite actions */}
