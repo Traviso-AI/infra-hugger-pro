@@ -87,43 +87,79 @@ export default function Signup() {
         {waitlisted ? (
           <motion.div
             key="confirmation"
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="w-full max-w-md"
           >
-            <Card className="border-0 shadow-lg">
-              <CardContent className="px-8 py-10 text-center">
+            <Card className="relative overflow-hidden border-0 shadow-xl shadow-accent/5">
+              {/* Subtle gradient accent bar */}
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent/60 via-accent to-accent/60" />
+
+              <CardContent className="px-8 pb-10 pt-12 text-center">
                 <AnimatedCheckmark />
 
-                <h2 className="mt-6 font-display text-2xl font-bold text-foreground">
-                  You're on the list, {firstName}!
-                </h2>
-
-                <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
-                  We're reviewing early access requests personally. If your account is
-                  approved we'll reach out to{" "}
-                  <span className="font-medium text-foreground">{email}</span> with
-                  everything you need to get started.
-                </p>
-
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground/80">
-                  In the meantime stay close — we'll be sharing updates, travel
-                  deals, and behind-the-scenes progress as we build.
-                </p>
-
-                <Button
-                  asChild
-                  className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90"
+                <motion.h2
+                  className="mt-7 font-display text-[1.75rem] font-bold leading-tight text-foreground"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.4 }}
                 >
+                  You're on the list{firstName ? `, ${firstName}` : ""}!
+                </motion.h2>
+
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="mt-5 space-y-4"
+                >
+                  <p className="text-[15px] leading-relaxed text-muted-foreground">
+                    We're personally reviewing early access requests. When your
+                    spot opens up, we'll send everything you need to{" "}
+                    <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 font-medium text-foreground text-sm">
+                      {email}
+                    </span>
+                  </p>
+
+                  <div className="mx-auto h-px w-16 bg-border" />
+
+                  <p className="text-sm leading-relaxed text-muted-foreground/70">
+                    Stay close — we're sharing updates, travel deals, and
+                    behind‑the‑scenes progress as we build.
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  className="mt-8 flex flex-col items-center gap-3"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.55, duration: 0.4 }}
+                >
+                  <Button
+                    asChild
+                    className="bg-accent text-accent-foreground hover:bg-accent/90 px-6 shadow-md shadow-accent/20"
+                  >
+                    <a
+                      href="https://x.com/travisoai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                      Follow us on X
+                    </a>
+                  </Button>
                   <a
-                    href="https://x.com/travisoai"
+                    href="https://www.instagram.com/travisoai"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-accent transition-colors"
                   >
-                    Follow us on X
+                    or follow on Instagram →
                   </a>
-                </Button>
+                </motion.div>
               </CardContent>
             </Card>
           </motion.div>
