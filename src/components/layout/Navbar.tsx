@@ -43,13 +43,17 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
-          <Link to="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Explore
-          </Link>
-          <Link to="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Leaderboard
-          </Link>
-          {user && (
+          {hasBetaAccess && (
+            <>
+              <Link to="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Explore
+              </Link>
+              <Link to="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Leaderboard
+              </Link>
+            </>
+          )}
+          {user && hasBetaAccess && (
             <>
               <Link to="/ai-planner" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 AI Planner
