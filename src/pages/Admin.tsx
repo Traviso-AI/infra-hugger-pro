@@ -1,29 +1,22 @@
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Shield, Users, MapPin, BookOpen, DollarSign, Star, Trash2, Eye, EyeOff } from "lucide-react";
-import { Navigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { BetaModeSwitch } from "@/components/admin/BetaModeSwitch";
+import { BetaWhitelist } from "@/components/admin/BetaWhitelist";
+import { AdminAllUsers } from "@/components/admin/AdminAllUsers";
+import { useState } from "react";
 
 export default function Admin() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
-
-  const { data: isAdmin, isLoading: checkingRole } = useQuery({
-    queryKey: ["is-admin", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase.rpc("has_role", { _user_id: user!.id, _role: "admin" });
-      return data === true;
-    },
-    enabled: !!user,
-  });
 
   const { data: allTrips } = useQuery({
     queryKey: ["admin-trips"],
@@ -34,7 +27,6 @@ export default function Admin() {
         .order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: isAdmin === true,
   });
 
   const { data: allProfiles } = useQuery({
@@ -43,7 +35,6 @@ export default function Admin() {
       const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: isAdmin === true,
   });
 
   const { data: allBookings } = useQuery({
@@ -55,7 +46,6 @@ export default function Admin() {
         .order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: isAdmin === true,
   });
 
   const togglePublish = async (tripId: string, current: boolean) => {
@@ -79,11 +69,7 @@ export default function Admin() {
     queryClient.invalidateQueries({ queryKey: ["admin-trips"] });
   };
 
-  if (checkingRole) return <div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" /></div>;
-  if (!isAdmin) return <Navigate to="/dashboard" replace />;
-
   const totalRevenue = allBookings?.reduce((s, b: any) => s + (b.total_price || 0), 0) || 0;
-  const totalCommissions = allBookings?.reduce((s, b: any) => s + (b.commission_amount || 0), 0) || 0;
 
   return (
     <div className="container py-8 md:py-12">
@@ -116,57 +102,44 @@ export default function Admin() {
         ))}
       </div>
 
-      <Tabs defaultValue="trips">
+      <Tabs defaultValue="users">
         <TabsList className="mb-6">
-          <TabsTrigger value="trips">Trips</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="trips">Trips</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users" className="space-y-6">
+          <BetaModeSwitch />
+          <BetaWhitelist />
+          <AdminAllUsers />
+        </TabsContent>
 
         <TabsContent value="trips">
           <div className="space-y-3">
             {allTrips?.map((trip: any) => (
               <Card key={trip.id}>
-                <CardContent className="flex items-center justify-between p-4">
+                <CardContent className="flex items-center justify-between p-4 gap-2">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium truncate">{trip.title}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {trip.destination} · by {(trip.profiles as any)?.display_name || "Unknown"} · {trip.total_bookings || 0} bookings
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
                     <Badge variant={trip.is_published ? "default" : "secondary"}>
                       {trip.is_published ? "Published" : "Draft"}
                     </Badge>
                     {trip.is_featured && <Badge className="bg-sunset text-white">Featured</Badge>}
-                    <Button variant="ghost" size="icon" onClick={() => togglePublish(trip.id, trip.is_published)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => togglePublish(trip.id, trip.is_published)}>
                       {trip.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => toggleFeatured(trip.id, trip.is_featured)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleFeatured(trip.id, trip.is_featured)}>
                       <Star className={`h-4 w-4 ${trip.is_featured ? "fill-sunset text-sunset" : ""}`} />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget({ id: trip.id, title: trip.title })}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget({ id: trip.id, title: trip.title })}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="users">
-          <div className="space-y-3">
-            {allProfiles?.map((p: any) => (
-              <Card key={p.id}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div>
-                    <h3 className="font-medium">{p.display_name || "No name"}</h3>
-                    <p className="text-sm text-muted-foreground">@{p.username || "—"} · Joined {new Date(p.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {p.is_creator && <Badge>Creator</Badge>}
-                    <span className="text-sm font-medium">${(p.total_earnings || 0).toLocaleString()}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -198,6 +171,7 @@ export default function Admin() {
           </div>
         </TabsContent>
       </Tabs>
+
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}

@@ -552,6 +552,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           instagram: string | null
           is_admin: boolean
@@ -571,6 +572,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           instagram?: string | null
           is_admin?: boolean
@@ -590,6 +592,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           instagram?: string | null
           is_admin?: boolean
