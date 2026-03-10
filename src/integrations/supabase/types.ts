@@ -67,24 +67,30 @@ export type Database = {
       beta_whitelist: {
         Row: {
           email: string
+          full_name: string | null
           has_signed_up: boolean
           id: string
           invited_at: string
           invited_by: string | null
+          source: string | null
         }
         Insert: {
           email: string
+          full_name?: string | null
           has_signed_up?: boolean
           id?: string
           invited_at?: string
           invited_by?: string | null
+          source?: string | null
         }
         Update: {
           email?: string
+          full_name?: string | null
           has_signed_up?: boolean
           id?: string
           invited_at?: string
           invited_by?: string | null
+          source?: string | null
         }
         Relationships: []
       }
