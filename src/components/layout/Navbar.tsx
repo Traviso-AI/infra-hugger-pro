@@ -102,6 +102,14 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => navigate("/install")}>
                   <Download className="mr-2 h-4 w-4" /> Install App
                 </DropdownMenuItem>
+                {profile?.is_admin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <Shield className="mr-2 h-4 w-4" /> Admin
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
