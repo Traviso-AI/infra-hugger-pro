@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Share2, Copy, Check } from "lucide-react";
@@ -43,12 +43,12 @@ export function ShareCollectionModal({ collectionId, collectionName }: ShareColl
 
   const content = (
     <div className="space-y-4 p-1">
-      <div className="text-center">
-        <h3 className="font-display text-lg font-bold">Share Collection</h3>
-        <p className="text-sm text-muted-foreground mt-1">
+      <DialogHeader className="text-center">
+        <DialogTitle className="font-display text-lg font-bold">Share Collection</DialogTitle>
+        <DialogDescription className="text-sm text-muted-foreground mt-1">
           Share "{collectionName}" with friends and fellow travelers
-        </p>
-      </div>
+        </DialogDescription>
+      </DialogHeader>
 
       <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
         <p className="flex-1 text-sm truncate text-muted-foreground">{shareLink}</p>
