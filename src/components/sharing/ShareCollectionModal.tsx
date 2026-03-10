@@ -42,16 +42,16 @@ export function ShareCollectionModal({ collectionId, collectionName }: ShareColl
   };
 
   const content = (
-    <div className="space-y-4 p-1">
-      <DialogHeader className="text-center">
-        <DialogTitle className="font-display text-lg font-bold">Share Collection</DialogTitle>
-        <DialogDescription className="text-sm text-muted-foreground mt-1">
+    <div className="space-y-4 p-1 overflow-hidden">
+      <div className="text-center">
+        <h3 className="font-display text-lg font-bold">Share Collection</h3>
+        <p className="text-sm text-muted-foreground mt-1">
           Share "{collectionName}" with friends and fellow travelers
-        </DialogDescription>
-      </DialogHeader>
+        </p>
+      </div>
 
-      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-        <p className="flex-1 text-sm truncate text-muted-foreground">{shareLink}</p>
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted min-w-0">
+        <p className="flex-1 text-sm truncate text-muted-foreground min-w-0">{shareLink}</p>
         <Button size="sm" variant="outline" onClick={handleCopy} className="shrink-0">
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         </Button>
