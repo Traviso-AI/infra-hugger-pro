@@ -957,6 +957,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       to_title_case: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
