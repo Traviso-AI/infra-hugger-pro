@@ -48,7 +48,7 @@ const App = () => (
             <Routes>
               {/* Public routes — no beta gate */}
               <Route element={<AppLayout />}>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<BetaGate><Index /></BetaGate>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
