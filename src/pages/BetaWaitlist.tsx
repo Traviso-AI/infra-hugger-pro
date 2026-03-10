@@ -23,7 +23,7 @@ const features = [
 ];
 
 export default function BetaWaitlist() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -37,6 +37,11 @@ export default function BetaWaitlist() {
   if (!user) {
     window.location.href = "https://traviso.ai";
     return null;
+  }
+
+  // If user already has beta access, redirect to dashboard
+  if (profile?.is_beta || profile?.is_admin) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
