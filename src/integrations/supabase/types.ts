@@ -46,6 +46,48 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      beta_whitelist: {
+        Row: {
+          email: string
+          has_signed_up: boolean
+          id: string
+          invited_at: string
+          invited_by: string | null
+        }
+        Insert: {
+          email: string
+          has_signed_up?: boolean
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+        }
+        Update: {
+          email?: string
+          has_signed_up?: boolean
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           check_in: string | null
@@ -512,6 +554,8 @@ export type Database = {
           display_name: string | null
           id: string
           instagram: string | null
+          is_admin: boolean
+          is_beta: boolean
           is_creator: boolean | null
           tiktok: string | null
           total_earnings: number | null
@@ -529,6 +573,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           instagram?: string | null
+          is_admin?: boolean
+          is_beta?: boolean
           is_creator?: boolean | null
           tiktok?: string | null
           total_earnings?: number | null
@@ -546,6 +592,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           instagram?: string | null
+          is_admin?: boolean
+          is_beta?: boolean
           is_creator?: boolean | null
           tiktok?: string | null
           total_earnings?: number | null
