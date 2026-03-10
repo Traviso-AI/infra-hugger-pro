@@ -24,7 +24,7 @@ const features = [
 ];
 
 export default function BetaWaitlist() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
 
   if (loading) {
     return (
