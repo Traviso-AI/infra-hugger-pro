@@ -52,7 +52,7 @@ export function StepTripBasics({ data, onChange, errors = {} }: StepTripBasicsPr
         <div className="space-y-2 sm:col-span-2">
           <Label>Trip Title *</Label>
           <Input
-            placeholder="3 Days in Tokyo"
+            placeholder="3 Days in Seoul"
             value={data.title}
             onChange={(e) => update("title", e.target.value)}
             className={`text-base ${errors.title ? "border-destructive" : ""}`}
