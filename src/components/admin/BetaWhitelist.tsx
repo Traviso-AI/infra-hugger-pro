@@ -144,7 +144,9 @@ export function BetaWhitelist() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{entry.email}</p>
                 <p className="text-xs text-muted-foreground">
-                  Invited {new Date(entry.invited_at).toLocaleDateString()}
+                  {entry.full_name ? `${entry.full_name} · ` : ""}
+                  {entry.source === "app_signup" ? "Self-signed up" : "Admin invited"}{" "}
+                  {new Date(entry.invited_at).toLocaleDateString()}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
