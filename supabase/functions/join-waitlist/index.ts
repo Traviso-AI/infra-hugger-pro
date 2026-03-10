@@ -39,8 +39,10 @@ serve(async (req) => {
         { onConflict: "email", ignoreDuplicates: true }
       );
 
+    // Only send to Loops for landing page signups, NOT app signups
     const loopsApiKey = Deno.env.get("LOOPS_API_KEY");
-    const loopsPromise = loopsApiKey
+    const shouldSendToLoops = loopsApiKey && source !== "app_signup";
+    const loopsPromise = shouldSendToLoops
       ? fetch("https://app.loops.so/api/v1/contacts/create", {
           method: "POST",
           headers: {
