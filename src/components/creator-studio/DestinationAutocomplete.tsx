@@ -78,7 +78,7 @@ export function DestinationAutocomplete({ value, onChange }: DestinationAutocomp
   return (
     <div ref={containerRef} className="relative">
       <Input
-        placeholder="Tokyo, Japan"
+        placeholder="Seoul, South Korea"
         value={query}
         onChange={handleInputChange}
         onFocus={() => results.length > 0 && setOpen(true)}
