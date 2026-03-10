@@ -138,7 +138,14 @@ export function ShareCollectionModal({ collectionId, collectionName }: ShareColl
         <Share2 className="h-3.5 w-3.5" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm">{content}</DialogContent>
+        <DialogContent
+          className="max-w-sm"
+          onPointerDownOutside={(e) => e.stopPropagation()}
+          onInteractOutside={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {content}
+        </DialogContent>
       </Dialog>
     </>
   );
