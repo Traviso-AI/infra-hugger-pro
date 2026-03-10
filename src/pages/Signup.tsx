@@ -8,20 +8,52 @@ import { useAuth } from "@/contexts/AuthContext";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
 import { Compass } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useBetaMode } from "@/hooks/useBetaMode";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [betaBlocked, setBetaBlocked] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const { isBetaMode } = useBetaMode();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setBetaBlocked(false);
     setLoading(true);
+
     try {
+      // Beta gate: check whitelist before creating account
+      if (isBetaMode) {
+        const { data: whitelistEntry } = await supabase
+          .from("beta_whitelist")
+          .select("id")
+          .eq("email", email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (!whitelistEntry) {
+          setBetaBlocked(true);
+          setLoading(false);
+          return;
+        }
+      }
+
       await signUp(email, password, fullName);
+
+      // If beta mode, mark whitelist entry as signed up and set is_beta on profile
+      if (isBetaMode) {
+        // These will be handled after profile creation via the trigger,
+        // but we also update whitelist immediately
+        await supabase
+          .from("beta_whitelist")
+          .update({ has_signed_up: true })
+          .eq("email", email.toLowerCase().trim());
+      }
+
       toast.success("Account created! Check your email to confirm.");
       navigate("/dashboard");
     } catch (err: any) {
@@ -49,6 +81,19 @@ export default function Signup() {
           <CardDescription>Create your account and start exploring</CardDescription>
         </CardHeader>
         <CardContent>
+          {betaBlocked && (
+            <div className="mb-5 rounded-lg border border-accent/30 bg-accent/5 p-4 text-center">
+              <p className="text-sm text-foreground">
+                Traviso AI is currently in private beta. You can join the waitlist at{" "}
+                <span className="font-medium">traviso.ai</span> — we'll send you an invite the moment a spot opens up.
+              </p>
+              <a href="https://traviso.ai" target="_blank" rel="noopener noreferrer">
+                <Button className="mt-3 bg-accent text-accent-foreground hover:bg-accent/90" size="sm">
+                  Join the Waitlist
+                </Button>
+              </a>
+            </div>
+          )}
           <Button
             variant="outline"
             className="w-full mb-4"
