@@ -90,21 +90,27 @@ export function Navbar() {
                   <p className="text-xs text-muted-foreground truncate">@{profile?.username || "user"}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Travel</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => navigate("/my-trips")}>
-                  <Plane className="mr-2 h-4 w-4" /> My Trips
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/collections")}>
-                  <FolderOpen className="mr-2 h-4 w-4" /> Collections
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
-                  <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {hasBetaAccess && (
+                  <>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Travel</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate("/my-trips")}>
+                      <Plane className="mr-2 h-4 w-4" /> My Trips
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/collections")}>
+                      <FolderOpen className="mr-2 h-4 w-4" /> Collections
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
+                      <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Account</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
-                </DropdownMenuItem>
+                {hasBetaAccess && (
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
