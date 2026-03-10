@@ -31,10 +31,13 @@ export default function Signup() {
 
     try {
       if (isBetaMode) {
+        // Only admin-added entries grant access (source = 'admin')
+        // Self-submitted entries (source = 'app_signup') stay pending
         const { data: whitelistEntry } = await supabase
           .from("beta_whitelist")
           .select("id")
           .eq("email", email.toLowerCase().trim())
+          .eq("source", "admin")
           .maybeSingle();
 
         if (!whitelistEntry) {
