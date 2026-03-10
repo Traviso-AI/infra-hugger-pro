@@ -1,7 +1,8 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Compass, Sparkles, CreditCard, Share2 } from "lucide-react";
+import { Sparkles, CreditCard, Share2, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 
 const features = [
