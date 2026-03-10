@@ -131,7 +131,7 @@ export default function Signup() {
                 </motion.div>
 
                 <motion.div
-                  className="mt-8 flex flex-col items-center gap-3"
+                  className="mt-8"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.55, duration: 0.4 }}
@@ -151,14 +151,6 @@ export default function Signup() {
                       Follow us on X
                     </a>
                   </Button>
-                  <a
-                    href="https://www.instagram.com/travisoai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-accent transition-colors"
-                  >
-                    or follow on Instagram →
-                  </a>
                 </motion.div>
               </CardContent>
             </Card>
