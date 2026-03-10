@@ -51,18 +51,6 @@ serve(async (req) => {
       }
     }
 
-    if (dbResult.error && !loopsResult) {
-      // Both failed
-      console.error("DB error:", dbResult.error);
-      return new Response(
-        JSON.stringify({ error: "Failed to join waitlist" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
