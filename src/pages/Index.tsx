@@ -14,11 +14,6 @@ export default function Index() {
   const { user, profile, loading: authLoading } = useAuth();
   const { isBetaMode, isLoading: betaLoading } = useBetaMode();
 
-  // Redirect logged-in non-beta users to waitlist during beta mode
-  if (!authLoading && !betaLoading && isBetaMode && user && profile && !profile.is_beta && !profile.is_admin) {
-    return <Navigate to="/beta-waitlist" replace />;
-  }
-
   const { data: featuredTrips } = useQuery({
     queryKey: ["featured-trips"],
     queryFn: async () => {
@@ -31,6 +26,11 @@ export default function Index() {
       return data || [];
     },
   });
+
+  // Redirect logged-in non-beta users to waitlist during beta mode
+  if (!authLoading && !betaLoading && isBetaMode && user && profile && !profile.is_beta && !profile.is_admin) {
+    return <Navigate to="/beta-waitlist" replace />;
+  }
 
   return (
     <div>
