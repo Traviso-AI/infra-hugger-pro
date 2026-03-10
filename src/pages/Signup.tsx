@@ -40,19 +40,21 @@ export default function Signup() {
           .maybeSingle();
 
         if (!whitelistEntry) {
-          // Not whitelisted — create auth account (sends confirmation email)
-          // but add to waitlist so admin can see them
-          const waitlistPromise = supabase.functions.invoke("join-waitlist", {
-            body: {
-              email: email.toLowerCase().trim(),
-              fullName: fullName.trim(),
-              source: "app_signup",
-            },
-          }).catch(() => {});
+          // Insert to waitlist FIRST, then create auth account
+          // (avoids race condition where profile trigger runs before whitelist row exists)
+          try {
+            await supabase.functions.invoke("join-waitlist", {
+              body: {
+                email: email.toLowerCase().trim(),
+                fullName: fullName.trim(),
+                source: "app_signup",
+              },
+            });
+          } catch {
+            // Continue even if waitlist insert fails
+          }
 
-          const signUpPromise = signUp(email, password, fullName);
-
-          await Promise.all([waitlistPromise, signUpPromise]);
+          await signUp(email, password, fullName);
 
           setWaitlisted(true);
           setLoading(false);
