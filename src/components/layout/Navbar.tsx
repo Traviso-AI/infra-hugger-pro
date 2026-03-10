@@ -153,29 +153,37 @@ export function Navbar() {
       {mobileOpen && (
         <div className="border-t bg-background p-4 md:hidden">
           <div className="flex flex-col gap-1">
-            <Link to="/explore" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-              <Compass className="h-4 w-4 text-muted-foreground" /> Explore
-            </Link>
-            <Link to="/leaderboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" /> Leaderboard
-            </Link>
+            {hasBetaAccess && (
+              <>
+                <Link to="/explore" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Compass className="h-4 w-4 text-muted-foreground" /> Explore
+                </Link>
+                <Link to="/leaderboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" /> Leaderboard
+                </Link>
+              </>
+            )}
             {user ? (
               <>
-                <Link to="/ai-planner" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" /> AI Planner
-                </Link>
-                <Link to="/create-trip" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <Plus className="h-4 w-4 text-muted-foreground" /> {profile?.is_creator ? "Creator Studio" : "Create Trip"}
-                </Link>
-                <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" /> Dashboard
-                </Link>
-                <Link to="/my-trips" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <Plane className="h-4 w-4 text-muted-foreground" /> My Trips
-                </Link>
-                <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
-                </Link>
+                {hasBetaAccess && (
+                  <>
+                    <Link to="/ai-planner" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" /> AI Planner
+                    </Link>
+                    <Link to="/create-trip" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <Plus className="h-4 w-4 text-muted-foreground" /> {profile?.is_creator ? "Creator Studio" : "Create Trip"}
+                    </Link>
+                    <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" /> Dashboard
+                    </Link>
+                    <Link to="/my-trips" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <Plane className="h-4 w-4 text-muted-foreground" /> My Trips
+                    </Link>
+                    <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
+                    </Link>
+                  </>
+                )}
                 <Link to="/install" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
                   <Download className="h-4 w-4 text-muted-foreground" /> Install App
                 </Link>
