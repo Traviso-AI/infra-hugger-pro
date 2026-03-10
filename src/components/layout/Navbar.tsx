@@ -6,6 +6,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useState } from "react";
+import { useBetaMode } from "@/hooks/useBetaMode";
 import {
   DropdownMenu,
   DropdownMenuContent,
