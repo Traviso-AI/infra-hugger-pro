@@ -1,7 +1,8 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Compass, Sparkles, CreditCard, Share2 } from "lucide-react";
+import { Sparkles, CreditCard, Share2, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 
 const features = [
@@ -23,7 +24,7 @@ const features = [
 ];
 
 export default function BetaWaitlist() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
 
   if (loading) {
     return (
@@ -72,21 +73,33 @@ export default function BetaWaitlist() {
           ))}
         </div>
 
-        <p className="mt-10 text-sm text-muted-foreground">
-          Follow us on{" "}
-          <a
-            href="https://x.com/travisoai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-medium text-accent hover:underline"
+        <div className="mt-10 flex flex-col items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            Follow us on{" "}
+            <a
+              href="https://x.com/travisoai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              @travisoai
+            </a>{" "}
+            for behind-the-scenes updates.
+          </p>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => signOut()}
+            className="text-muted-foreground hover:text-foreground"
           >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-            @travisoai
-          </a>{" "}
-          for behind-the-scenes updates.
-        </p>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
+          </Button>
+        </div>
       </div>
     </div>
   );
