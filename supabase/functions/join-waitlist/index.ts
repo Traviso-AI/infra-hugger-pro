@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,26 +21,13 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Run DB insert + Loops call simultaneously
-    const dbPromise = supabase
-      .from("beta_whitelist")
-      .upsert(
-        {
-          email: email.toLowerCase().trim(),
-          full_name: fullName || null,
-          source: source || "app_signup",
-          has_signed_up: false,
-        },
-        { onConflict: "email" }
-      );
-
+    // Send to Loops only — admin manually approves via whitelist
     const loopsApiKey = Deno.env.get("LOOPS_API_KEY");
-    const loopsPromise = loopsApiKey
-      ? fetch("https://app.loops.so/api/v1/contacts/create", {
+    let loopsResult = null;
+
+    if (loopsApiKey) {
+      try {
+        loopsResult = await fetch("https://app.loops.so/api/v1/contacts/create", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${loopsApiKey}`,
@@ -54,24 +40,10 @@ serve(async (req) => {
             source: source || "app_signup",
             userGroup: "Waitlist",
           }),
-        }).catch((e) => {
-          console.error("Loops API error:", e);
-          return null;
-        })
-      : Promise.resolve(null);
-
-    const [dbResult, loopsResult] = await Promise.all([dbPromise, loopsPromise]);
-
-    if (dbResult.error && !loopsResult) {
-      // Both failed
-      console.error("DB error:", dbResult.error);
-      return new Response(
-        JSON.stringify({ error: "Failed to join waitlist" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+        });
+      } catch (e) {
+        console.error("Loops API error:", e);
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
