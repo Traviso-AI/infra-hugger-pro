@@ -21,6 +21,10 @@ export function Navbar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isBetaMode } = useBetaMode();
+
+  // User has beta access if beta mode is off, or they have is_beta/is_admin
+  const hasBetaAccess = !isBetaMode || profile?.is_beta || profile?.is_admin;
 
   const handleSignOut = async () => {
     await signOut();
