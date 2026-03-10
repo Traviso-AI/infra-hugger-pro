@@ -3,10 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBetaMode } from "@/hooks/useBetaMode";
 
 export function BetaGate({ children }: { children: React.ReactNode }) {
-  const { profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { isBetaMode, isLoading: betaLoading } = useBetaMode();
 
-  if (authLoading || betaLoading) {
+  if (betaLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
@@ -17,9 +17,21 @@ export function BetaGate({ children }: { children: React.ReactNode }) {
   // If beta mode is off, let everyone through
   if (!isBetaMode) return <>{children}</>;
 
-  // If beta mode is on, check if user has beta access
+  // If still loading auth, show spinner
+  if (authLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Not logged in during beta — redirect to login
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Logged in with beta access or admin — allow through
   if (profile?.is_beta || profile?.is_admin) return <>{children}</>;
 
-  // Not approved — redirect to waitlist
+  // Logged in but no beta access — waitlist
   return <Navigate to="/beta-waitlist" replace />;
 }
