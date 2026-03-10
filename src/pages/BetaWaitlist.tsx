@@ -45,9 +45,9 @@ export default function BetaWaitlist() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-lg text-center">
-        <img src={logo} alt="Traviso AI" className="mx-auto mb-12 h-24 w-auto" />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-16">
+      <div className="w-full max-w-2xl text-center">
+        <img src={logo} alt="Traviso AI" className="mx-auto mb-14 h-36 w-auto" />
 
         <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
           You're on the list
