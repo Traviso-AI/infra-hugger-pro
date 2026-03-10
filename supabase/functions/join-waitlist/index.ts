@@ -21,10 +21,6 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
     // Send to Loops only — admin manually approves via whitelist
     const loopsApiKey = Deno.env.get("LOOPS_API_KEY");
     let loopsResult = null;
