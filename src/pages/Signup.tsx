@@ -31,8 +31,7 @@ export default function Signup() {
 
     try {
       if (isBetaMode) {
-        // Only admin-added entries grant access (source = 'admin')
-        // Self-submitted entries (source = 'app_signup') stay pending
+        // Only admin-added entries grant immediate access (source = 'admin')
         const { data: whitelistEntry } = await supabase
           .from("beta_whitelist")
           .select("id")
@@ -41,18 +40,20 @@ export default function Signup() {
           .maybeSingle();
 
         if (!whitelistEntry) {
-          // Not whitelisted — silently add to waitlist + Loops
-          try {
-            await supabase.functions.invoke("join-waitlist", {
-              body: {
-                email: email.toLowerCase().trim(),
-                fullName: fullName.trim(),
-                source: "app_signup",
-              },
-            });
-          } catch {
-            // Fail silently
-          }
+          // Not whitelisted — create auth account (sends confirmation email)
+          // but add to waitlist so admin can see them
+          const waitlistPromise = supabase.functions.invoke("join-waitlist", {
+            body: {
+              email: email.toLowerCase().trim(),
+              fullName: fullName.trim(),
+              source: "app_signup",
+            },
+          }).catch(() => {});
+
+          const signUpPromise = signUp(email, password, fullName);
+
+          await Promise.all([waitlistPromise, signUpPromise]);
+
           setWaitlisted(true);
           setLoading(false);
           return;
