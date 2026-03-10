@@ -6,6 +6,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useState } from "react";
+import { useBetaMode } from "@/hooks/useBetaMode";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,10 @@ export function Navbar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isBetaMode } = useBetaMode();
+
+  // User has beta access if beta mode is off, or they have is_beta/is_admin
+  const hasBetaAccess = !isBetaMode || profile?.is_beta || profile?.is_admin;
 
   const handleSignOut = async () => {
     await signOut();
@@ -38,13 +43,17 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
-          <Link to="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Explore
-          </Link>
-          <Link to="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            Leaderboard
-          </Link>
-          {user && (
+          {hasBetaAccess && (
+            <>
+              <Link to="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Explore
+              </Link>
+              <Link to="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Leaderboard
+              </Link>
+            </>
+          )}
+          {user && hasBetaAccess && (
             <>
               <Link to="/ai-planner" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 AI Planner
@@ -81,21 +90,27 @@ export function Navbar() {
                   <p className="text-xs text-muted-foreground truncate">@{profile?.username || "user"}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Travel</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => navigate("/my-trips")}>
-                  <Plane className="mr-2 h-4 w-4" /> My Trips
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/collections")}>
-                  <FolderOpen className="mr-2 h-4 w-4" /> Collections
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
-                  <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {hasBetaAccess && (
+                  <>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Travel</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate("/my-trips")}>
+                      <Plane className="mr-2 h-4 w-4" /> My Trips
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/collections")}>
+                      <FolderOpen className="mr-2 h-4 w-4" /> Collections
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/ai-planner")}>
+                      <MessageSquare className="mr-2 h-4 w-4" /> AI Planner
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuLabel className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Account</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                  <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
-                </DropdownMenuItem>
+                {hasBetaAccess && (
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <BarChart3 className="mr-2 h-4 w-4" /> Dashboard
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
@@ -138,29 +153,37 @@ export function Navbar() {
       {mobileOpen && (
         <div className="border-t bg-background p-4 md:hidden">
           <div className="flex flex-col gap-1">
-            <Link to="/explore" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-              <Compass className="h-4 w-4 text-muted-foreground" /> Explore
-            </Link>
-            <Link to="/leaderboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" /> Leaderboard
-            </Link>
+            {hasBetaAccess && (
+              <>
+                <Link to="/explore" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Compass className="h-4 w-4 text-muted-foreground" /> Explore
+                </Link>
+                <Link to="/leaderboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" /> Leaderboard
+                </Link>
+              </>
+            )}
             {user ? (
               <>
-                <Link to="/ai-planner" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" /> AI Planner
-                </Link>
-                <Link to="/create-trip" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <Plus className="h-4 w-4 text-muted-foreground" /> {profile?.is_creator ? "Creator Studio" : "Create Trip"}
-                </Link>
-                <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" /> Dashboard
-                </Link>
-                <Link to="/my-trips" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <Plane className="h-4 w-4 text-muted-foreground" /> My Trips
-                </Link>
-                <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
-                  <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
-                </Link>
+                {hasBetaAccess && (
+                  <>
+                    <Link to="/ai-planner" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" /> AI Planner
+                    </Link>
+                    <Link to="/create-trip" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <Plus className="h-4 w-4 text-muted-foreground" /> {profile?.is_creator ? "Creator Studio" : "Create Trip"}
+                    </Link>
+                    <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" /> Dashboard
+                    </Link>
+                    <Link to="/my-trips" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <Plane className="h-4 w-4 text-muted-foreground" /> My Trips
+                    </Link>
+                    <Link to="/collections" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
+                      <FolderOpen className="h-4 w-4 text-muted-foreground" /> Collections
+                    </Link>
+                  </>
+                )}
                 <Link to="/install" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted transition-colors" onClick={() => setMobileOpen(false)}>
                   <Download className="h-4 w-4 text-muted-foreground" /> Install App
                 </Link>

@@ -1,14 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TripCard } from "@/components/trips/TripCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, TrendingUp, Users, ArrowRight, MapPin, Star } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBetaMode } from "@/hooks/useBetaMode";
 
 
 
 export default function Index() {
+  const { user, profile, loading: authLoading } = useAuth();
+  const { isBetaMode, isLoading: betaLoading } = useBetaMode();
+
   const { data: featuredTrips } = useQuery({
     queryKey: ["featured-trips"],
     queryFn: async () => {
@@ -21,6 +26,11 @@ export default function Index() {
       return data || [];
     },
   });
+
+  // Redirect logged-in non-beta users to waitlist during beta mode
+  if (!authLoading && !betaLoading && isBetaMode && user && profile && !profile.is_beta && !profile.is_admin) {
+    return <Navigate to="/beta-waitlist" replace />;
+  }
 
   return (
     <div>
