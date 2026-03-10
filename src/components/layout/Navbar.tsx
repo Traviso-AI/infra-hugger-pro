@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen, Plane, Download } from "lucide-react";
+import { Menu, X, User, LogOut, Plus, BarChart3, MessageSquare, Compass, FolderOpen, Plane, Download, Shield } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -102,6 +102,14 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => navigate("/install")}>
                   <Download className="mr-2 h-4 w-4" /> Install App
                 </DropdownMenuItem>
+                {profile?.is_admin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <Shield className="mr-2 h-4 w-4" /> Admin
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
