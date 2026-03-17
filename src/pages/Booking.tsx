@@ -1,16 +1,26 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plane, Hotel, Activity, Utensils, Shield, Users, Loader2 } from "lucide-react";
+import { Plane, Hotel, Activity, Shield, Users, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getReferral } from "@/lib/referral";
+
+// trip_sessions table doesn't exist yet — define the shape locally
+interface TripSession {
+  id: string;
+  status: string;
+  selected_hotels: any[] | null;
+  selected_flights: any[] | null;
+  selected_activities: any[] | null;
+  total_amount_cents: number;
+  created_at: string;
+}
 
 export default function Booking() {
   const { tripId } = useParams();
@@ -20,65 +30,23 @@ export default function Booking() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // Traveler details form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState(user?.email ?? "");
   const [phone, setPhone] = useState("");
   const [passport, setPassport] = useState("");
 
-  // Load trip session
-  const { data: session, isLoading: sessionLoading } = useQuery({
-    queryKey: ["trip-session", tripSessionId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trip_sessions")
-        .select("*")
-        .eq("id", tripSessionId!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!tripSessionId,
-  });
+  // Stub: trip_sessions table doesn't exist yet
+  const session: TripSession | null = null;
+  const sessionLoading = false;
+  const bookingCount = 0;
 
-  // Social proof — bookings this month for the destination
-  const { data: bookingCount } = useQuery({
-    queryKey: ["social-proof", session?.selected_hotels],
-    queryFn: async () => {
-      // Extract destination from hotels or flights
-      const hotels = session?.selected_hotels as any[] | null;
-      const flights = session?.selected_flights as any[] | null;
-      const destination = hotels?.[0]?.name?.split(",").pop()?.trim() ??
-        flights?.[0]?.destination ?? null;
-      if (!destination) return 0;
-
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-
-      const { count } = await supabase
-        .from("trip_sessions")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "completed")
-        .gte("created_at", monthAgo.toISOString());
-
-      return count ?? 0;
-    },
-    enabled: !!session,
-  });
-
-  // Parse selections
   const flights = useMemo(() => (session?.selected_flights as any[] | null) ?? [], [session]);
   const hotels = useMemo(() => (session?.selected_hotels as any[] | null) ?? [], [session]);
   const activities = useMemo(() => (session?.selected_activities as any[] | null) ?? [], [session]);
 
   const totalCents = session?.total_amount_cents ?? 0;
   const totalDollars = (totalCents / 100).toFixed(2);
-
-  // Compute line items from real data
-  const flightTotal = flights.reduce((s: number, f: any) => s + (f.price_cents ?? 0), 0);
-  const hotelTotal = hotels.reduce((s: number, h: any) => s + (h.total_price_cents ?? 0), 0);
-  const activityTotal = activities.reduce((s: number, a: any) => s + (a.price_cents ?? 0), 0);
 
   const hasFlights = flights.length > 0;
 
@@ -100,13 +68,7 @@ export default function Booking() {
           guests: 1,
           total_price: totalCents / 100,
           referral_creator: referral,
-          traveler: {
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            phone,
-            passport: passport || undefined,
-          },
+          traveler: { first_name: firstName, last_name: lastName, email, phone, passport: passport || undefined },
         },
       });
       if (error) throw error;
@@ -147,8 +109,7 @@ export default function Booking() {
         <h1 className="font-display text-2xl md:text-3xl font-bold mb-1">Complete Your Booking</h1>
         <p className="text-muted-foreground text-sm mb-6">Review your selections and enter traveler details.</p>
 
-        {/* Social proof */}
-        {bookingCount != null && bookingCount > 0 && (
+        {bookingCount > 0 && (
           <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-accent/5 border border-accent/15 text-sm">
             <Users className="h-4 w-4 text-accent" />
             <span><strong>{bookingCount}</strong> people booked trips this month</span>
@@ -156,7 +117,6 @@ export default function Booking() {
         )}
 
         <div className="space-y-5">
-          {/* Price breakdown */}
           <Card>
             <CardHeader><CardTitle className="font-display text-lg">Package Summary</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -187,7 +147,6 @@ export default function Booking() {
                   <span className="font-medium">${(a.price_cents / 100).toFixed(0)}</span>
                 </div>
               ))}
-
               <div className="flex justify-between font-bold text-lg border-t pt-3 mt-3">
                 <span>Total</span>
                 <span className="text-accent">${totalDollars}</span>
@@ -195,7 +154,6 @@ export default function Booking() {
             </CardContent>
           </Card>
 
-          {/* Traveler details */}
           <Card>
             <CardHeader><CardTitle className="font-display text-lg">Traveler Details</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -227,7 +185,6 @@ export default function Booking() {
             </CardContent>
           </Card>
 
-          {/* Security badge + CTA */}
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Shield className="h-3.5 w-3.5" />

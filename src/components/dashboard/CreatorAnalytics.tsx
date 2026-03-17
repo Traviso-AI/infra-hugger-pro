@@ -19,38 +19,28 @@ const chartConfig = {
   revenue: { label: "Revenue", color: "hsl(220, 60%, 15%)" },
 };
 
+interface CreatorEarnings {
+  pending_payout_cents: number;
+  total_paid_out_cents: number;
+  stripe_connect_account_id: string | null;
+}
+
+interface CommissionEntry {
+  id: string;
+  amount_cents: number;
+  creator_percentage: number;
+  traviso_margin_cents: number;
+  booking_type: string | null;
+  created_at: string;
+}
+
 export function CreatorAnalytics() {
   const { user } = useAuth();
   const [connectLoading, setConnectLoading] = useState(false);
 
-  // --- Earnings data ---
-  const { data: earnings, refetch: refetchEarnings } = useQuery({
-    queryKey: ["creator-earnings", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("creator_earnings")
-        .select("*")
-        .eq("creator_id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // --- Commission history ---
-  const { data: commissions } = useQuery({
-    queryKey: ["creator-commissions", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("commission_ledger")
-        .select("*")
-        .eq("creator_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data ?? [];
-    },
-    enabled: !!user,
-  });
+  // --- Earnings data (table doesn't exist yet — stub) ---
+  const earnings: CreatorEarnings | null = null;
+  const commissions: CommissionEntry[] = [];
 
   // --- Existing analytics queries ---
   const { data: tripIds } = useQuery({
@@ -221,14 +211,14 @@ export function CreatorAnalytics() {
       </Card>
 
       {/* Commission history */}
-      {commissions && commissions.length > 0 && (
+      {commissions.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-medium">Commission History</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-0 divide-y">
-              {commissions.map((c: any) => {
+              {commissions.map((c) => {
                 const creatorEarned = ((c.amount_cents * c.creator_percentage) / 100 / 100).toFixed(2);
                 const travisoMargin = (c.traviso_margin_cents / 100).toFixed(2);
                 return (
@@ -253,7 +243,7 @@ export function CreatorAnalytics() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, change }) => (
+        {stats.map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
