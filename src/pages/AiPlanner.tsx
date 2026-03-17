@@ -14,6 +14,7 @@ import { ChatHistoryDrawer } from "@/components/ai-planner/ChatHistoryDrawer";
 import { useConversations } from "@/hooks/useConversations";
 import { ComparisonCard, parseComparisonBlocks } from "@/components/ai-planner/ComparisonCard";
 import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
+import { SearchResultsBlock, parseSearchResultsBlocks } from "@/components/ai-planner/SearchResultsBlock";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
@@ -425,10 +426,81 @@ export default function AiPlanner() {
 
           {messages.map((msg, i) => {
             const hasComparison = msg.role === "assistant" && msg.content.includes("```traviso-compare");
-            const parsed = hasComparison ? parseComparisonBlocks(msg.content) : null;
+            const hasResults = msg.role === "assistant" && msg.content.includes("```traviso-results");
+            const parsedComparison = hasComparison ? parseComparisonBlocks(msg.content) : null;
+            const parsedResults = hasResults ? parseSearchResultsBlocks(msg.content) : null;
 
             const handleComparisonSelect = (opt: ComparisonOption) => {
               setInput(`I'd like to go with "${opt.name}" (${opt.price}). Please add it to my itinerary.`);
+            };
+
+            // Render assistant message content with embedded blocks
+            const renderAssistantContent = () => {
+              // Both block types can coexist — parse results first, then comparisons within text parts
+              if (parsedResults && parsedResults.results.some(Boolean)) {
+                return (
+                  <div className="prose prose-sm max-w-none dark:prose-invert nala-prose space-y-3">
+                    {parsedResults.textParts.map((text, j) => {
+                      // Within each text part, also check for comparison blocks
+                      const hasInnerComparison = text.includes("```traviso-compare");
+                      const innerParsed = hasInnerComparison ? parseComparisonBlocks(text) : null;
+
+                      return (
+                        <div key={`results-${j}`}>
+                          {innerParsed ? (
+                            innerParsed.textParts.map((innerText, k) => (
+                              <div key={`inner-${k}`}>
+                                {innerText.trim() && <ReactMarkdown>{innerText}</ReactMarkdown>}
+                                {k < innerParsed.comparisons.length && innerParsed.comparisons[k] && (
+                                  <ComparisonCard
+                                    data={innerParsed.comparisons[k]!}
+                                    onSelect={handleComparisonSelect}
+                                  />
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            text.trim() && <ReactMarkdown>{text}</ReactMarkdown>
+                          )}
+                          {j < parsedResults.results.length && parsedResults.results[j] && (
+                            <SearchResultsBlock
+                              data={parsedResults.results[j]!}
+                              onSelectFlight={(f) => setInput(`I'd like the ${f.airline_name} flight at $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`)}
+                              onSelectHotel={(h) => setInput(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
+                              onSelectActivity={(a) => setInput(`I'd like to do "${a.title}" ($${(a.price_cents / 100).toFixed(0)}/person). Please add it to my trip.`)}
+                              onSelectRestaurant={(r) => setInput(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              if (parsedComparison) {
+                return (
+                  <div className="prose prose-sm max-w-none dark:prose-invert nala-prose space-y-3">
+                    {parsedComparison.textParts.map((text, j) => (
+                      <div key={`text-${j}`}>
+                        {text.trim() && <ReactMarkdown>{text}</ReactMarkdown>}
+                        {j < parsedComparison.comparisons.length && parsedComparison.comparisons[j] && (
+                          <ComparisonCard
+                            data={parsedComparison.comparisons[j]!}
+                            onSelect={handleComparisonSelect}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              );
             };
 
             return (
@@ -447,25 +519,7 @@ export default function AiPlanner() {
                       : "bg-card border"
                   }`}
                 >
-                  {msg.role === "assistant" && parsed ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert nala-prose space-y-3">
-                      {parsed.textParts.map((text, j) => (
-                        <div key={`text-${j}`}>
-                          {text.trim() && <ReactMarkdown>{text}</ReactMarkdown>}
-                          {j < parsed.comparisons.length && parsed.comparisons[j] && (
-                            <ComparisonCard
-                              data={parsed.comparisons[j]!}
-                              onSelect={handleComparisonSelect}
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : msg.role === "assistant" ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
-                  ) : (
+                  {msg.role === "assistant" ? renderAssistantContent() : (
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
                 </div>

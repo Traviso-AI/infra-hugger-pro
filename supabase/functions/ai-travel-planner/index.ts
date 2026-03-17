@@ -1,5 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -62,19 +60,21 @@ ABSOLUTE RULES for itineraries (violating these is a failure):
 8. Add brief context in each bullet — WHY this place is worth visiting, what makes it special
 9. Never write a paragraph. Every piece of content is either a heading, bullet, or horizontal rule.
 
-## COMPARISON MODE
+## LIVE SEARCH RESULTS — MANDATORY OUTPUT FORMAT
 
-When a user asks to find, compare, or search for hotels, flights, restaurants, or activities:
+You have access to live search tools for flights, hotels, activities, and restaurants. When users ask to find, compare, or search for any of these, call the appropriate tool. If required parameters are missing, ask for them in ONE short sentence.
 
-1. If dates/destination are missing, ask for them first (one short sentence).
-2. Write a 1-sentence intro, then output the comparison block, then optionally 1 short tips section.
-3. Use this EXACT format — a fenced code block with language tag "traviso-compare":
+### OUTPUT FORMAT (CRITICAL — you MUST use this exact format for ALL search results)
 
-${"```"}traviso-compare
+After receiving tool results, you MUST output them in TWO ways:
+
+**1. A traviso-compare block** with the TOP 3 options (for the comparison card UI):
+
+\`\`\`traviso-compare
 {
   "category": "hotel",
-  "destination": "Tulum",
-  "dates": "Mar 15-20",
+  "destination": "London",
+  "dates": "May 1-5",
   "options": [
     {
       "name": "Hotel Name",
@@ -82,53 +82,641 @@ ${"```"}traviso-compare
       "price": "$X/night",
       "rating": 4.5,
       "location": "Area or neighborhood",
-      "duration": "5 nights",
-      "highlights": ["Pool", "Beach access", "Free breakfast"],
+      "duration": "4 nights",
+      "highlights": ["Feature 1", "Feature 2", "Feature 3"],
       "recommended": false
     }
   ]
 }
-${"```"}
+\`\`\`
 
-RULES for comparison blocks:
-- category: hotel | flight | restaurant | activity | event | transport
-- Always exactly 3 options with varied price points
-- Mark ONE as "recommended": true (best value)
-- Use plausible real-sounding names for the destination
-- Pricing formats: hotels "$X/night", flights "$X roundtrip", restaurants "$X-Y/person", activities "$X/person"
-- NEVER nest comparison blocks inside other markdown
-- Keep any tips section AFTER the block to max 3-4 bullets under a ### heading
+**2. A traviso-results block** with the raw data (for the rich card UI):
 
-Trigger comparison mode for: "find me hotels", "compare flights", "show restaurants", "what activities", "I need a hotel", or any shopping/comparing intent.`;
+For flights:
+\`\`\`traviso-results
+{
+  "type": "flights",
+  "flights": [
+    {
+      "id": "offer_id",
+      "airline_name": "British Airways",
+      "airline_logo_url": "https://...",
+      "departure_time": "2026-04-15T10:50:00",
+      "arrival_time": "2026-04-15T13:48:00",
+      "duration_minutes": 478,
+      "stops": 0,
+      "price_cents": 29619,
+      "currency": "USD",
+      "cabin_class": "economy",
+      "booking_token": "offer_id"
+    }
+  ]
+}
+\`\`\`
 
+For hotels:
+\`\`\`traviso-results
+{
+  "type": "hotels",
+  "hotels": [
+    {
+      "id": "6605",
+      "name": "Royal Lancaster London",
+      "stars": 5,
+      "address": "Bayswater, London",
+      "image_url": "https://...",
+      "price_per_night_cents": 26865,
+      "total_price_cents": 80594,
+      "currency": "EUR",
+      "cancellation_policy": "non-refundable",
+      "booking_token": "rateKey..."
+    }
+  ]
+}
+\`\`\`
 
-type MessageContent = string;
+For activities:
+\`\`\`traviso-results
+{
+  "type": "activities",
+  "activities": [
+    {
+      "id": "62043P1",
+      "title": "London in a Day: Tower of London & River Cruise",
+      "description": "Full-day walking tour...",
+      "image_url": "https://...",
+      "price_cents": 12027,
+      "currency": "USD",
+      "duration_minutes": 360,
+      "rating": 4.8,
+      "review_count": 740,
+      "category": null,
+      "booking_url": "https://www.viator.com/...",
+      "booking_token": "62043P1"
+    }
+  ]
+}
+\`\`\`
 
+For restaurants:
+\`\`\`traviso-results
+{
+  "type": "restaurants",
+  "restaurants": [
+    {
+      "id": "place_id",
+      "name": "Circolo Popolare",
+      "cuisine": "Italian",
+      "price_range": "$$$",
+      "rating": 4.8,
+      "review_count": 36792,
+      "image_url": "https://...",
+      "address": "40-41 Rathbone Pl, London",
+      "opentable_url": null,
+      "affiliate_enabled": false
+    }
+  ]
+}
+\`\`\`
+
+### RULES (CRITICAL):
+- You MUST output BOTH a traviso-compare block AND a traviso-results block for every search result
+- The traviso-results block must contain the RAW data from the tool results — copy the fields exactly as returned by the tool. Include up to 5 results.
+- The traviso-compare block should have exactly 3 curated options with varied price points. Mark ONE as "recommended": true.
+- Use REAL names, prices, and ratings from the tool results — NEVER invent data
+- NEVER write search results as bullet points or plain text. ALWAYS use the block formats above.
+- NEVER nest blocks inside other markdown
+- Output order: 1-sentence intro → traviso-compare block → traviso-results block → optional 1-3 bullet tips
+- After the blocks, mention these are live prices and offer to book or show more options
+- When multiple tools are called (e.g. flights + hotels + activities + restaurants), output separate traviso-compare and traviso-results blocks for EACH category, one after another
+
+Trigger search mode for: "find me hotels", "compare flights", "show restaurants", "what activities", "I need a hotel", "search flights", "plan a trip", or any shopping/comparing intent.`;
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 interface ChatMessage {
   role: "user" | "assistant";
-  content: MessageContent;
+  content: string;
+}
+
+interface AnthropicMessage {
+  role: "user" | "assistant";
+  content: any;
 }
 
 // ---------------------------------------------------------------------------
-// Gemini direct API — used when an image is attached.
-// Fetches the image URL, converts it to base64, and calls generateContent
-// using the inlineData format that the Gemini API actually requires.
-// Wraps the response into OpenAI SSE format so the frontend parser is unchanged.
+// Tool definitions for Anthropic format
 // ---------------------------------------------------------------------------
-async function callGeminiWithVision(
+const SEARCH_TOOLS = [
+  {
+    name: "search_flights",
+    description: "Search for live flight options between two airports. Call this when users ask about flights, airfare, or flying somewhere.",
+    input_schema: {
+      type: "object",
+      properties: {
+        origin: { type: "string", description: "Origin airport IATA code (e.g. LHR, JFK, LAX)" },
+        destination: { type: "string", description: "Destination airport IATA code (e.g. CDG, NRT, FCO)" },
+        departure_date: { type: "string", description: "Departure date in YYYY-MM-DD format" },
+        return_date: { type: "string", description: "Return date in YYYY-MM-DD format (optional for one-way)" },
+        passengers: { type: "number", description: "Number of passengers (default 1)" },
+      },
+      required: ["origin", "destination", "departure_date"],
+    },
+  },
+  {
+    name: "search_hotels",
+    description: "Search for live hotel availability in a destination. Call this when users ask about hotels, accommodation, or places to stay.",
+    input_schema: {
+      type: "object",
+      properties: {
+        destination_code: { type: "string", description: "Hotelbeds destination code (e.g. LON for London, PAR for Paris, NYC for New York, ROM for Rome, BCN for Barcelona, TYO for Tokyo)" },
+        check_in: { type: "string", description: "Check-in date in YYYY-MM-DD format" },
+        check_out: { type: "string", description: "Check-out date in YYYY-MM-DD format" },
+        adults: { type: "number", description: "Number of adults per room (default 2)" },
+        rooms: { type: "number", description: "Number of rooms (default 1)" },
+      },
+      required: ["destination_code", "check_in", "check_out"],
+    },
+  },
+  {
+    name: "search_activities",
+    description: "Search for activities, tours, experiences, and things to do at a destination. Call this when users ask about activities, tours, things to do, or sightseeing.",
+    input_schema: {
+      type: "object",
+      properties: {
+        destination: { type: "string", description: "Destination city name (e.g. London, Paris, Tokyo)" },
+        start_date: { type: "string", description: "Start date in YYYY-MM-DD format (optional)" },
+        end_date: { type: "string", description: "End date in YYYY-MM-DD format (optional)" },
+      },
+      required: ["destination"],
+    },
+  },
+  {
+    name: "search_restaurants",
+    description: "Search for restaurants at a destination. Call this when users ask about restaurants, dining, where to eat, or food recommendations.",
+    input_schema: {
+      type: "object",
+      properties: {
+        destination: { type: "string", description: "Destination city name (e.g. London, Paris, Tokyo)" },
+        date: { type: "string", description: "Date in YYYY-MM-DD format (optional)" },
+        party_size: { type: "number", description: "Number of diners (optional)" },
+        cuisine: { type: "string", description: "Cuisine type filter (e.g. Italian, Japanese, Mexican — optional)" },
+      },
+      required: ["destination"],
+    },
+  },
+];
+
+const STATUS_MESSAGES: Record<string, string> = {
+  search_flights: "✈️ Searching live flights...\n\n",
+  search_hotels: "🏨 Checking hotel availability...\n\n",
+  search_activities: "🎯 Finding activities and experiences...\n\n",
+  search_restaurants: "🍽️ Looking up restaurants...\n\n",
+};
+
+// ---------------------------------------------------------------------------
+// Call our Supabase Edge Functions for live search
+// ---------------------------------------------------------------------------
+async function executeToolCall(name: string, args: Record<string, any>): Promise<string> {
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+
+  const functionMap: Record<string, string> = {
+    search_flights: "search-flights",
+    search_hotels: "search-hotels",
+    search_activities: "search-activities",
+    search_restaurants: "search-restaurants",
+  };
+
+  const fnName = functionMap[name];
+  if (!fnName) return JSON.stringify({ error: `Unknown tool: ${name}` });
+
+  try {
+    console.log(`[ai-travel-planner] Calling ${fnName} with:`, JSON.stringify(args));
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(args),
+    });
+
+    const data = await res.json();
+    console.log(`[ai-travel-planner] ${fnName} returned ${JSON.stringify(data).length} chars`);
+
+    // Trim results to top 10 to keep context manageable
+    if (data.flights) data.flights = data.flights.slice(0, 10);
+    if (data.hotels) data.hotels = data.hotels.slice(0, 10);
+    if (data.activities) data.activities = data.activities.slice(0, 10);
+    if (data.restaurants) data.restaurants = data.restaurants.slice(0, 10);
+
+    return JSON.stringify(data);
+  } catch (e) {
+    console.error(`[ai-travel-planner] Tool call ${fnName} failed:`, e);
+    return JSON.stringify({ error: `Failed to call ${fnName}: ${e instanceof Error ? e.message : "unknown error"}` });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SSE helpers — emit OpenAI-compatible SSE chunks for the frontend
+// ---------------------------------------------------------------------------
+function sseChunk(content: string): Uint8Array {
+  const encoder = new TextEncoder();
+  return encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`);
+}
+
+function sseDone(): Uint8Array {
+  return new TextEncoder().encode("data: [DONE]\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// Convert frontend ChatMessage[] to Anthropic messages format
+// ---------------------------------------------------------------------------
+function toAnthropicMessages(messages: ChatMessage[]): AnthropicMessage[] {
+  return messages.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Retryable status codes — 500 (internal) and 529 (overloaded)
+// ---------------------------------------------------------------------------
+const RETRYABLE_STATUSES = new Set([500, 529]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ---------------------------------------------------------------------------
+// Convert Anthropic messages to OpenAI format (for fallback)
+// ---------------------------------------------------------------------------
+function toOpenAIMessages(messages: AnthropicMessage[]): any[] {
+  return messages.map((m) => {
+    // Simple string content
+    if (typeof m.content === "string") {
+      return { role: m.role, content: m.content };
+    }
+    // Array content (tool_use, tool_result, image, text blocks)
+    if (Array.isArray(m.content)) {
+      // Check if it's tool results (user role with tool_result blocks)
+      const toolResults = m.content.filter((b: any) => b.type === "tool_result");
+      if (toolResults.length > 0) {
+        return toolResults.map((tr: any) => ({
+          role: "tool",
+          tool_call_id: tr.tool_use_id,
+          content: typeof tr.content === "string" ? tr.content : JSON.stringify(tr.content),
+        }));
+      }
+      // Check if assistant message with tool_use blocks
+      const toolUses = m.content.filter((b: any) => b.type === "tool_use");
+      const textBlocks = m.content.filter((b: any) => b.type === "text");
+      if (toolUses.length > 0) {
+        return {
+          role: "assistant",
+          content: textBlocks.map((b: any) => b.text).join("") || null,
+          tool_calls: toolUses.map((tu: any) => ({
+            id: tu.id,
+            type: "function",
+            function: { name: tu.name, arguments: JSON.stringify(tu.input) },
+          })),
+        };
+      }
+      // Image + text blocks — convert to OpenAI vision format
+      const parts = m.content.map((b: any) => {
+        if (b.type === "text") return { type: "text", text: b.text };
+        if (b.type === "image") {
+          return {
+            type: "image_url",
+            image_url: { url: `data:${b.source.media_type};base64,${b.source.data}` },
+          };
+        }
+        return { type: "text", text: JSON.stringify(b) };
+      });
+      return { role: m.role, content: parts };
+    }
+    return { role: m.role, content: String(m.content) };
+  }).flat();
+}
+
+// OpenAI tool format from Anthropic tools
+const OPENAI_TOOLS = SEARCH_TOOLS.map((t) => ({
+  type: "function" as const,
+  function: {
+    name: t.name,
+    description: t.description,
+    parameters: t.input_schema,
+  },
+}));
+
+// ---------------------------------------------------------------------------
+// Call Anthropic Messages API (non-streaming, with retry + OpenAI fallback)
+// Returns the full response text and any tool_use blocks
+// ---------------------------------------------------------------------------
+async function callAnthropic(
+  messages: AnthropicMessage[],
+  includeTools: boolean,
+): Promise<{ text: string; toolCalls: any[]; stopReason: string }> {
+  const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
+
+  const body: Record<string, any> = {
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages,
+  };
+
+  if (includeTools) {
+    body.tools = SEARCH_TOOLS;
+  }
+
+  // Attempt 1
+  let res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  // Retry once after 2s for 500/529
+  if (RETRYABLE_STATUSES.has(res.status)) {
+    console.log(`[ai-travel-planner] Anthropic returned ${res.status}, retrying in 2s...`);
+    await sleep(2000);
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  // Still failing — fall back to OpenAI
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error(`[ai-travel-planner] Anthropic error ${res.status} after retry:`, errText);
+    if (res.status === 429) throw new Error("RATE_LIMIT");
+
+    console.log("[ai-travel-planner] Falling back to OpenAI GPT-4o...");
+    return await callOpenAI(messages, includeTools);
+  }
+
+  const data = await res.json();
+  let text = "";
+  const toolCalls: any[] = [];
+
+  for (const block of data.content ?? []) {
+    if (block.type === "text") {
+      text += block.text;
+    } else if (block.type === "tool_use") {
+      toolCalls.push(block);
+    }
+  }
+
+  return { text, toolCalls, stopReason: data.stop_reason ?? "end_turn" };
+}
+
+// ---------------------------------------------------------------------------
+// OpenAI GPT-4o fallback (non-streaming)
+// ---------------------------------------------------------------------------
+async function callOpenAI(
+  messages: AnthropicMessage[],
+  includeTools: boolean,
+): Promise<{ text: string; toolCalls: any[]; stopReason: string }> {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured (fallback failed)");
+
+  const openaiMessages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...toOpenAIMessages(messages),
+  ];
+
+  const body: Record<string, any> = {
+    model: "gpt-4o",
+    max_tokens: 4096,
+    messages: openaiMessages,
+  };
+
+  if (includeTools) {
+    body.tools = OPENAI_TOOLS;
+    body.tool_choice = "auto";
+  }
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("[ai-travel-planner] OpenAI fallback error:", res.status, errText);
+    throw new Error(`OpenAI fallback error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  const choice = data.choices?.[0];
+  const text = choice?.message?.content ?? "";
+  const toolCalls: any[] = [];
+
+  // Convert OpenAI tool_calls to Anthropic-like format for consistency
+  if (choice?.message?.tool_calls) {
+    for (const tc of choice.message.tool_calls) {
+      toolCalls.push({
+        id: tc.id,
+        name: tc.function.name,
+        input: JSON.parse(tc.function.arguments),
+        type: "tool_use",
+      });
+    }
+  }
+
+  return { text, toolCalls, stopReason: choice?.finish_reason ?? "end_turn" };
+}
+
+// ---------------------------------------------------------------------------
+// Stream response to SSE (with retry + OpenAI fallback)
+// Tries Anthropic streaming, falls back to OpenAI streaming
+// ---------------------------------------------------------------------------
+async function streamToSSE(
+  messages: AnthropicMessage[],
+  controller: ReadableStreamDefaultController,
+): Promise<void> {
+  const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
+
+  const anthropicBody = {
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages,
+    stream: true,
+  };
+
+  // Attempt 1
+  let res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(anthropicBody),
+  });
+
+  // Retry once after 2s for 500/529
+  if (RETRYABLE_STATUSES.has(res.status)) {
+    console.log(`[ai-travel-planner] Anthropic stream returned ${res.status}, retrying in 2s...`);
+    await sleep(2000);
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(anthropicBody),
+    });
+  }
+
+  // Still failing — fall back to OpenAI streaming
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error(`[ai-travel-planner] Anthropic stream error ${res.status} after retry:`, errText);
+    console.log("[ai-travel-planner] Falling back to OpenAI GPT-4o streaming...");
+    await streamOpenAIToSSE(messages, controller);
+    return;
+  }
+
+  // Stream Anthropic SSE → our OpenAI-format SSE
+  const reader = res.body?.getReader();
+  if (!reader) return;
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") continue;
+
+      try {
+        const event = JSON.parse(payload);
+        if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+          controller.enqueue(sseChunk(event.delta.text));
+        }
+      } catch {
+        // skip malformed lines
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// OpenAI streaming fallback — stream GPT-4o response as our SSE format
+// ---------------------------------------------------------------------------
+async function streamOpenAIToSSE(
+  messages: AnthropicMessage[],
+  controller: ReadableStreamDefaultController,
+): Promise<void> {
+  const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  if (!OPENAI_API_KEY) {
+    console.error("[ai-travel-planner] OPENAI_API_KEY not set, cannot fall back");
+    controller.enqueue(sseChunk("\n\nSorry, I'm having trouble right now. Please try again in a moment."));
+    return;
+  }
+
+  const openaiMessages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...toOpenAIMessages(messages),
+  ];
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o",
+      max_tokens: 4096,
+      messages: openaiMessages,
+      stream: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("[ai-travel-planner] OpenAI stream fallback error:", res.status, errText);
+    controller.enqueue(sseChunk("\n\nSorry, I'm having trouble right now. Please try again in a moment."));
+    return;
+  }
+
+  // OpenAI SSE is already in the format our frontend expects — pipe through
+  const reader = res.body?.getReader();
+  if (!reader) return;
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") continue;
+
+      try {
+        const event = JSON.parse(payload);
+        const delta = event.choices?.[0]?.delta?.content;
+        if (delta) {
+          controller.enqueue(sseChunk(delta));
+        }
+      } catch {
+        // skip malformed lines
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Handle image messages — fetch image, call Anthropic with vision
+// ---------------------------------------------------------------------------
+async function handleImageMessage(
   messages: ChatMessage[],
   imageUrl: string,
-): Promise<Response> {
-  const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-  if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
-
-  // --- Step 1: Fetch the image and convert to base64 ---
-  console.log("[ai-travel-planner] Fetching image from storage URL...");
+  controller: ReadableStreamDefaultController,
+): Promise<void> {
+  console.log("[ai-travel-planner] Fetching image for vision...");
   const imgResp = await fetch(imageUrl);
-  if (!imgResp.ok) {
-    throw new Error(`Failed to fetch image: ${imgResp.status} ${imgResp.statusText}`);
-  }
-  const mimeType = imgResp.headers.get("content-type") ?? "image/jpeg";
+  if (!imgResp.ok) throw new Error(`Failed to fetch image: ${imgResp.status}`);
+
+  const mimeType = (imgResp.headers.get("content-type") ?? "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
   const imageBuffer = await imgResp.arrayBuffer();
   const bytes = new Uint8Array(imageBuffer);
   const CHUNK = 8192;
@@ -137,137 +725,33 @@ async function callGeminiWithVision(
     binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
   }
   const base64Data = btoa(binary);
-  console.log(`[ai-travel-planner] Image fetched: ${mimeType}, ${imageBuffer.byteLength} bytes`);
+  console.log(`[ai-travel-planner] Image: ${mimeType}, ${imageBuffer.byteLength} bytes`);
 
-  // --- Step 2: Find the last user message ---
-  let userMessage = "";
-  let lastUserIdx = -1;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "user") {
-      userMessage = messages[i].content;
-      lastUserIdx = i;
-      break;
-    }
+  // Build Anthropic messages with image in last user message
+  const anthropicMessages: AnthropicMessage[] = [];
+  for (let i = 0; i < messages.length - 1; i++) {
+    anthropicMessages.push({ role: messages[i].role, content: messages[i].content });
   }
 
-  // --- Step 3: Build Gemini contents array with conversation history ---
-  // "assistant" → "model" per Gemini API spec
-  const contents = [];
-  for (let i = 0; i < messages.length; i++) {
-    if (i === lastUserIdx) continue; // added below with image
-    const msg = messages[i];
-    contents.push({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    });
-  }
-
-  // Last user message with inlineData image
-  contents.push({
+  const lastUserMsg = messages[messages.length - 1];
+  anthropicMessages.push({
     role: "user",
-    parts: [
-      { inlineData: { mimeType, data: base64Data } },
-      { text: userMessage },
+    content: [
+      {
+        type: "image",
+        source: { type: "base64", media_type: mimeType, data: base64Data },
+      },
+      { type: "text", text: lastUserMsg?.content ?? "What's in this image?" },
     ],
   });
 
-  console.log(`[ai-travel-planner] Calling Gemini 1.5 Flash, ${contents.length} turns`);
-
-  // --- Step 4: Call Gemini generateContent ---
-  const geminiResp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-      }),
-    },
-  );
-
-  if (!geminiResp.ok) {
-    const errText = await geminiResp.text();
-    console.error("[ai-travel-planner] Gemini API error:", geminiResp.status, errText);
-    if (geminiResp.status === 429) {
-      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    throw new Error(`Gemini API error ${geminiResp.status}: ${errText}`);
-  }
-
-  const data = await geminiResp.json();
-  const responseText: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  console.log(`[ai-travel-planner] Gemini vision response: ${responseText.length} chars`);
-
-  // --- Step 5: Return as OpenAI SSE format so the frontend parser is unchanged ---
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    start(controller) {
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({ choices: [{ delta: { content: responseText } }] })}\n\n`,
-        ),
-      );
-      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
-    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// AI gateway — used for text-only messages
-// ---------------------------------------------------------------------------
-async function callAIGateway(messages: ChatMessage[]): Promise<Response> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-      stream: true,
-    }),
-  });
-
-  if (!response.ok) {
-    if (response.status === 429) {
-      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (response.status === 402) {
-      return new Response(JSON.stringify({ error: "Payment required" }), {
-        status: 402,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const t = await response.text();
-    console.error("[ai-travel-planner] AI gateway error:", response.status, t);
-    throw new Error("AI gateway request failed");
-  }
-
-  return new Response(response.body, {
-    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-  });
+  await streamToSSE(anthropicMessages, controller);
 }
 
 // ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
-serve(async (req: Request) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -278,13 +762,101 @@ serve(async (req: Request) => {
       imageUrl?: string;
     };
 
-    if (imageUrl) {
-      console.log("[ai-travel-planner] Image attached → Gemini 1.5 Flash (direct API)");
-      return await callGeminiWithVision(messages, imageUrl);
-    }
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          // --- Image path: vision with streaming ---
+          if (imageUrl) {
+            console.log("[ai-travel-planner] Image attached → Anthropic vision");
+            await handleImageMessage(messages, imageUrl, controller);
+            controller.enqueue(sseDone());
+            controller.close();
+            return;
+          }
 
-    console.log("[ai-travel-planner] Text-only → AI gateway");
-    return await callAIGateway(messages);
+          // --- Text path: check for tool calls first ---
+          console.log("[ai-travel-planner] Text → Anthropic with tools");
+          const anthropicMessages = toAnthropicMessages(messages);
+
+          const initial = await callAnthropic(anthropicMessages, true);
+
+          // No tool calls — just stream the response
+          if (initial.toolCalls.length === 0) {
+            console.log("[ai-travel-planner] No tool calls, streaming text response");
+            await streamToSSE(anthropicMessages, controller);
+            controller.enqueue(sseDone());
+            controller.close();
+            return;
+          }
+
+          // --- Tool calls detected ---
+          console.log(`[ai-travel-planner] ${initial.toolCalls.length} tool call(s)`);
+
+          // Stream any text the model produced before tool calls
+          if (initial.text) {
+            controller.enqueue(sseChunk(initial.text));
+          }
+
+          // Emit status messages
+          for (const tc of initial.toolCalls) {
+            const status = STATUS_MESSAGES[tc.name] ?? "🔍 Searching...\n\n";
+            controller.enqueue(sseChunk(status));
+          }
+
+          // Execute all tool calls in parallel
+          const toolResults = await Promise.all(
+            initial.toolCalls.map(async (tc: any) => {
+              const result = await executeToolCall(tc.name, tc.input);
+              return {
+                type: "tool_result" as const,
+                tool_use_id: tc.id,
+                content: result,
+              };
+            }),
+          );
+
+          // Build follow-up messages with tool results
+          // Anthropic format: assistant message with content blocks, then user message with tool_results
+          const assistantContent: any[] = [];
+          if (initial.text) {
+            assistantContent.push({ type: "text", text: initial.text });
+          }
+          for (const tc of initial.toolCalls) {
+            assistantContent.push({
+              type: "tool_use",
+              id: tc.id,
+              name: tc.name,
+              input: tc.input,
+            });
+          }
+
+          const followUpMessages: AnthropicMessage[] = [
+            ...anthropicMessages,
+            { role: "assistant", content: assistantContent },
+            { role: "user", content: toolResults },
+          ];
+
+          // Stream the final response with real search data
+          console.log("[ai-travel-planner] Streaming final response with tool results");
+          await streamToSSE(followUpMessages, controller);
+
+          controller.enqueue(sseDone());
+          controller.close();
+        } catch (e) {
+          console.error("[ai-travel-planner] Stream error:", e);
+          const msg = e instanceof Error && e.message === "RATE_LIMIT"
+            ? "I'm getting too many requests right now. Please try again in a moment."
+            : "Something went wrong. Please try again.";
+          controller.enqueue(sseChunk(msg));
+          controller.enqueue(sseDone());
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    });
   } catch (e) {
     console.error("[ai-travel-planner] Unhandled error:", e);
     return new Response(

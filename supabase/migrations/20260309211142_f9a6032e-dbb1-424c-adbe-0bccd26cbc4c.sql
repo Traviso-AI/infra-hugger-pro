@@ -30,7 +30,13 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trg_deduplicate_trip_view
-BEFORE INSERT ON public.trip_views
-FOR EACH ROW
-EXECUTE FUNCTION public.deduplicate_trip_view();
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'trip_views') THEN
+    CREATE TRIGGER trg_deduplicate_trip_view
+    BEFORE INSERT ON public.trip_views
+    FOR EACH ROW
+    EXECUTE FUNCTION public.deduplicate_trip_view();
+  END IF;
+END;
+$$;
