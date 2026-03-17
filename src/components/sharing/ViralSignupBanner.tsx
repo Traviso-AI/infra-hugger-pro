@@ -3,17 +3,18 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { X, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { setReferral } from "@/lib/referral";
 
 export function ViralSignupBanner() {
   const { user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   const [searchParams] = useSearchParams();
 
-  // Store referral in sessionStorage
+  // Store referral in localStorage with 30-day expiry
   useEffect(() => {
     const ref = searchParams.get("ref");
     if (ref) {
-      sessionStorage.setItem("traviso_referral", ref);
+      setReferral(ref);
     }
   }, [searchParams]);
 

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Plane, Hotel, Activity, Utensils, Shield, Users, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { getReferral } from "@/lib/referral";
 
 export default function Booking() {
   const { tripId } = useParams();
@@ -88,6 +89,7 @@ export default function Booking() {
     if (!user || !session) return;
     setLoading(true);
     try {
+      const referral = getReferral();
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           trip_session_id: session.id,
@@ -97,6 +99,7 @@ export default function Booking() {
           check_out: hotels[0]?.check_out_date ?? null,
           guests: 1,
           total_price: totalCents / 100,
+          referral_creator: referral,
           traveler: {
             first_name: firstName,
             last_name: lastName,

@@ -13,6 +13,7 @@ import { TripPhotoGallery } from "@/components/trips/TripPhotoGallery";
 import { ActivityMap } from "@/components/trips/ActivityMap";
 import { LiveTripTracker } from "@/components/trips/LiveTripTracker";
 import { ViralSignupBanner } from "@/components/sharing/ViralSignupBanner";
+import { setReferral } from "@/lib/referral";
 import { TripDetailSkeleton } from "@/components/skeletons/TripDetailSkeleton";
 import { isGenericPlaceholder } from "@/lib/destination-covers";
 import { usePageSEO } from "@/hooks/usePageSEO";
@@ -28,7 +29,7 @@ export default function TripDetail() {
   // Store referral
   useEffect(() => {
     const ref = searchParams.get("ref");
-    if (ref) sessionStorage.setItem("traviso_referral", ref);
+    if (ref) setReferral(ref);
   }, [searchParams]);
 
   // Accept invite
