@@ -22,6 +22,7 @@ import MyTrips from "./pages/MyTrips";
 import AiPlanner from "./pages/AiPlanner";
 import Leaderboard from "./pages/Leaderboard";
 import Booking from "./pages/Booking";
+import BookingProgress from "./pages/BookingProgress";
 import BookingSuccess from "./pages/BookingSuccess";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
@@ -70,6 +71,8 @@ const App = () => (
                 <Route path="/create-trip" element={<ProtectedRoute><BetaGate><ErrorBoundary><CreateTrip /></ErrorBoundary></BetaGate></ProtectedRoute>} />
                 <Route path="/edit-trip/:id" element={<ProtectedRoute><BetaGate><ErrorBoundary><EditTrip /></ErrorBoundary></BetaGate></ProtectedRoute>} />
                 <Route path="/booking/success" element={<ProtectedRoute><BetaGate><BookingSuccess /></BetaGate></ProtectedRoute>} />
+                <Route path="/booking/progress" element={<ProtectedRoute><BetaGate><BookingProgress /></BetaGate></ProtectedRoute>} />
+                <Route path="/booking/confirmation" element={<ProtectedRoute><BetaGate><BookingSuccess /></BetaGate></ProtectedRoute>} />
                 <Route path="/booking/:tripId" element={<ProtectedRoute><BetaGate><ErrorBoundary><Booking /></ErrorBoundary></BetaGate></ProtectedRoute>} />
                 <Route path="/collections" element={<ProtectedRoute><BetaGate><ErrorBoundary><Collections /></ErrorBoundary></BetaGate></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><BetaGate><ErrorBoundary><Profile /></ErrorBoundary></BetaGate></ProtectedRoute>} />

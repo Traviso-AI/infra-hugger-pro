@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,303 +7,246 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plane, Hotel, Utensils, Activity, Package, Check, Loader2, Music, Bus } from "lucide-react";
-
-type LoadingStep = { label: string; icon: React.ElementType };
-
-const typeIcon: Record<string, React.ElementType> = {
-  flight: Plane, hotel: Hotel, restaurant: Utensils,
-  activity: Activity, event: Music, transport: Bus,
-};
+import { Plane, Hotel, Activity, Utensils, Shield, Users, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Booking() {
   const { tripId } = useParams();
+  const [searchParams] = useSearchParams();
+  const tripSessionId = searchParams.get("session") ?? tripId;
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("1");
   const [loading, setLoading] = useState(false);
-  const [calculating, setCalculating] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [priceCalculated, setPriceCalculated] = useState(false);
 
-  const { data: trip } = useQuery({
-    queryKey: ["booking-trip", tripId],
+  // Traveler details form
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [phone, setPhone] = useState("");
+  const [passport, setPassport] = useState("");
+
+  // Load trip session
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ["trip-session", tripSessionId],
     queryFn: async () => {
-      const { data } = await supabase.from("trips").select("*").eq("id", tripId!).single();
+      const { data, error } = await supabase
+        .from("trip_sessions")
+        .select("*")
+        .eq("id", tripSessionId!)
+        .single();
+      if (error) throw error;
       return data;
     },
-    enabled: !!tripId,
+    enabled: !!tripSessionId,
   });
 
-  // Fetch all activities with their details for price breakdown
-  const { data: allActivities } = useQuery({
-    queryKey: ["booking-all-activities", tripId],
+  // Social proof — bookings this month for the destination
+  const { data: bookingCount } = useQuery({
+    queryKey: ["social-proof", session?.selected_hotels],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("trip_days")
-        .select("day_number, title, trip_activities(id, title, type, price_estimate, location)")
-        .eq("trip_id", tripId!)
-        .order("day_number");
-      return data || [];
+      // Extract destination from hotels or flights
+      const hotels = session?.selected_hotels as any[] | null;
+      const flights = session?.selected_flights as any[] | null;
+      const destination = hotels?.[0]?.name?.split(",").pop()?.trim() ??
+        flights?.[0]?.destination ?? null;
+      if (!destination) return 0;
+
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+      const { count } = await supabase
+        .from("trip_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "completed")
+        .gte("created_at", monthAgo.toISOString());
+
+      return count ?? 0;
     },
-    enabled: !!tripId,
+    enabled: !!session,
   });
 
-  const activityTypes = useMemo(() => {
-    const types = new Set<string>();
-    allActivities?.forEach((day: any) =>
-      day.trip_activities?.forEach((act: any) => types.add(act.type?.toLowerCase()))
-    );
-    return types;
-  }, [allActivities]);
+  // Parse selections
+  const flights = useMemo(() => (session?.selected_flights as any[] | null) ?? [], [session]);
+  const hotels = useMemo(() => (session?.selected_hotels as any[] | null) ?? [], [session]);
+  const activities = useMemo(() => (session?.selected_activities as any[] | null) ?? [], [session]);
 
-  const flatActivities = useMemo(() => {
-    const items: { title: string; type: string; price: number }[] = [];
-    allActivities?.forEach((day: any) =>
-      day.trip_activities?.forEach((act: any) => {
-        // Deterministic price based on title hash if none exists
-        let price = act.price_estimate;
-        if (!price || price <= 0) {
-          // Simple string hash for deterministic pricing
-          let hash = 0;
-          const str = act.title || act.id || '';
-          for (let c = 0; c < str.length; c++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(c);
-            hash |= 0;
-          }
-          hash = Math.abs(hash);
-          const t = act.type?.toLowerCase();
-          if (t === "flight") price = 280 + (hash % 200);
-          else if (t === "hotel") price = 120 + (hash % 150);
-          else if (t === "restaurant") price = 25 + (hash % 50);
-          else if (t === "transport") price = 15 + (hash % 30);
-          else price = 40 + (hash % 80);
-        }
-        items.push({ title: act.title, type: act.type?.toLowerCase() || "activity", price });
-      })
-    );
-    return items;
-  }, [allActivities]);
+  const totalCents = session?.total_amount_cents ?? 0;
+  const totalDollars = (totalCents / 100).toFixed(2);
 
-  const hasFlights = activityTypes.has("flight");
-  const hasHotels = activityTypes.has("hotel");
-  const hasExperiences = useMemo(() => {
-    return activityTypes.has("activity") || activityTypes.has("restaurant") || activityTypes.has("experience") || activityTypes.has("event");
-  }, [activityTypes]);
+  // Compute line items from real data
+  const flightTotal = flights.reduce((s: number, f: any) => s + (f.price_cents ?? 0), 0);
+  const hotelTotal = hotels.reduce((s: number, h: any) => s + (h.total_price_cents ?? 0), 0);
+  const activityTotal = activities.reduce((s: number, a: any) => s + (a.price_cents ?? 0), 0);
 
-  const loadingSteps = useMemo(() => {
-    const steps: LoadingStep[] = [];
-    if (hasFlights) steps.push({ label: "Searching flights...", icon: Plane });
-    if (hasHotels) steps.push({ label: "Checking hotel availability...", icon: Hotel });
-    if (hasExperiences) steps.push({ label: "Calculating experiences...", icon: Activity });
-    steps.push({ label: "Building your package...", icon: Package });
-    return steps;
-  }, [hasFlights, hasHotels, hasExperiences]);
+  const hasFlights = flights.length > 0;
 
-  useEffect(() => {
-    if (!calculating) return;
-    if (currentStep >= loadingSteps.length) {
-      setCalculating(false);
-      setPriceCalculated(true);
-      return;
-    }
-    const timer = setTimeout(() => setCurrentStep((s) => s + 1), 1200);
-    return () => clearTimeout(timer);
-  }, [calculating, currentStep, loadingSteps.length]);
+  const canSubmit = firstName.trim() && lastName.trim() && email.trim() &&
+    (!hasFlights || passport.trim());
 
-  const handleCalculatePrice = () => {
-    if (!checkIn || !checkOut) {
-      toast.error("Please select travel dates first");
-      return;
-    }
-    setCurrentStep(0);
-    setCalculating(true);
-    setPriceCalculated(false);
-  };
-
-  const totalPrice = useMemo(() => {
-    const numGuests = parseInt(guests);
-    return flatActivities.reduce((sum, a) => sum + a.price, 0) * numGuests;
-  }, [flatActivities, guests]);
-
-  // Group activities by type for the breakdown
-  const groupedByType = useMemo(() => {
-    const groups: Record<string, { items: typeof flatActivities; total: number }> = {};
-    flatActivities.forEach((a) => {
-      if (!groups[a.type]) groups[a.type] = { items: [], total: 0 };
-      groups[a.type].items.push(a);
-      groups[a.type].total += a.price;
-    });
-    return groups;
-  }, [flatActivities]);
-
-  const handleBook = async () => {
-    if (!user || !trip) return;
+  const handleCheckout = async () => {
+    if (!user || !session) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          trip_id: trip.id,
+          trip_session_id: session.id,
+          trip_id: null,
           hotel_id: null,
-          check_in: checkIn,
-          check_out: checkOut,
-          guests: parseInt(guests),
-          total_price: totalPrice,
+          check_in: hotels[0]?.check_in_date ?? null,
+          check_out: hotels[0]?.check_out_date ?? null,
+          guests: 1,
+          total_price: totalCents / 100,
+          traveler: {
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone,
+            passport: passport || undefined,
+          },
         },
       });
       if (error) throw error;
-      // Handle both possible response shapes
       const url = typeof data === "string" ? JSON.parse(data)?.url : data?.url;
       if (url) {
         window.location.href = url;
       } else {
-        console.error("Checkout response:", data);
         throw new Error("No checkout URL returned");
       }
     } catch (err: any) {
-      console.error("Booking error:", err);
-      toast.error(err.message || "Booking failed");
+      console.error("Checkout error:", err);
+      toast.error(err.message || "Checkout failed");
       setLoading(false);
     }
   };
 
-  if (!trip) return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-    </div>
-  );
-  const typeLabels: Record<string, string> = {
-    flight: "Flights", hotel: "Accommodation", restaurant: "Dining",
-    activity: "Activities", event: "Events", transport: "Transport", experience: "Experiences",
-  };
+  if (sessionLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="container max-w-lg py-16 text-center">
+        <h1 className="font-display text-2xl font-bold mb-2">Session Not Found</h1>
+        <p className="text-muted-foreground mb-6">This booking session doesn't exist or has expired.</p>
+        <Button onClick={() => navigate("/explore")}>Explore Trips</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-2xl px-4 py-6 md:py-12">
-      <h1 className="font-display text-2xl md:text-3xl font-bold mb-2">Check Availability</h1>
-      <p className="text-muted-foreground text-sm md:text-base mb-6 md:mb-8">
-        Curated package — everything included. Select dates and guests.
-      </p>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="font-display text-2xl md:text-3xl font-bold mb-1">Complete Your Booking</h1>
+        <p className="text-muted-foreground text-sm mb-6">Review your selections and enter traveler details.</p>
 
-      <div className="space-y-6">
-        {/* Dates & Guests */}
-        <Card>
-          <CardHeader><CardTitle className="font-display text-lg">Travel Dates & Guests</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Check-in</Label>
-                <Input type="date" value={checkIn} min={new Date().toISOString().split("T")[0]} onChange={(e) => { setCheckIn(e.target.value); setPriceCalculated(false); }} />
-              </div>
-              <div className="space-y-2">
-                <Label>Check-out</Label>
-                <Input type="date" value={checkOut} min={checkIn || new Date().toISOString().split("T")[0]} onChange={(e) => { setCheckOut(e.target.value); setPriceCalculated(false); }} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Guests</Label>
-              <Select value={guests} onValueChange={(v) => { setGuests(v); setPriceCalculated(false); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <SelectItem key={n} value={String(n)}>{n} guest{n > 1 ? "s" : ""}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Social proof */}
+        {bookingCount != null && bookingCount > 0 && (
+          <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-accent/5 border border-accent/15 text-sm">
+            <Users className="h-4 w-4 text-accent" />
+            <span><strong>{bookingCount}</strong> people booked trips this month</span>
+          </div>
+        )}
 
-        {/* Calculate / Loading / Breakdown / Book */}
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            {/* Loading animation */}
-            {calculating && (
-              <div className="space-y-3">
-                {loadingSteps.map((step, i) => {
-                  const Icon = step.icon;
-                  const done = i < currentStep;
-                  const active = i === currentStep;
-                  return (
-                    <div key={step.label} className={`flex items-center gap-3 text-sm transition-opacity duration-300 ${active ? "opacity-100" : done ? "opacity-60" : "opacity-30"}`}>
-                      {done ? (
-                        <Check className="h-4 w-4 text-green-500" />
-                      ) : active ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                      ) : (
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <span className={done ? "line-through text-muted-foreground" : active ? "font-medium" : ""}>{step.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+        <div className="space-y-5">
+          {/* Price breakdown */}
+          <Card>
+            <CardHeader><CardTitle className="font-display text-lg">Package Summary</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {flights.map((f: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Plane className="h-4 w-4 text-muted-foreground" />
+                    {f.airline_name ?? "Flight"} — {f.cabin_class ?? "economy"}
+                  </span>
+                  <span className="font-medium">${(f.price_cents / 100).toFixed(0)}</span>
+                </div>
+              ))}
+              {hotels.map((h: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Hotel className="h-4 w-4 text-muted-foreground" />
+                    {h.name ?? "Hotel"} — {h.stars ? `${h.stars}*` : ""}
+                  </span>
+                  <span className="font-medium">${(h.total_price_cents / 100).toFixed(0)}</span>
+                </div>
+              ))}
+              {activities.map((a: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    {a.title ?? "Activity"}
+                  </span>
+                  <span className="font-medium">${(a.price_cents / 100).toFixed(0)}</span>
+                </div>
+              ))}
 
-            {/* Price breakdown — only after calculation */}
-            {priceCalculated && (
-              <div className="space-y-3">
-                <h3 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider">Package Breakdown</h3>
-                {Object.entries(groupedByType).map(([type, group]) => {
-                  const Icon = typeIcon[type] || Activity;
-                  const label = typeLabels[type] || type;
-                  return (
-                    <div key={type} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 font-medium">
-                          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                          {label}
-                        </span>
-                        <span>${group.total.toLocaleString()}</span>
-                      </div>
-                      {group.items.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs text-muted-foreground pl-6">
-                          <span>{item.title}</span>
-                          <span>${item.price}</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-                {parseInt(guests) > 1 && (
-                  <div className="flex justify-between text-sm text-muted-foreground border-t pt-2">
-                    <span>× {guests} guests</span>
-                    <span></span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-lg border-t pt-3">
-                  <span>Total</span>
-                  <span>${totalPrice.toLocaleString()}</span>
+              <div className="flex justify-between font-bold text-lg border-t pt-3 mt-3">
+                <span>Total</span>
+                <span className="text-accent">${totalDollars}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Traveler details */}
+          <Card>
+            <CardHeader><CardTitle className="font-display text-lg">Traveler Details</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>First Name *</Label>
+                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Name *</Label>
+                  <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Smith" />
                 </div>
               </div>
-            )}
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 123-4567" />
+              </div>
+              {hasFlights && (
+                <div className="space-y-2">
+                  <Label>Passport Number *</Label>
+                  <Input value={passport} onChange={(e) => setPassport(e.target.value)} placeholder="AB1234567" />
+                  <p className="text-[11px] text-muted-foreground">Required for international flights</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-            {/* Buttons */}
-            {!priceCalculated ? (
-              <Button
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                size="lg"
-                onClick={handleCalculatePrice}
-                disabled={calculating}
-              >
-                {calculating ? "Calculating..." : "Calculate Price →"}
-              </Button>
-            ) : (
-              <Button
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_0_20px_hsl(var(--accent)/0.3)]"
-                size="lg"
-                onClick={handleBook}
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "Confirm & Book →"}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          {/* Security badge + CTA */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Shield className="h-3.5 w-3.5" />
+              <span>Secure checkout powered by Stripe. Your payment details are never stored.</span>
+            </div>
+            <Button
+              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_0_20px_hsl(var(--accent)/0.3)] text-base py-6"
+              onClick={handleCheckout}
+              disabled={loading || !canSubmit}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Redirecting to checkout...
+                </>
+              ) : (
+                `Pay $${totalDollars} →`
+              )}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
