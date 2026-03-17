@@ -16,6 +16,15 @@ import { ComparisonCard, parseComparisonBlocks } from "@/components/ai-planner/C
 import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
 import { SearchResultsBlock, parseSearchResultsBlocks } from "@/components/ai-planner/SearchResultsBlock";
 
+// Strip incomplete or unparseable traviso fenced blocks so ReactMarkdown doesn't render raw JSON
+function stripRawBlocks(text: string): string {
+  // Remove any complete traviso blocks that failed to parse (shouldn't be in textParts, but safety net)
+  let cleaned = text.replace(/```traviso-(?:compare|results)\s*\n[\s\S]*?```/g, "");
+  // Remove any incomplete/in-progress traviso blocks (opening backticks without closing)
+  cleaned = cleaned.replace(/```traviso-(?:compare|results)[\s\S]*$/g, "");
+  return cleaned;
+}
+
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
 
@@ -450,7 +459,7 @@ export default function AiPlanner() {
                           {innerParsed ? (
                             innerParsed.textParts.map((innerText, k) => (
                               <div key={`inner-${k}`}>
-                                {innerText.trim() && <ReactMarkdown>{innerText}</ReactMarkdown>}
+                                {stripRawBlocks(innerText).trim() && <ReactMarkdown>{stripRawBlocks(innerText)}</ReactMarkdown>}
                                 {k < innerParsed.comparisons.length && innerParsed.comparisons[k] && (
                                   <ComparisonCard
                                     data={innerParsed.comparisons[k]!}
@@ -460,7 +469,7 @@ export default function AiPlanner() {
                               </div>
                             ))
                           ) : (
-                            text.trim() && <ReactMarkdown>{text}</ReactMarkdown>
+                            stripRawBlocks(text).trim() && <ReactMarkdown>{stripRawBlocks(text)}</ReactMarkdown>
                           )}
                           {j < parsedResults.results.length && parsedResults.results[j] && (
                             <SearchResultsBlock
@@ -483,7 +492,7 @@ export default function AiPlanner() {
                   <div className="prose prose-sm max-w-none dark:prose-invert nala-prose space-y-3">
                     {parsedComparison.textParts.map((text, j) => (
                       <div key={`text-${j}`}>
-                        {text.trim() && <ReactMarkdown>{text}</ReactMarkdown>}
+                        {stripRawBlocks(text).trim() && <ReactMarkdown>{stripRawBlocks(text)}</ReactMarkdown>}
                         {j < parsedComparison.comparisons.length && parsedComparison.comparisons[j] && (
                           <ComparisonCard
                             data={parsedComparison.comparisons[j]!}
@@ -498,7 +507,7 @@ export default function AiPlanner() {
 
               return (
                 <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown>{stripRawBlocks(msg.content)}</ReactMarkdown>
                 </div>
               );
             };
