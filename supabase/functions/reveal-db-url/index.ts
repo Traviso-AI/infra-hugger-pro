@@ -8,8 +8,9 @@ Deno.serve(async (req) => {
   }
 
   const dbUrl = Deno.env.get("SUPABASE_DB_URL") ?? "NOT SET";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "NOT SET";
 
-  return new Response(JSON.stringify({ SUPABASE_DB_URL: dbUrl }), {
+  return new Response(JSON.stringify({ SUPABASE_DB_URL: dbUrl, SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey }), {
     headers: { "Content-Type": "application/json" },
   });
 });
