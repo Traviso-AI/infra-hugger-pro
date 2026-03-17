@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, BarChart, Bar, ResponsiveContainer } from "recharts";
-import { Eye, TrendingUp, Users, DollarSign } from "lucide-react";
-import { format, subDays, startOfDay } from "date-fns";
+import { AreaChart, Area, XAxis, YAxis, BarChart, Bar } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye, TrendingUp, Users, DollarSign, Wallet, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
+import { format, subDays } from "date-fns";
 import { useMemo } from "react";
+import { toast } from "sonner";
 
 const chartConfig = {
   views: { label: "Views", color: "hsl(174, 60%, 40%)" },
@@ -17,7 +21,38 @@ const chartConfig = {
 
 export function CreatorAnalytics() {
   const { user } = useAuth();
+  const [connectLoading, setConnectLoading] = useState(false);
 
+  // --- Earnings data ---
+  const { data: earnings, refetch: refetchEarnings } = useQuery({
+    queryKey: ["creator-earnings", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("creator_earnings")
+        .select("*")
+        .eq("creator_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // --- Commission history ---
+  const { data: commissions } = useQuery({
+    queryKey: ["creator-commissions", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("commission_ledger")
+        .select("*")
+        .eq("creator_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  // --- Existing analytics queries ---
   const { data: tripIds } = useQuery({
     queryKey: ["my-trip-ids", user?.id],
     queryFn: async () => {
@@ -103,6 +138,30 @@ export function CreatorAnalytics() {
   const totalRevenue30d = bookingsData?.filter((b) => b.status === "confirmed").reduce((s, b) => s + Number(b.total_price || 0), 0) || 0;
   const totalFollowers30d = followersData?.length || 0;
 
+  const pendingPayout = (earnings?.pending_payout_cents ?? 0) / 100;
+  const totalPaidOut = (earnings?.total_paid_out_cents ?? 0) / 100;
+  const isConnected = !!earnings?.stripe_connect_account_id;
+
+  const handleConnectBank = async () => {
+    setConnectLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-connect-account", {
+        body: { email: user?.email },
+      });
+      if (error) throw error;
+      const url = typeof data === "string" ? JSON.parse(data)?.url : data?.url;
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error("No onboarding URL returned");
+      }
+    } catch (err: any) {
+      console.error("Connect error:", err);
+      toast.error(err.message || "Failed to start Stripe onboarding");
+      setConnectLoading(false);
+    }
+  };
+
   const stats = [
     { label: "Views (30d)", value: totalViews.toLocaleString(), icon: Eye, change: "+views this month" },
     { label: "Bookings (30d)", value: totalBookings30d, icon: TrendingUp, change: "confirmed" },
@@ -113,6 +172,84 @@ export function CreatorAnalytics() {
   return (
     <div className="space-y-6">
       <h2 className="font-display text-xl font-bold">Creator Analytics</h2>
+
+      {/* Earnings banner */}
+      <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-transparent">
+        <CardContent className="p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                <Wallet className="h-6 w-6 text-accent" />
+              </div>
+              <div>
+                <div className="flex items-baseline gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pending Payout</p>
+                    <p className="text-2xl font-bold text-accent">${pendingPayout.toFixed(2)}</p>
+                  </div>
+                  <div className="border-l pl-3">
+                    <p className="text-xs text-muted-foreground">Total Paid Out</p>
+                    <p className="text-lg font-semibold">${totalPaidOut.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              {isConnected ? (
+                <Badge className="bg-green-500/10 text-green-600 border-green-500/20 px-3 py-1.5">
+                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                  Bank Connected
+                </Badge>
+              ) : (
+                <Button
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={handleConnectBank}
+                  disabled={connectLoading}
+                >
+                  {connectLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                  )}
+                  Connect Your Bank Account
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Commission history */}
+      {commissions && commissions.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">Commission History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-0 divide-y">
+              {commissions.map((c: any) => {
+                const creatorEarned = ((c.amount_cents * c.creator_percentage) / 100 / 100).toFixed(2);
+                const travisoMargin = (c.traviso_margin_cents / 100).toFixed(2);
+                return (
+                  <div key={c.id} className="flex items-center justify-between py-3 gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium capitalize">{c.booking_type?.replace(/_/g, " ") ?? "Booking"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(c.created_at), "MMM d, yyyy")} · {c.creator_percentage}% commission
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-accent">+${creatorEarned}</p>
+                      <p className="text-[10px] text-muted-foreground">Platform: ${travisoMargin}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
