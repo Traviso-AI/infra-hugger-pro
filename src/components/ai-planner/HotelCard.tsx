@@ -30,7 +30,7 @@ export function HotelCard({ hotel, onSelect }: HotelCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border bg-card overflow-hidden my-2"
+      className="rounded-xl border bg-card overflow-hidden my-2 w-full min-w-0"
     >
       <div className="flex">
         {/* Image */}

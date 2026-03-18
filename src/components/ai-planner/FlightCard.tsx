@@ -47,7 +47,7 @@ export function FlightCard({ flight, onSelect }: FlightCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border bg-card p-4 my-2"
+      className="rounded-xl border bg-card p-4 my-2 w-full min-w-0"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Airline */}
