@@ -380,6 +380,7 @@ export default function AiPlanner() {
       if (reader) {
         const assistantMsg: Message = { role: "assistant", content: "" };
         setMessages((prev) => [...prev, assistantMsg]);
+        let loadingCleared = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -398,6 +399,14 @@ export default function AiPlanner() {
                   updated[updated.length - 1] = { role: "assistant", content: assistantContent };
                   return updated;
                 });
+                // Clear loading as soon as results block arrives so cards are interactive
+                if (!loadingCleared && assistantContent.includes("```\n\n")) {
+                  const hasResults = /```traviso-results\s*\n[\s\S]*?```/.test(assistantContent);
+                  if (hasResults) {
+                    setLoading(false);
+                    loadingCleared = true;
+                  }
+                }
               }
             } catch {}
           }

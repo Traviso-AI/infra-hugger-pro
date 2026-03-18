@@ -120,7 +120,9 @@ Deno.serve(async (req) => {
           // Prefer room images, then hotel images; pick the first available
           const img = h.images?.find((i: any) => i.type?.code === "GEN") ?? h.images?.[0];
           if (img?.path) {
-            imageMap[String(h.code)] = `https://photos.hotelbeds.com/giata/bigger/${img.path}`;
+            // Sanitize: strip query params from path to avoid double ? in URL
+            const cleanPath = img.path.split("?")[0];
+            imageMap[String(h.code)] = `https://photos.hotelbeds.com/giata/bigger/${cleanPath}`;
           }
         }
       } else {
