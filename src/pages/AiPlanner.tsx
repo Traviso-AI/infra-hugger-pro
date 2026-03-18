@@ -51,14 +51,23 @@ function parseMessageSections(content: string): {
   const results: SearchResultsData[] = [];
   const comparisons: ComparisonData[] = [];
 
-  // Extract all traviso-results blocks
+  // Extract all traviso-results blocks, deduplicate by type (keep largest)
   const resultsRegex = /```traviso-results\s*\n([\s\S]*?)```/g;
   let match;
+  const resultsByType = new Map<string, SearchResultsData>();
   while ((match = resultsRegex.exec(content)) !== null) {
     try {
-      results.push(JSON.parse(match[1].trim()));
+      const parsed = JSON.parse(match[1].trim()) as SearchResultsData;
+      const t = parsed.type;
+      const items = (parsed as any)[t] as any[] | undefined;
+      const existing = resultsByType.get(t);
+      const existingLen = existing ? ((existing as any)[t]?.length ?? 0) : 0;
+      if (!existing || (items?.length ?? 0) > existingLen) {
+        resultsByType.set(t, parsed);
+      }
     } catch { /* skip malformed */ }
   }
+  results.push(...resultsByType.values());
 
   // Extract all traviso-compare blocks
   const compareRegex = /```traviso-compare\s*\n([\s\S]*?)```/g;
