@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
-        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.photos,places.primaryType,places.primaryTypeDisplayName",
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.priceRange,places.photos,places.primaryType,places.primaryTypeDisplayName",
       },
       body: JSON.stringify({
         textQuery,
@@ -89,11 +89,26 @@ Deno.serve(async (req) => {
         imageUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=720&key=${GOOGLE_PLACES_API_KEY}`;
       }
 
+      // Resolve price: priceLevel enum → dollar signs, fallback to priceRange text
+      let priceRange: string | null = priceLevelLabels[place.priceLevel] ?? null;
+      if (!priceRange && place.priceRange) {
+        // priceRange has startPrice/endPrice with units — infer tier from midpoint
+        const start = place.priceRange.startPrice?.units ? Number(place.priceRange.startPrice.units) : null;
+        const end = place.priceRange.endPrice?.units ? Number(place.priceRange.endPrice.units) : null;
+        if (start != null || end != null) {
+          const mid = (start ?? 0) + ((end ?? start ?? 0) - (start ?? 0)) / 2;
+          if (mid <= 15) priceRange = "$";
+          else if (mid <= 35) priceRange = "$$";
+          else if (mid <= 70) priceRange = "$$$";
+          else priceRange = "$$$$";
+        }
+      }
+
       return {
         id: place.id,
         name: place.displayName?.text ?? "Unknown Restaurant",
         cuisine: cuisine ?? place.primaryTypeDisplayName?.text ?? null,
-        price_range: priceLevelLabels[place.priceLevel] ?? null,
+        price_range: priceRange,
         rating: place.rating ?? null,
         review_count: place.userRatingCount ?? 0,
         image_url: imageUrl,
