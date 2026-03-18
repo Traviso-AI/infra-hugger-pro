@@ -190,7 +190,7 @@ For restaurants:
 
 ### RULES (CRITICAL):
 - You MUST output BOTH a traviso-compare block AND a traviso-results block for every search result
-- The traviso-results block must contain the RAW data from the tool results — copy the fields exactly as returned by the tool. Include up to 5 results.
+- The traviso-results block must contain the RAW data from the tool results — copy ALL results returned by the tool exactly as-is. Do not truncate or limit the number of results. Include every single item the tool returned.
 - The traviso-compare block should have exactly 3 curated options with varied price points. Mark ONE as "recommended": true.
 - Use REAL names, prices, and ratings from the tool results — NEVER invent data
 - NEVER write search results as bullet points or plain text. ALWAYS use the block formats above.
