@@ -878,30 +878,13 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Immediately emit full traviso-results blocks so cards render before AI streams
-          for (const tc of initial.toolCalls) {
-            const full = fullResults[tc.id];
-            if (!full) continue;
-            const typeMap: Record<string, string> = {
-              search_flights: "flights",
-              search_hotels: "hotels",
-              search_activities: "activities",
-              search_restaurants: "restaurants",
-            };
-            const resultType = typeMap[tc.name];
-            if (resultType && full[resultType]?.length) {
-              const block = `\n\n\`\`\`traviso-results\n${JSON.stringify({ type: resultType, [resultType]: full[resultType] })}\n\`\`\`\n\n`;
-              controller.enqueue(sseChunk(block));
-            }
-          }
-
           const followUpMessages: AnthropicMessage[] = [
             ...anthropicMessages,
             { role: "assistant", content: assistantContent },
             { role: "user", content: toolResults },
           ];
 
-          // Stream the AI commentary (compare blocks + text) — cards are already visible
+          // Stream the final response with real search data
           console.log("[ai-travel-planner] Streaming final response with tool results");
           await streamToSSE(followUpMessages, controller);
 
