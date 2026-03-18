@@ -31,8 +31,9 @@ function stripRawBlocks(text: string): string {
 
 /** Strip emoji status lines that the backend streams before tool results */
 function stripStatusLines(text: string): string {
+  // Use alternation instead of character class — multi-byte emoji break [] without /u flag
   return text
-    .replace(/[✈️🏨🎯🍽️🔍]\s*(?:Search(?:ing)?|Check(?:ing)?|Find(?:ing)?|Look(?:ing)?\s*up)[^\n]*\.{3}\n*/gi, "")
+    .replace(/(?:✈️|🏨|🎯|🍽️|🔍)\s*(?:Search(?:ing)?|Check(?:ing)?|Find(?:ing)?|Look(?:ing)?\s*up)[^\n]*\.{3}\n*/gi, "")
     .replace(/Found\s+\d+\s+\w+,?\s*[^\n]*\.{3}\n*/gi, "")
     .trim();
 }
