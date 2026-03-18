@@ -216,105 +216,17 @@ After receiving tool results, you MUST output them in TWO ways:
 }
 \`\`\`
 
-**2. A traviso-results block** with the raw data (for the rich card UI):
-
-For flights:
-\`\`\`traviso-results
-{
-  "type": "flights",
-  "flights": [
-    {
-      "id": "offer_id",
-      "airline_name": "British Airways",
-      "airline_logo_url": "https://...",
-      "departure_time": "2026-04-15T10:50:00",
-      "arrival_time": "2026-04-15T13:48:00",
-      "duration_minutes": 478,
-      "stops": 0,
-      "price_cents": 29619,
-      "currency": "USD",
-      "cabin_class": "economy",
-      "booking_token": "offer_id"
-    }
-  ]
-}
-\`\`\`
-
-For hotels:
-\`\`\`traviso-results
-{
-  "type": "hotels",
-  "hotels": [
-    {
-      "id": "6605",
-      "name": "Royal Lancaster London",
-      "stars": 5,
-      "address": "Bayswater, London",
-      "image_url": "https://...",
-      "price_per_night_cents": 26865,
-      "total_price_cents": 80594,
-      "currency": "EUR",
-      "cancellation_policy": "non-refundable",
-      "booking_token": "rateKey..."
-    }
-  ]
-}
-\`\`\`
-
-For activities:
-\`\`\`traviso-results
-{
-  "type": "activities",
-  "activities": [
-    {
-      "id": "62043P1",
-      "title": "London in a Day: Tower of London & River Cruise",
-      "description": "Full-day walking tour...",
-      "image_url": "https://...",
-      "price_cents": 12027,
-      "currency": "USD",
-      "duration_minutes": 360,
-      "rating": 4.8,
-      "review_count": 740,
-      "category": null,
-      "booking_url": "https://www.viator.com/...",
-      "booking_token": "62043P1"
-    }
-  ]
-}
-\`\`\`
-
-For restaurants:
-\`\`\`traviso-results
-{
-  "type": "restaurants",
-  "restaurants": [
-    {
-      "id": "place_id",
-      "name": "Circolo Popolare",
-      "cuisine": "Italian",
-      "price_range": "$$$",
-      "rating": 4.8,
-      "review_count": 36792,
-      "image_url": "https://...",
-      "address": "40-41 Rathbone Pl, London",
-      "opentable_url": null,
-      "affiliate_enabled": false
-    }
-  ]
-}
-\`\`\`
+Note: traviso-results blocks are generated automatically by the system — do NOT output them yourself. Only output traviso-compare blocks.
 
 ### RULES (CRITICAL):
-- You MUST output BOTH a traviso-compare block AND a traviso-results block for every search result
-- The traviso-results block must contain the RAW data from the tool results — copy ALL results returned by the tool exactly as-is. Do not truncate or limit the number of results. Include every single item the tool returned.
-- The traviso-compare block should have exactly 3 curated options with varied price points. Mark ONE as "recommended": true.
+- You MUST output a traviso-compare block for every search result with exactly 3 curated options with varied price points. Mark ONE as "recommended": true.
+- Do NOT output traviso-results blocks — these are generated automatically by the system. Only output traviso-compare blocks.
 - Use REAL names, prices, and ratings from the tool results — NEVER invent data
-- NEVER write search results as bullet points or plain text. ALWAYS use the block formats above.
+- NEVER write search results as bullet points or plain text. ALWAYS use the traviso-compare block format above.
 - NEVER nest blocks inside other markdown
-- Output order: 1-sentence intro → traviso-compare block → traviso-results block → optional 1-3 bullet tips
-- After the blocks, mention these are live prices and offer to book or show more options
-- When multiple tools are called (e.g. flights + hotels + activities + restaurants), output separate traviso-compare and traviso-results blocks for EACH category, one after another
+- Output order: 1-sentence intro → traviso-compare block → optional 1-3 bullet tips
+- After the block, mention these are live prices and offer to book or show more options
+- When multiple tools are called (e.g. flights + hotels + activities + restaurants), output a separate traviso-compare block for EACH category, one after another
 
 Trigger search mode for: "find me hotels", "compare flights", "show restaurants", "what activities", "I need a hotel", "search flights", "plan a trip", "things to do", "where to eat", "cheap hotels", "luxury hotels", or any request for bookable items.
 
