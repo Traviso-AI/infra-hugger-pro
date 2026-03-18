@@ -316,10 +316,10 @@ async function executeToolCall(name: string, args: Record<string, any>): Promise
     console.log(`[ai-travel-planner] ${fnName} returned ${JSON.stringify(data).length} chars`);
 
     // Trim results to top 10 to keep context manageable
-    if (data.flights) data.flights = data.flights.slice(0, 10);
-    if (data.hotels) data.hotels = data.hotels.slice(0, 10);
-    if (data.activities) data.activities = data.activities.slice(0, 10);
-    if (data.restaurants) data.restaurants = data.restaurants.slice(0, 10);
+    if (data.flights) data.flights = data.flights.slice(0, 20);
+    if (data.hotels) data.hotels = data.hotels.slice(0, 20);
+    if (data.activities) data.activities = data.activities.slice(0, 20);
+    if (data.restaurants) data.restaurants = data.restaurants.slice(0, 20);
 
     return JSON.stringify(data);
   } catch (e) {
