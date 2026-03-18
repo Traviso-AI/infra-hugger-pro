@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Star, MapPin, DollarSign, Lock } from "lucide-react";
+import { Star, MapPin, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -56,8 +56,7 @@ export function RestaurantCard({ restaurant, onSelect }: RestaurantCardProps) {
                 </span>
               )}
               {restaurant.price_range && (
-                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                  <DollarSign className="h-3 w-3" />
+                <span className="text-xs font-medium text-muted-foreground">
                   {restaurant.price_range}
                 </span>
               )}
