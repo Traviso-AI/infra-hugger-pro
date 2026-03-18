@@ -110,26 +110,43 @@ function parseMessageSections(content: string): {
 // ---------------------------------------------------------------------------
 // Intent detection — runs client-side before AI is called
 // ---------------------------------------------------------------------------
-function detectFlightIntent(text: string): boolean {
-  return /\b(flight|fly|flying|flew|airport|airline|plane)\b/i.test(text);
+function detectFlightIntent(text: string, history: { role: string; content: string }[]): boolean {
+  const recentHistory = history.slice(-4).map((m) => m.content).join(" ");
+  // Direct flight keywords in current message
+  if (/\b(flight|fly|flying|flew|airport|airline|plane|flights)\b/i.test(text)) return true;
+  // Flight keywords in recent history + affirmative/all in current message
+  if (/\b(flight|fly|flying|flew|airport|airline|plane)\b/i.test(recentHistory) &&
+      /\b(all|yes|sure|ok|flights|both|everything|all of the above|all of them)\b/i.test(text)) return true;
+  return false;
 }
 
-function detectHotelIntent(text: string): boolean {
-  return /\b(hotel|stay|accommodation|lodge|hostel|airbnb|resort)\b/i.test(text);
+function detectHotelIntent(text: string, history: { role: string; content: string }[]): boolean {
+  const recentHistory = history.slice(-4).map((m) => m.content).join(" ");
+  if (/\b(hotel|stay|accommodation|lodge|hostel|airbnb|resort|hotels)\b/i.test(text)) return true;
+  if (/\b(hotel|stay|accommodation|lodge|hostel|airbnb|resort)\b/i.test(recentHistory) &&
+      /\b(all|yes|sure|ok|hotels|both|everything|all of the above|all of them)\b/i.test(text)) return true;
+  return false;
 }
 
 /** Extract destination city from the conversation history */
 function extractDestination(messages: { role: string; content: string }[], currentText: string): string | null {
   const allText = [...messages.map((m) => m.content), currentText].join(" ");
-  // Match "to [City]", "in [City]", "[City] trip"
+  // Match "to [city]", "in [city]", "[city] trip" — case insensitive
   const patterns = [
-    /(?:to|in|visit|visiting)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
-    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+trip/,
-    /trip\s+to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
+    /(?:to|in|visit|visiting)\s+([a-z][a-z]+(?:\s+[a-z]+)?)/i,
+    /([a-z]+(?:\s+[a-z]+)?)\s+trip/i,
+    /trip\s+to\s+([a-z]+(?:\s+[a-z]+)?)/i,
   ];
+  // Common city names to validate against noise words
+  const cities = /^(london|paris|tokyo|rome|barcelona|new york|nyc|los angeles|sydney|dubai|amsterdam|berlin|lisbon|bangkok|singapore|bali|cancun|tulum|vegas|las vegas|miami|seattle|san francisco|chicago|boston|toronto|vancouver|montreal|hawaii|maui|seoul|hong kong|taipei|istanbul|cairo|marrakech|prague|vienna|budapest|dublin|edinburgh|madrid|milan|florence|venice|naples|osaka|kyoto|mumbai|delhi|goa|rio|bogota|medellin|lima|cusco|cape town|zanzibar|nairobi|reykjavik|stockholm|copenhagen|oslo|helsinki|athens|santorini|mykonos|crete|phuket|hanoi|ho chi minh|kuala lumpur|jakarta|mexico city|cartagena)/i;
   for (const p of patterns) {
     const m = allText.match(p);
-    if (m) return m[1];
+    if (m) {
+      const candidate = m[1].trim();
+      if (cities.test(candidate)) {
+        return candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase();
+      }
+    }
   }
   return null;
 }
@@ -503,7 +520,7 @@ export default function AiPlanner() {
     const date = extractDate(messages, text);
 
     // Flight intent: need origin + passengers
-    if (detectFlightIntent(text) && dest && date) {
+    if (detectFlightIntent(text, messages) && dest && date) {
       // Show the user's message in chat, then show inline form
       setMessages((prev) => [...prev, { role: "user", content: text }]);
       setInput("");
@@ -512,7 +529,7 @@ export default function AiPlanner() {
     }
 
     // Hotel intent: need check-in/check-out + guests
-    if (detectHotelIntent(text) && dest && !formCheckIn) {
+    if (detectHotelIntent(text, messages) && dest && !formCheckIn) {
       setMessages((prev) => [...prev, { role: "user", content: text }]);
       setInput("");
       setPendingForm({ type: "hotel", destination: dest });
