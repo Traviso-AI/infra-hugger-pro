@@ -157,7 +157,22 @@ Deno.serve(async (req) => {
       };
     });
 
-    const result = { activities };
+    // Deduplicate by product code and normalized title
+    const seenIds = new Set<string>();
+    const seenTitles = new Set<string>();
+    const irrelevantPatterns = /luggage\s*storage|bag\s*storage|locker/i;
+
+    const deduped = activities.filter((a: any) => {
+      if (seenIds.has(a.id)) return false;
+      const normalizedTitle = a.title.toLowerCase().trim();
+      if (seenTitles.has(normalizedTitle)) return false;
+      if (irrelevantPatterns.test(a.title)) return false;
+      seenIds.add(a.id);
+      seenTitles.add(normalizedTitle);
+      return true;
+    });
+
+    const result = { activities: deduped };
 
     // Store in cache
     cache.set(cacheKey, { data: result, timestamp: Date.now() });
