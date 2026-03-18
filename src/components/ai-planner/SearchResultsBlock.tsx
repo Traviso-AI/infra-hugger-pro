@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { FlightCard, type FlightData } from "./FlightCard";
 import { HotelCard, type HotelData } from "./HotelCard";
 import { ActivityCard, type ActivityData } from "./ActivityCard";
 import { RestaurantCard, type RestaurantData } from "./RestaurantCard";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 export interface SearchResultsData {
   type: "flights" | "hotels" | "activities" | "restaurants";
@@ -19,6 +22,41 @@ interface SearchResultsBlockProps {
   onSelectRestaurant?: (r: RestaurantData) => void;
 }
 
+const INITIAL_COUNT = 3;
+
+function ExpandableList<T extends { id: string }>({
+  items,
+  renderItem,
+  label,
+}: {
+  items: T[];
+  renderItem: (item: T) => React.ReactNode;
+  label: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, INITIAL_COUNT);
+  const remaining = items.length - INITIAL_COUNT;
+
+  return (
+    <div className="space-y-1">
+      {visible.map((item) => (
+        <div key={item.id}>{renderItem(item)}</div>
+      ))}
+      {!expanded && remaining > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => setExpanded(true)}
+        >
+          <ChevronDown className="h-3.5 w-3.5 mr-1" />
+          Show {remaining} more {label}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function SearchResultsBlock({
   data,
   onSelectFlight,
@@ -28,41 +66,41 @@ export function SearchResultsBlock({
 }: SearchResultsBlockProps) {
   if (data.type === "flights" && data.flights?.length) {
     return (
-      <div className="space-y-1">
-        {data.flights.map((f) => (
-          <FlightCard key={f.id} flight={f} onSelect={onSelectFlight} />
-        ))}
-      </div>
+      <ExpandableList
+        items={data.flights}
+        label="flights"
+        renderItem={(f) => <FlightCard flight={f} onSelect={onSelectFlight} />}
+      />
     );
   }
 
   if (data.type === "hotels" && data.hotels?.length) {
     return (
-      <div className="space-y-1">
-        {data.hotels.map((h) => (
-          <HotelCard key={h.id} hotel={h} onSelect={onSelectHotel} />
-        ))}
-      </div>
+      <ExpandableList
+        items={data.hotels}
+        label="hotels"
+        renderItem={(h) => <HotelCard hotel={h} onSelect={onSelectHotel} />}
+      />
     );
   }
 
   if (data.type === "activities" && data.activities?.length) {
     return (
-      <div className="space-y-1">
-        {data.activities.map((a) => (
-          <ActivityCard key={a.id} activity={a} onSelect={onSelectActivity} />
-        ))}
-      </div>
+      <ExpandableList
+        items={data.activities}
+        label="activities"
+        renderItem={(a) => <ActivityCard activity={a} onSelect={onSelectActivity} />}
+      />
     );
   }
 
   if (data.type === "restaurants" && data.restaurants?.length) {
     return (
-      <div className="space-y-1">
-        {data.restaurants.map((r) => (
-          <RestaurantCard key={r.id} restaurant={r} onSelect={onSelectRestaurant} />
-        ))}
-      </div>
+      <ExpandableList
+        items={data.restaurants}
+        label="restaurants"
+        renderItem={(r) => <RestaurantCard restaurant={r} onSelect={onSelectRestaurant} />}
+      />
     );
   }
 

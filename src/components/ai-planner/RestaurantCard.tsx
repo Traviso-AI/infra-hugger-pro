@@ -31,12 +31,13 @@ export function RestaurantCard({ restaurant, onSelect }: RestaurantCardProps) {
       <div className="flex">
         {/* Image */}
         {restaurant.image_url && (
-          <div className="w-28 sm:w-36 shrink-0">
+          <div className="w-28 sm:w-36 shrink-0 min-h-[120px]">
             <img
               src={restaurant.image_url}
               alt={restaurant.name}
               className="h-full w-full object-cover"
               loading="lazy"
+              referrerPolicy="no-referrer"
             />
           </div>
         )}

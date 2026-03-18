@@ -35,12 +35,13 @@ export function HotelCard({ hotel, onSelect }: HotelCardProps) {
       <div className="flex">
         {/* Image */}
         {hotel.image_url && (
-          <div className="w-28 sm:w-36 shrink-0">
+          <div className="w-28 sm:w-36 shrink-0 min-h-[120px]">
             <img
               src={hotel.image_url}
               alt={hotel.name}
               className="h-full w-full object-cover"
               loading="lazy"
+              referrerPolicy="no-referrer"
             />
           </div>
         )}
