@@ -133,7 +133,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
       <p className="text-xs text-muted-foreground mb-6 text-center">Tell me about your trip and I'll handle the rest.</p>
 
       <div className="max-w-md mx-auto">
-        <div className="bg-card/80 backdrop-blur border border-border/50 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-card/80 backdrop-blur border border-border/50 rounded-2xl shadow-xl">
           {/* Tab bar */}
           <div className="flex border-b overflow-x-auto">
             {tabs.map((t) => (
