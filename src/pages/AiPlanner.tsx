@@ -472,6 +472,7 @@ export default function AiPlanner() {
                             stripRawBlocks(text).trim() && <ReactMarkdown>{stripRawBlocks(text)}</ReactMarkdown>
                           )}
                           {j < parsedResults.results.length && parsedResults.results[j] && (
+                            <div className="not-prose">
                             <SearchResultsBlock
                               data={parsedResults.results[j]!}
                               onSelectFlight={(f) => setInput(`I'd like the ${f.airline_name} flight at $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`)}
@@ -479,6 +480,7 @@ export default function AiPlanner() {
                               onSelectActivity={(a) => setInput(`I'd like to do "${a.title}" ($${(a.price_cents / 100).toFixed(0)}/person). Please add it to my trip.`)}
                               onSelectRestaurant={(r) => setInput(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
                             />
+                            </div>
                           )}
                         </div>
                       );
