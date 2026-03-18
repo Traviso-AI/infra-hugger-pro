@@ -20,6 +20,10 @@ const SYSTEM_PROMPT = `You are Nala, a friendly AI travel planning assistant nam
 9. ALWAYS write a 1-sentence intro before showing cards. Never show silent cards.
 10. ALWAYS confirm selections in 1 sentence and ask what they need next. Never error on a selection message.
 
+## TOOL ERROR HANDLING
+- If a tool returns {"error": "missing_param", "message": "..."}, ask the user for that info naturally using the message text. Never show the raw error JSON.
+- If a tool returns {"error": "no_results", "message": "..."}, tell the user naturally and offer an alternative: "I couldn't find flights for those dates — want to try a day earlier or later?"
+
 ## RESPONSE STYLE
 - Be concise. 1-2 sentences max before/after cards.
 - End with one short question about what to book next.
@@ -286,7 +290,7 @@ const SEARCH_TOOLS = [
         passengers: { type: "number", description: "Number of passengers (default 1)" },
         keyword: { type: "string", description: "Specific airline name to filter by (e.g. Delta, British Airways — optional)" },
       },
-      required: ["origin", "destination", "departure_date"],
+      required: ["origin", "destination", "departure_date", "passengers"],
     },
   },
   {
@@ -302,7 +306,7 @@ const SEARCH_TOOLS = [
         rooms: { type: "number", description: "Number of rooms (default 1)" },
         keyword: { type: "string", description: "Specific hotel name to filter by (e.g. Ritz Carlton, Hilton — optional)" },
       },
-      required: ["destination_code", "check_in", "check_out"],
+      required: ["destination_code", "check_in", "check_out", "adults"],
     },
   },
   {

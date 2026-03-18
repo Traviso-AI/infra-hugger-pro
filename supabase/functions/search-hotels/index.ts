@@ -45,12 +45,9 @@ Deno.serve(async (req) => {
     const body: HotelSearchRequest = await req.json();
     const { destination_code, check_in, check_out, adults, rooms = 1, keyword } = body;
 
-    if (!destination_code || !check_in || !check_out || !adults) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: destination_code, check_in, check_out, adults" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    if (!destination_code) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you looking for hotels in?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!check_in || !check_out) return new Response(JSON.stringify({ error: "missing_param", message: "What are your check-in and check-out dates?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!adults) return new Response(JSON.stringify({ error: "missing_param", message: "How many guests?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const signature = await generateSignature(HOTELBEDS_API_KEY, HOTELBEDS_SECRET);
 
@@ -85,8 +82,8 @@ Deno.serve(async (req) => {
       const errorBody = await searchRes.text();
       console.error("Hotelbeds API error:", searchRes.status, errorBody);
       return new Response(
-        JSON.stringify({ error: "Hotel search failed", details: errorBody }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "no_results", message: "No hotels found. Try different dates or a nearby city.", hotels: [] }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
 
     if (!destination) {
       return new Response(
-        JSON.stringify({ error: "Missing required field: destination" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "missing_param", message: "Which city are you looking for restaurants in?" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
       const errBody = await searchRes.text();
       console.error("Google Places error:", searchRes.status, errBody);
       return new Response(
-        JSON.stringify({ error: "Restaurant search failed", details: errBody }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "no_results", message: "Restaurants unavailable right now. Try again in a moment.", restaurants: [] }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

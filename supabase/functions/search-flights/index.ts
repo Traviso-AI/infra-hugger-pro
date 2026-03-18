@@ -38,12 +38,10 @@ Deno.serve(async (req) => {
     const body: FlightSearchRequest = await req.json();
     const { origin, destination, departure_date, return_date, passengers, keyword } = body;
 
-    if (!origin || !destination || !departure_date || !passengers) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields: origin, destination, departure_date, passengers" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    if (!origin) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you flying from?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!destination) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you flying to?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!departure_date) return new Response(JSON.stringify({ error: "missing_param", message: "What date are you flying?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!passengers) return new Response(JSON.stringify({ error: "missing_param", message: "How many passengers are traveling?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Build slices for the Duffel offer request
     const slices: DuffelSlice[] = [
@@ -87,8 +85,8 @@ Deno.serve(async (req) => {
       const errorBody = await offerRes.text();
       console.error("Duffel API error:", offerRes.status, errorBody);
       return new Response(
-        JSON.stringify({ error: "Flight search failed", details: errorBody }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({ error: "no_results", message: "No flights found for these dates. Try different dates or a nearby airport.", flights: [] }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
