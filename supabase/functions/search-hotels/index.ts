@@ -10,6 +10,7 @@ interface HotelSearchRequest {
   check_out: string;
   adults: number;
   rooms?: number;
+  keyword?: string;
 }
 
 async function generateSignature(apiKey: string, secret: string): Promise<string> {
@@ -42,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     const body: HotelSearchRequest = await req.json();
-    const { destination_code, check_in, check_out, adults, rooms = 1 } = body;
+    const { destination_code, check_in, check_out, adults, rooms = 1, keyword } = body;
 
     if (!destination_code || !check_in || !check_out || !adults) {
       return new Response(
@@ -171,7 +172,15 @@ Deno.serve(async (req) => {
       };
     });
 
-    return new Response(JSON.stringify({ hotels }), {
+    // Filter by keyword (hotel name) if provided — prioritize matches, keep others as alternatives
+    let filtered = hotels;
+    if (keyword) {
+      const kw = keyword.toLowerCase();
+      const matches = hotels.filter((h: any) => h.name.toLowerCase().includes(kw));
+      filtered = matches.length > 0 ? matches : hotels;
+    }
+
+    return new Response(JSON.stringify({ hotels: filtered }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

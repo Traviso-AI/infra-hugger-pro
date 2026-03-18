@@ -229,6 +229,7 @@ const SEARCH_TOOLS = [
         departure_date: { type: "string", description: "Departure date in YYYY-MM-DD format" },
         return_date: { type: "string", description: "Return date in YYYY-MM-DD format (optional for one-way)" },
         passengers: { type: "number", description: "Number of passengers (default 1)" },
+        keyword: { type: "string", description: "Specific airline name to filter by (e.g. Delta, British Airways — optional)" },
       },
       required: ["origin", "destination", "departure_date"],
     },
@@ -244,6 +245,7 @@ const SEARCH_TOOLS = [
         check_out: { type: "string", description: "Check-out date in YYYY-MM-DD format" },
         adults: { type: "number", description: "Number of adults per room (default 2)" },
         rooms: { type: "number", description: "Number of rooms (default 1)" },
+        keyword: { type: "string", description: "Specific hotel name to filter by (e.g. Ritz Carlton, Hilton — optional)" },
       },
       required: ["destination_code", "check_in", "check_out"],
     },
@@ -257,6 +259,7 @@ const SEARCH_TOOLS = [
         destination: { type: "string", description: "Destination city name (e.g. London, Paris, Tokyo)" },
         start_date: { type: "string", description: "Start date in YYYY-MM-DD format (optional)" },
         end_date: { type: "string", description: "End date in YYYY-MM-DD format (optional)" },
+        keyword: { type: "string", description: "Specific activity or landmark to search for (e.g. Colosseum, Tower of London — optional)" },
       },
       required: ["destination"],
     },
@@ -271,6 +274,7 @@ const SEARCH_TOOLS = [
         date: { type: "string", description: "Date in YYYY-MM-DD format (optional)" },
         party_size: { type: "number", description: "Number of diners (optional)" },
         cuisine: { type: "string", description: "Cuisine type filter (e.g. Italian, Japanese, Mexican — optional)" },
+        keyword: { type: "string", description: "Specific restaurant name to search for (e.g. Nobu, Ritz — optional)" },
       },
       required: ["destination"],
     },
@@ -824,6 +828,7 @@ Deno.serve(async (req) => {
           }
 
           // --- Tool calls detected ---
+          let resultsEmitted = false;
           console.log(`[ai-travel-planner] ${initial.toolCalls.length} tool call(s)`);
 
           // Stream any text the model produced before tool calls
@@ -892,6 +897,7 @@ Deno.serve(async (req) => {
             if (resultType && full[resultType]?.length) {
               const block = `\n\n\`\`\`traviso-results\n${JSON.stringify({ type: resultType, [resultType]: full[resultType] })}\n\`\`\`\n\n`;
               controller.enqueue(sseChunk(block));
+              resultsEmitted = true;
             }
           }
 
@@ -909,10 +915,13 @@ Deno.serve(async (req) => {
           controller.close();
         } catch (e) {
           console.error("[ai-travel-planner] Stream error:", e);
-          const msg = e instanceof Error && e.message === "RATE_LIMIT"
-            ? "I'm getting too many requests right now. Please try again in a moment."
-            : "Something went wrong. Please try again.";
-          controller.enqueue(sseChunk(msg));
+          // Only show error if no results were already streamed to the user
+          if (!resultsEmitted) {
+            const msg = e instanceof Error && e.message === "RATE_LIMIT"
+              ? "I'm getting too many requests right now. Please try again in a moment."
+              : "Something went wrong. Please try again.";
+            controller.enqueue(sseChunk(msg));
+          }
           controller.enqueue(sseDone());
           controller.close();
         }

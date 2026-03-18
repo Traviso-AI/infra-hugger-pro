@@ -9,6 +9,7 @@ interface RestaurantSearchRequest {
   date?: string;
   party_size?: number;
   cuisine?: string;
+  keyword?: string;
 }
 
 const priceLevelLabels: Record<string, string> = {
@@ -36,7 +37,7 @@ Deno.serve(async (req) => {
     if (!GOOGLE_PLACES_API_KEY) throw new Error("GOOGLE_PLACES_API_KEY not configured");
 
     const body: RestaurantSearchRequest = await req.json();
-    const { destination, date, party_size, cuisine } = body;
+    const { destination, date, party_size, cuisine, keyword } = body;
 
     if (!destination) {
       return new Response(
@@ -45,10 +46,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build search query
-    const textQuery = cuisine
-      ? `${cuisine} restaurants in ${destination}`
-      : `best restaurants in ${destination}`;
+    // Build search query — keyword takes priority for specific restaurant searches
+    const textQuery = keyword
+      ? `${keyword} restaurant in ${destination}`
+      : cuisine
+        ? `${cuisine} restaurants in ${destination}`
+        : `best restaurants in ${destination}`;
 
     // Use Google Places API (New) — Text Search
     const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {

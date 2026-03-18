@@ -10,6 +10,7 @@ interface FlightSearchRequest {
   departure_date: string;
   return_date?: string;
   passengers: number;
+  keyword?: string;
 }
 
 interface DuffelSlice {
@@ -35,7 +36,7 @@ Deno.serve(async (req) => {
     if (!DUFFEL_API_KEY) throw new Error("DUFFEL_API_KEY not configured");
 
     const body: FlightSearchRequest = await req.json();
-    const { origin, destination, departure_date, return_date, passengers } = body;
+    const { origin, destination, departure_date, return_date, passengers, keyword } = body;
 
     if (!origin || !destination || !departure_date || !passengers) {
       return new Response(
@@ -128,7 +129,15 @@ Deno.serve(async (req) => {
       };
     });
 
-    return new Response(JSON.stringify({ flights }), {
+    // Filter by keyword (airline name) if provided — prioritize matches, keep others as alternatives
+    let filtered = flights;
+    if (keyword) {
+      const kw = keyword.toLowerCase();
+      const matches = flights.filter((f: any) => f.airline_name.toLowerCase().includes(kw));
+      filtered = matches.length > 0 ? matches : flights;
+    }
+
+    return new Response(JSON.stringify({ flights: filtered }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

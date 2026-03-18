@@ -9,6 +9,7 @@ interface ActivitySearchRequest {
   start_date?: string;
   end_date?: string;
   currency?: string;
+  keyword?: string;
 }
 
 const VIATOR_BASE_URL = "https://api.viator.com/partner";
@@ -18,8 +19,8 @@ const API_TIMEOUT_MS = 8000; // 8 second hard timeout
 // Simple in-memory cache keyed by destination+dates
 const cache = new Map<string, { data: any; timestamp: number }>();
 
-function getCacheKey(destination: string, start_date?: string, end_date?: string): string {
-  return `${destination.toLowerCase()}|${start_date ?? ""}|${end_date ?? ""}`;
+function getCacheKey(destination: string, start_date?: string, end_date?: string, keyword?: string): string {
+  return `${destination.toLowerCase()}|${start_date ?? ""}|${end_date ?? ""}|${(keyword ?? "").toLowerCase()}`;
 }
 
 function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
     if (!VIATOR_API_KEY) throw new Error("VIATOR_API_KEY not configured");
 
     const body: ActivitySearchRequest = await req.json();
-    const { destination, start_date, end_date, currency = "USD" } = body;
+    const { destination, start_date, end_date, currency = "USD", keyword } = body;
 
     if (!destination) {
       return new Response(
@@ -54,8 +55,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check cache
-    const cacheKey = getCacheKey(destination, start_date, end_date);
+    // Check cache — keyword is part of the key so specific searches don't return generic results
+    const cacheKey = getCacheKey(destination, start_date, end_date, keyword);
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       console.log(`[search-activities] Cache hit for ${cacheKey}`);
@@ -64,9 +65,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build search request
+    // Build search request — include keyword in search term for specific queries
+    const searchTerm = keyword ? `${keyword} ${destination}` : destination;
     const searchBody: Record<string, any> = {
-      searchTerm: destination,
+      searchTerm,
       searchTypes: [
         {
           searchType: "PRODUCTS",
