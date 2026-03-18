@@ -487,7 +487,7 @@ export default function AiPlanner() {
 
         {/* 2. ALL result cards grouped together */}
         {results.length > 0 && (
-          <div className="not-prose space-y-2">
+          <div className="not-prose w-full space-y-2">
             {results.map((r, i) => (
               <SearchResultsBlock
                 key={`result-${i}`}
@@ -512,7 +512,7 @@ export default function AiPlanner() {
 
         {/* 3. Nala's Top Picks — compare blocks below results */}
         {comparisons.length > 0 && (
-          <div className="not-prose space-y-2">
+          <div className="not-prose w-full space-y-2">
             <div className="flex items-center gap-2 pt-2 pb-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-accent">Nala's Top Picks</span>
             </div>

@@ -161,6 +161,14 @@ If a request doesn't fit any pattern, identify what the user wants and ask ONE c
 - **MANDATORY INTRO**: ALWAYS write a 1-sentence intro BEFORE showing any search results. Examples: "Here are the best hotels in London for your dates:", "I found some great flights from London to New York:", "Here are popular activities in London:". NEVER show cards with no intro text — silence before cards is a failure.
 - **FOLLOW-UP CONTEXT**: When the user responds with a preference like "outdoors", "romantic", "cheap", "family friendly", etc. after you've already been discussing a destination — ALWAYS carry forward the destination and dates from earlier in the conversation. Call the appropriate search tool with keyword set to their preference. NEVER say you can't help or show an error. Example: if you just showed London hotels and user says "outdoors" → call search_activities with destination="London" and keyword="outdoors".
 
+## SELECTION CONFIRMATIONS
+
+When a user selects an item (messages like "I'd like the...", "I'd like to stay at...", "I'd like to add..."), you MUST:
+1. Confirm the selection in 1 sentence: "Great choice! I've noted the [item name]."
+2. Ask what they need next: "Want me to find hotels/activities/restaurants too?"
+3. NEVER call a search tool in response to a selection message — it's a confirmation, not a search request.
+4. NEVER show an error or say you're having trouble when receiving a selection message.
+
 ## LIVE SEARCH — MANDATORY TOOL USE (CRITICAL)
 
 You have access to live search tools for flights, hotels, activities, and restaurants.
@@ -908,10 +916,12 @@ Deno.serve(async (req) => {
 
     const stream = new ReadableStream({
       async start(controller) {
+        let contentEmitted = false; // tracks if ANY content was sent to client
         try {
           // --- Image path: vision with streaming ---
           if (imageUrl) {
             console.log("[ai-travel-planner] Image attached → Anthropic vision");
+            contentEmitted = true;
             await handleImageMessage(messages, imageUrl, controller);
             controller.enqueue(sseDone());
             controller.close();
@@ -927,6 +937,7 @@ Deno.serve(async (req) => {
           // No tool calls — just stream the response
           if (initial.toolCalls.length === 0) {
             console.log("[ai-travel-planner] No tool calls, streaming text response");
+            contentEmitted = true;
             await streamToSSE(anthropicMessages, controller);
             controller.enqueue(sseDone());
             controller.close();
@@ -934,7 +945,6 @@ Deno.serve(async (req) => {
           }
 
           // --- Tool calls detected ---
-          let resultsEmitted = false;
           console.log(`[ai-travel-planner] ${initial.toolCalls.length} tool call(s)`);
 
           // Stream any text the model produced before tool calls
@@ -1003,7 +1013,7 @@ Deno.serve(async (req) => {
             if (resultType && full[resultType]?.length) {
               const block = `\n\n\`\`\`traviso-results\n${JSON.stringify({ type: resultType, [resultType]: full[resultType] })}\n\`\`\`\n\n`;
               controller.enqueue(sseChunk(block));
-              resultsEmitted = true;
+              contentEmitted = true;
             }
           }
 
@@ -1015,14 +1025,16 @@ Deno.serve(async (req) => {
 
           // Stream the AI commentary (compare blocks + text) — cards are already visible
           console.log("[ai-travel-planner] Streaming final response with tool results");
+          contentEmitted = true;
           await streamToSSE(followUpMessages, controller);
 
           controller.enqueue(sseDone());
           controller.close();
         } catch (e) {
           console.error("[ai-travel-planner] Stream error:", e);
-          // Only show error if no results were already streamed to the user
-          if (!resultsEmitted) {
+          // Only show error if NO content was already streamed to the user
+          console.log(`[ai-travel-planner] Error in stream, contentEmitted=${contentEmitted}`);
+          if (!contentEmitted) {
             const msg = e instanceof Error && e.message === "RATE_LIMIT"
               ? "I'm getting too many requests right now. Please try again in a moment."
               : "Something went wrong. Please try again.";

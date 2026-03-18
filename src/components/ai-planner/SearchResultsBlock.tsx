@@ -98,7 +98,7 @@ function PaginatedList<T extends { id: string }>({
   const header = categoryHeaders[label];
 
   return (
-    <div className="space-y-1.5">
+    <div className="w-full space-y-1.5">
       {/* Category header */}
       {header && (
         <div className="flex items-center gap-2 pt-1 pb-0.5">
