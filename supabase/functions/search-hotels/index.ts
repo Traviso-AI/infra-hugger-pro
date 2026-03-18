@@ -172,15 +172,42 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Filter by keyword (hotel name) if provided — prioritize matches, keep others as alternatives
+    // Filter by keyword (hotel name) if provided
     let filtered = hotels;
+    let keywordNotFound = false;
     if (keyword) {
       const kw = keyword.toLowerCase();
       const matches = hotels.filter((h: any) => h.name.toLowerCase().includes(kw));
-      filtered = matches.length > 0 ? matches : hotels;
+      if (matches.length > 0) {
+        filtered = matches;
+      } else {
+        // Infer tier from keyword and show similar alternatives
+        keywordNotFound = true;
+        const luxuryKeywords = /ritz|four seasons|mandarin|peninsula|st\.\s*regis|waldorf|rosewood|aman|bulgari|shangri|dorchester|claridge|savoy|langham|connaught/i;
+        const midKeywords = /hilton|marriott|hyatt|sheraton|westin|radisson|intercontinental|crowne|doubletree|novotel/i;
+        const isLuxury = luxuryKeywords.test(keyword);
+        const isMid = midKeywords.test(keyword);
+
+        if (isLuxury) {
+          // Show 4-5 star hotels sorted by price descending
+          filtered = hotels
+            .filter((h: any) => (h.stars ?? 0) >= 4)
+            .sort((a: any, b: any) => b.price_per_night_cents - a.price_per_night_cents);
+        } else if (isMid) {
+          // Show 3-4 star hotels
+          filtered = hotels
+            .filter((h: any) => (h.stars ?? 0) >= 3 && (h.stars ?? 0) <= 4)
+            .sort((a: any, b: any) => a.price_per_night_cents - b.price_per_night_cents);
+        }
+        // If no tier match or too few results, keep all
+        if (filtered.length < 3) filtered = hotels;
+      }
     }
 
-    return new Response(JSON.stringify({ hotels: filtered }), {
+    return new Response(JSON.stringify({
+      hotels: filtered,
+      keyword_not_found: keywordNotFound ? keyword : undefined,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

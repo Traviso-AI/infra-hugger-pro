@@ -199,7 +199,14 @@ For restaurants:
 - After the blocks, mention these are live prices and offer to book or show more options
 - When multiple tools are called (e.g. flights + hotels + activities + restaurants), output separate traviso-compare and traviso-results blocks for EACH category, one after another
 
-Trigger search mode for: "find me hotels", "compare flights", "show restaurants", "what activities", "I need a hotel", "search flights", "plan a trip", or any shopping/comparing intent.`;
+Trigger search mode for: "find me hotels", "compare flights", "show restaurants", "what activities", "I need a hotel", "search flights", "plan a trip", or any shopping/comparing intent.
+
+### HANDLING keyword_not_found IN RESULTS
+If a tool result contains "keyword_not_found": "[hotel name]", it means the specific hotel was not found in available inventory. You MUST:
+1. Tell the user: "I couldn't find [hotel name] in available inventory — it may be listed under a different name or not available for these dates."
+2. Then say: "Here are the top alternatives available to book through Traviso:"
+3. Show the results as normal traviso-compare and traviso-results blocks.
+NEVER silently show alternatives without explaining why the specific hotel wasn't found.`;
 
 // ---------------------------------------------------------------------------
 // Types
