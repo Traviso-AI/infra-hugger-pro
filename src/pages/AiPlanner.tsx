@@ -492,9 +492,12 @@ export default function AiPlanner() {
           </div>
         )}
 
-        {/* 3. Compare blocks (curated picks) below results */}
+        {/* 3. Nala's Top Picks — compare blocks below results */}
         {comparisons.length > 0 && (
           <div className="not-prose space-y-2">
+            <div className="flex items-center gap-2 pt-2 pb-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-accent">Nala's Top Picks</span>
+            </div>
             {comparisons.map((c, i) => (
               <ComparisonCard
                 key={`compare-${i}`}

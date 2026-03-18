@@ -75,7 +75,7 @@ export function SearchLoadingCard({ searchType, statusText }: SearchLoadingCardP
               </motion.div>
               <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">{label}</span>
             </div>
-            <p className="text-sm text-foreground/80 truncate">{statusText}</p>
+            <p className="text-sm text-foreground/80 truncate">{statusText.replace(/(?:✈️|🏨|🎯|🍽️|🔍)\s*/g, "")}</p>
           </div>
 
           {/* Spinning indicator */}

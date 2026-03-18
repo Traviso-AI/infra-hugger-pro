@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { FlightCard, type FlightData } from "./FlightCard";
 import { HotelCard, type HotelData } from "./HotelCard";
 import { ActivityCard, type ActivityData } from "./ActivityCard";
 import { RestaurantCard, type RestaurantData } from "./RestaurantCard";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ArrowUpDown } from "lucide-react";
+import { ChevronDown, ArrowUpDown, Plane, Hotel, Compass, UtensilsCrossed } from "lucide-react";
 
 export interface SearchResultsData {
   type: "flights" | "hotels" | "activities" | "restaurants";
@@ -65,6 +66,13 @@ function SortPills({
 // ---------------------------------------------------------------------------
 // Paginated + sortable list
 // ---------------------------------------------------------------------------
+const categoryHeaders: Record<string, { label: string; icon: React.ElementType }> = {
+  flights: { label: "Flights", icon: Plane },
+  hotels: { label: "Hotels", icon: Hotel },
+  activities: { label: "Activities", icon: Compass },
+  restaurants: { label: "Restaurants", icon: UtensilsCrossed },
+};
+
 function PaginatedList<T extends { id: string }>({
   items,
   renderItem,
@@ -87,29 +95,57 @@ function PaginatedList<T extends { id: string }>({
   const allShown = visibleCount >= sorted.length;
   const atMax = sorted.length >= MAX_RESULTS && allShown;
 
+  const header = categoryHeaders[label];
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
+      {/* Category header */}
+      {header && (
+        <div className="flex items-center gap-2 pt-1 pb-0.5">
+          <header.icon className="h-4 w-4 text-accent" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {header.label}
+          </span>
+          <span className="text-[10px] text-muted-foreground/60">{items.length} found</span>
+        </div>
+      )}
+
       <SortPills options={sortOptions} active={sortKey} onChange={setSortKey} />
 
-      {visible.map((item) => (
-        <div key={item.id}>{renderItem(item)}</div>
-      ))}
+      <AnimatePresence initial={false}>
+        {visible.map((item, idx) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: idx < PAGE_SIZE ? idx * 0.06 : 0 }}
+          >
+            {renderItem(item)}
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
       {!allShown && remaining > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full text-xs text-muted-foreground hover:text-foreground"
-          onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
         >
-          <ChevronDown className="h-3.5 w-3.5 mr-1" />
-          Load {Math.min(remaining, PAGE_SIZE)} more {label}
-        </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          >
+            <ChevronDown className="h-3.5 w-3.5 mr-1" />
+            Show {Math.min(remaining, PAGE_SIZE)} more {label}
+          </Button>
+        </motion.div>
       )}
 
       {atMax && (
         <p className="text-center text-[11px] text-muted-foreground py-2">
-          Showing top {MAX_RESULTS} results. Try adjusting your dates or filters to see different options.
+          Showing top {MAX_RESULTS} results. Adjust your dates or filters to see different options.
         </p>
       )}
     </div>
