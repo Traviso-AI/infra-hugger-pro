@@ -131,21 +131,12 @@ function detectHotelIntent(text: string, history: { role: string; content: strin
 /** Extract destination city from the conversation history */
 function extractDestination(messages: { role: string; content: string }[], currentText: string): string | null {
   const allText = [...messages.map((m) => m.content), currentText].join(" ");
-  // Match "to [city]", "in [city]", "[city] trip" — case insensitive
-  const patterns = [
-    /(?:to|in|visit|visiting)\s+([a-z][a-z]+(?:\s+[a-z]+)?)/i,
-    /([a-z]+(?:\s+[a-z]+)?)\s+trip/i,
-    /trip\s+to\s+([a-z]+(?:\s+[a-z]+)?)/i,
-  ];
-  // Common city names to validate against noise words
-  const cities = /^(london|paris|tokyo|rome|barcelona|new york|nyc|los angeles|sydney|dubai|amsterdam|berlin|lisbon|bangkok|singapore|bali|cancun|tulum|vegas|las vegas|miami|seattle|san francisco|chicago|boston|toronto|vancouver|montreal|hawaii|maui|seoul|hong kong|taipei|istanbul|cairo|marrakech|prague|vienna|budapest|dublin|edinburgh|madrid|milan|florence|venice|naples|osaka|kyoto|mumbai|delhi|goa|rio|bogota|medellin|lima|cusco|cape town|zanzibar|nairobi|reykjavik|stockholm|copenhagen|oslo|helsinki|athens|santorini|mykonos|crete|phuket|hanoi|ho chi minh|kuala lumpur|jakarta|mexico city|cartagena)/i;
-  for (const p of patterns) {
-    const m = allText.match(p);
-    if (m) {
-      const candidate = m[1].trim();
-      if (cities.test(candidate)) {
-        return candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase();
-      }
+  const cities = ["london","paris","tokyo","rome","barcelona","new york","nyc","los angeles","sydney","dubai","amsterdam","berlin","lisbon","bangkok","singapore","bali","cancun","tulum","vegas","las vegas","miami","seattle","san francisco","chicago","boston","toronto","vancouver","montreal","hawaii","maui","seoul","hong kong","taipei","istanbul","cairo","marrakech","prague","vienna","budapest","dublin","edinburgh","madrid","milan","florence","venice","naples","osaka","kyoto","mumbai","delhi","goa","rio","bogota","medellin","lima","cusco","cape town","zanzibar","nairobi","reykjavik","stockholm","copenhagen","oslo","helsinki","athens","santorini","mykonos","crete","phuket","hanoi","ho chi minh","kuala lumpur","jakarta","mexico city","cartagena"];
+  // Direct match: find any known city name in the text
+  const lowerText = allText.toLowerCase();
+  for (const city of cities) {
+    if (lowerText.includes(city)) {
+      return city.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     }
   }
   return null;
