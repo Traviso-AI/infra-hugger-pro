@@ -3,7 +3,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Save, Paperclip, X, FileText, Image } from "lucide-react";
+import { Send, Loader2, Save, Paperclip, X, FileText, Image, Plane, Hotel } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
@@ -106,6 +108,52 @@ function parseMessageSections(content: string): {
 }
 
 // ---------------------------------------------------------------------------
+// Intent detection — runs client-side before AI is called
+// ---------------------------------------------------------------------------
+function detectFlightIntent(text: string): boolean {
+  return /\b(flight|fly|flying|flew|airport|airline|plane)\b/i.test(text);
+}
+
+function detectHotelIntent(text: string): boolean {
+  return /\b(hotel|stay|accommodation|lodge|hostel|airbnb|resort)\b/i.test(text);
+}
+
+/** Extract destination city from the conversation history */
+function extractDestination(messages: { role: string; content: string }[], currentText: string): string | null {
+  const allText = [...messages.map((m) => m.content), currentText].join(" ");
+  // Match "to [City]", "in [City]", "[City] trip"
+  const patterns = [
+    /(?:to|in|visit|visiting)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
+    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+trip/,
+    /trip\s+to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
+  ];
+  for (const p of patterns) {
+    const m = allText.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+/** Extract date from conversation */
+function extractDate(messages: { role: string; content: string }[], currentText: string): string | null {
+  const allText = [...messages.map((m) => m.content), currentText].join(" ");
+  // Match "April 14", "april 14th", "Apr 20 2026", "2026-04-14"
+  const isoMatch = allText.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+  if (isoMatch) return isoMatch[1];
+  const naturalMatch = allText.match(/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*)\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(\d{4})?\b/i);
+  if (naturalMatch) {
+    const months: Record<string, string> = { jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06", jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
+    const mon = months[naturalMatch[1].slice(0, 3).toLowerCase()];
+    const day = naturalMatch[2].padStart(2, "0");
+    const year = naturalMatch[3] ?? new Date().getFullYear().toString();
+    if (mon) return `${year}-${mon}-${day}`;
+  }
+  return null;
+}
+
+type PendingForm = { type: "flight"; destination: string; date: string } | { type: "hotel"; destination: string } | null;
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
@@ -124,6 +172,14 @@ export default function AiPlanner() {
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
   const [conversationCreated, setConversationCreated] = useState(false);
+
+  // Inline parameter forms — shown when intent detected but params missing
+  const [pendingForm, setPendingForm] = useState<PendingForm>(null);
+  const [formOrigin, setFormOrigin] = useState("");
+  const [formPassengers, setFormPassengers] = useState("2");
+  const [formCheckIn, setFormCheckIn] = useState("");
+  const [formCheckOut, setFormCheckOut] = useState("");
+  const [formGuests, setFormGuests] = useState("2");
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -438,12 +494,58 @@ export default function AiPlanner() {
     }
   };
 
-  // Public wrappers
-  const sendMessage = () => sendMessageWithText();
+  // Public wrappers — intercept intents before calling AI
+  const sendMessage = () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    const dest = extractDestination(messages, text);
+    const date = extractDate(messages, text);
+
+    // Flight intent: need origin + passengers
+    if (detectFlightIntent(text) && dest && date) {
+      // Show the user's message in chat, then show inline form
+      setMessages((prev) => [...prev, { role: "user", content: text }]);
+      setInput("");
+      setPendingForm({ type: "flight", destination: dest, date });
+      return;
+    }
+
+    // Hotel intent: need check-in/check-out + guests
+    if (detectHotelIntent(text) && dest && !formCheckIn) {
+      setMessages((prev) => [...prev, { role: "user", content: text }]);
+      setInput("");
+      setPendingForm({ type: "hotel", destination: dest });
+      return;
+    }
+
+    // No interception needed — send directly
+    sendMessageWithText();
+  };
+
   const sendDirectMessage = (text: string) => {
     // Force scroll to bottom when user selects a card
     setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     sendMessageWithText(text);
+  };
+
+  // Handle flight form submission
+  const handleFlightFormSubmit = () => {
+    if (!pendingForm || pendingForm.type !== "flight" || !formOrigin.trim()) return;
+    const msg = `Find me flights from ${formOrigin.trim()} to ${pendingForm.destination} on ${pendingForm.date}, ${formPassengers} passenger${parseInt(formPassengers) > 1 ? "s" : ""}`;
+    setPendingForm(null);
+    setFormOrigin("");
+    sendMessageWithText(msg);
+  };
+
+  // Handle hotel form submission
+  const handleHotelFormSubmit = () => {
+    if (!pendingForm || pendingForm.type !== "hotel" || !formCheckIn || !formCheckOut) return;
+    const msg = `Find me hotels in ${pendingForm.destination}, check-in ${formCheckIn}, check-out ${formCheckOut}, ${formGuests} guest${parseInt(formGuests) > 1 ? "s" : ""}`;
+    setPendingForm(null);
+    setFormCheckIn("");
+    setFormCheckOut("");
+    sendMessageWithText(msg);
   };
 
   const handleSaveTrip = async () => {
@@ -657,6 +759,119 @@ export default function AiPlanner() {
               </div>
             </motion.div>
           ))}
+
+          {/* Inline parameter forms — shown when intent detected */}
+          <AnimatePresence>
+            {pendingForm?.type === "flight" && (
+              <motion.div
+                key="flight-form"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="flex justify-start gap-2"
+              >
+                <NalaAvatar />
+                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 bg-card border space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Plane className="h-4 w-4 text-accent" />
+                    <span>Flight to {pendingForm.destination} on {pendingForm.date}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Flying from</Label>
+                      <Input
+                        placeholder="City or airport"
+                        value={formOrigin}
+                        onChange={(e) => setFormOrigin(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleFlightFormSubmit(); }}
+                        className="h-9 text-sm"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Passengers</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="9"
+                        value={formPassengers}
+                        onChange={(e) => setFormPassengers(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
+                    onClick={handleFlightFormSubmit}
+                    disabled={!formOrigin.trim()}
+                  >
+                    Search Flights
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {pendingForm?.type === "hotel" && (
+              <motion.div
+                key="hotel-form"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="flex justify-start gap-2"
+              >
+                <NalaAvatar />
+                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 bg-card border space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Hotel className="h-4 w-4 text-accent" />
+                    <span>Hotels in {pendingForm.destination}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Check-in</Label>
+                      <Input
+                        type="date"
+                        value={formCheckIn}
+                        min={new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setFormCheckIn(e.target.value)}
+                        className="h-9 text-sm"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Check-out</Label>
+                      <Input
+                        type="date"
+                        value={formCheckOut}
+                        min={formCheckIn || new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setFormCheckOut(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Guests</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="9"
+                      value={formGuests}
+                      onChange={(e) => setFormGuests(e.target.value)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
+                    onClick={handleHotelFormSubmit}
+                    disabled={!formCheckIn || !formCheckOut}
+                  >
+                    Search Hotels
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Loading state — premium card for search, dots for text */}
           <AnimatePresence>
