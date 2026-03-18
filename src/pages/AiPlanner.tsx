@@ -281,17 +281,18 @@ export default function AiPlanner() {
   };
 
   // ---------------------------------------------------------------------------
-  // Send message
+  // Send message (core logic, accepts optional override text)
   // ---------------------------------------------------------------------------
-  const sendMessage = async () => {
-    const hasText = input.trim().length > 0;
+  const sendMessageWithText = async (overrideText?: string) => {
+    const directText = overrideText?.trim();
+    const hasText = directText ? true : input.trim().length > 0;
     const hasFile = selectedFile !== null;
     if ((!hasText && !hasFile) || loading) return;
 
     setLoading(true);
     setUploadLoading(hasFile);
 
-    let userText = input.trim();
+    let userText = directText || input.trim();
     let imageUrl: string | undefined;
 
     const socialUrl = detectSocialUrl(userText);
@@ -423,6 +424,10 @@ export default function AiPlanner() {
     }
   };
 
+  // Public wrappers
+  const sendMessage = () => sendMessageWithText();
+  const sendDirectMessage = (text: string) => sendMessageWithText(text);
+
   const handleSaveTrip = async () => {
     if (!user) {
       toast.error("Please sign in to save trips");
@@ -450,7 +455,7 @@ export default function AiPlanner() {
   // Render helpers
   // ---------------------------------------------------------------------------
   const handleComparisonSelect = (opt: ComparisonOption) => {
-    setInput(`I'd like to go with "${opt.name}" (${opt.price}). Please add it to my itinerary.`);
+    sendDirectMessage(`I'd like to go with "${opt.name}" (${opt.price}). Please add it to my itinerary.`);
   };
 
   /** Renders a structured assistant message: intro → results → picks → tips */
@@ -483,10 +488,17 @@ export default function AiPlanner() {
               <SearchResultsBlock
                 key={`result-${i}`}
                 data={r}
-                onSelectFlight={(f) => setInput(`I'd like the ${f.airline_name} flight at $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`)}
-                onSelectHotel={(h) => setInput(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
-                onSelectActivity={(a) => setInput(`I'd like to do "${a.title}" ($${(a.price_cents / 100).toFixed(0)}/person). Please add it to my trip.`)}
-                onSelectRestaurant={(r) => setInput(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
+                onSelectFlight={(f) => {
+                  const dep = new Date(f.departure_time);
+                  const arr = new Date(f.arrival_time);
+                  const depTime = dep.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+                  const arrTime = arr.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+                  const date = dep.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  sendDirectMessage(`I'd like the ${f.airline_name} flight departing ${depTime} arriving ${arrTime} on ${date} for $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`);
+                }}
+                onSelectHotel={(h) => sendDirectMessage(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
+                onSelectActivity={(a) => sendDirectMessage(`I'd like to add "${a.title}" at $${(a.price_cents / 100).toFixed(0)}/person. Please add it to my trip.`)}
+                onSelectRestaurant={(r) => sendDirectMessage(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
               />
             ))}
           </div>

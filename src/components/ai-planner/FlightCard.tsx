@@ -27,6 +27,11 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function formatDuration(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -55,7 +60,9 @@ export function FlightCard({ flight, onSelect }: FlightCardProps) {
           )}
           <div className="min-w-0">
             <p className="text-sm font-medium truncate">{flight.airline_name}</p>
-            <p className="text-xs text-muted-foreground capitalize">{flight.cabin_class}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatDate(flight.departure_time)} · <span className="capitalize">{flight.cabin_class}</span>
+            </p>
           </div>
         </div>
 
