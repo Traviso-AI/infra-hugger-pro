@@ -15,6 +15,7 @@ import { useConversations } from "@/hooks/useConversations";
 import { ComparisonCard, parseComparisonBlocks } from "@/components/ai-planner/ComparisonCard";
 import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
 import { SearchResultsBlock, parseSearchResultsBlocks } from "@/components/ai-planner/SearchResultsBlock";
+import { SearchLoadingCard, detectSearchStatus } from "@/components/ai-planner/SearchLoadingCard";
 
 // Strip incomplete or unparseable traviso fenced blocks so ReactMarkdown doesn't render raw JSON
 function stripRawBlocks(text: string): string {
@@ -538,19 +539,34 @@ export default function AiPlanner() {
             );
           })}
 
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-              className="flex justify-start gap-2"
-            >
-              <NalaAvatar />
-              <div className="rounded-2xl bg-card border px-4 py-3">
-                <TypingDots />
-              </div>
-            </motion.div>
-          )}
+          {loading && (() => {
+            // Check if the latest assistant message has a search status
+            const lastMsg = messages[messages.length - 1];
+            const searchStatus = lastMsg?.role === "assistant"
+              ? detectSearchStatus(lastMsg.content)
+              : null;
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="flex justify-start gap-2"
+              >
+                <NalaAvatar />
+                {searchStatus ? (
+                  <SearchLoadingCard
+                    searchType={searchStatus.searchType}
+                    statusText={searchStatus.statusText}
+                  />
+                ) : (
+                  <div className="rounded-2xl bg-card border px-4 py-3">
+                    <TypingDots />
+                  </div>
+                )}
+              </motion.div>
+            );
+          })()}
 
           {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
             <motion.div
