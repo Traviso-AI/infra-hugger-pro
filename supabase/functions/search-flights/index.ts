@@ -114,10 +114,16 @@ Deno.serve(async (req) => {
 
       const priceCents = Math.round(parseFloat(offer.total_amount) * 100);
 
+      // Build flight number from carrier code + flight number
+      const carrierCode = firstSegment?.operating_carrier?.iata_code ?? firstSegment?.marketing_carrier?.iata_code ?? "";
+      const flightNum = firstSegment?.operating_carrier_flight_number ?? firstSegment?.marketing_carrier_flight_number ?? "";
+      const flightNumber = carrierCode && flightNum ? `${carrierCode}${flightNum}` : null;
+
       return {
         id: offer.id,
         airline_name: carrier.name ?? "Unknown Airline",
         airline_logo_url: carrier.logo_symbol_url ?? carrier.logo_lockup_url ?? null,
+        flight_number: flightNumber,
         departure_time: firstSegment?.departing_at ?? null,
         arrival_time: lastSegment?.arriving_at ?? null,
         duration_minutes: durationMinutes,

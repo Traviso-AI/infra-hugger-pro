@@ -426,7 +426,11 @@ export default function AiPlanner() {
 
   // Public wrappers
   const sendMessage = () => sendMessageWithText();
-  const sendDirectMessage = (text: string) => sendMessageWithText(text);
+  const sendDirectMessage = (text: string) => {
+    // Force scroll to bottom when user selects a card
+    setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    sendMessageWithText(text);
+  };
 
   const handleSaveTrip = async () => {
     if (!user) {
@@ -494,7 +498,9 @@ export default function AiPlanner() {
                   const depTime = dep.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
                   const arrTime = arr.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
                   const date = dep.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                  sendDirectMessage(`I'd like the ${f.airline_name} flight departing ${depTime} arriving ${arrTime} on ${date} for $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`);
+                  const flightNum = f.flight_number ? ` ${f.flight_number}` : "";
+                  const stopsText = f.stops === 0 ? "nonstop" : `${f.stops} stop${f.stops > 1 ? "s" : ""}`;
+                  sendDirectMessage(`I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`);
                 }}
                 onSelectHotel={(h) => sendDirectMessage(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
                 onSelectActivity={(a) => sendDirectMessage(`I'd like to add "${a.title}" at $${(a.price_cents / 100).toFixed(0)}/person. Please add it to my trip.`)}

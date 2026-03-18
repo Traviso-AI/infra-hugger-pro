@@ -7,6 +7,7 @@ export interface FlightData {
   id: string;
   airline_name: string;
   airline_logo_url: string | null;
+  flight_number: string | null;
   departure_time: string;
   arrival_time: string;
   duration_minutes: number;
@@ -59,7 +60,10 @@ export function FlightCard({ flight, onSelect }: FlightCardProps) {
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate">{flight.airline_name}</p>
+            <p className="text-sm font-medium truncate">
+              {flight.airline_name}
+              {flight.flight_number && <span className="ml-1.5 text-xs font-normal text-muted-foreground">{flight.flight_number}</span>}
+            </p>
             <p className="text-xs text-muted-foreground">
               {formatDate(flight.departure_time)} · <span className="capitalize">{flight.cabin_class}</span>
             </p>
