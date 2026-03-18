@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Plane, Hotel, Compass, UtensilsCrossed, ArrowRight, Loader2 } from "lucide-react";
+import { Plane, Hotel, Compass, UtensilsCrossed, LayoutGrid, Loader2 } from "lucide-react";
 import { NalaAvatar } from "./NalaAvatar";
 import { PlaceAutocomplete } from "./PlaceAutocomplete";
 
@@ -117,7 +117,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "full", label: "Package", icon: ArrowRight },
+    { id: "full", label: "Package", icon: LayoutGrid },
     { id: "flights", label: "Flights", icon: Plane },
     { id: "hotels", label: "Hotels", icon: Hotel },
     { id: "activities", label: "Activities", icon: Compass },
@@ -153,7 +153,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
           </div>
 
           {/* Tab content */}
-          <div className="p-4 overflow-y-auto max-h-[60vh]">
+          <div className="p-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={tab}
@@ -168,11 +168,11 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Destination *</Label>
-                        <PlaceAutocomplete placeholder="London, Tokyo..." value={dest} onChange={setDest} className={`h-10 ${errorClass("dest")}`} autoFocus />
+                        <PlaceAutocomplete placeholder="e.g. London, UK" value={dest} onChange={setDest} className={`h-10 ${errorClass("dest")}`} autoFocus />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Flying from {needs.flights && "*"}</Label>
-                        <PlaceAutocomplete placeholder="Seattle, NYC..." value={origin} onChange={setOrigin} className={`h-10 ${errorClass("origin")}`} />
+                        <PlaceAutocomplete placeholder="e.g. Seattle, USA" value={origin} onChange={setOrigin} className={`h-10 ${errorClass("origin")}`} />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -224,11 +224,11 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">From *</Label>
-                        <PlaceAutocomplete placeholder="Seattle, NYC..." value={fFrom} onChange={setFFrom} className={`h-10 ${errorClass("fFrom")}`} autoFocus />
+                        <PlaceAutocomplete placeholder="e.g. Seattle, USA" value={fFrom} onChange={setFFrom} className={`h-10 ${errorClass("fFrom")}`} autoFocus />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">To *</Label>
-                        <PlaceAutocomplete placeholder="London, Tokyo..." value={fTo} onChange={setFTo} className={`h-10 ${errorClass("fTo")}`} />
+                        <PlaceAutocomplete placeholder="e.g. London, UK" value={fTo} onChange={setFTo} className={`h-10 ${errorClass("fTo")}`} />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
                   <>
                     <div className="space-y-1">
                       <Label className="text-xs">Destination *</Label>
-                      <PlaceAutocomplete placeholder="London, Tokyo..." value={hDest} onChange={setHDest} className={`h-10 ${errorClass("hDest")}`} autoFocus />
+                      <PlaceAutocomplete placeholder="e.g. Paris, France" value={hDest} onChange={setHDest} className={`h-10 ${errorClass("hDest")}`} autoFocus />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -285,7 +285,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
                   <>
                     <div className="space-y-1">
                       <Label className="text-xs">Destination *</Label>
-                      <PlaceAutocomplete placeholder="London, Tokyo..." value={aDest} onChange={setADest} className={`h-10 ${errorClass("aDest")}`} autoFocus />
+                      <PlaceAutocomplete placeholder="e.g. Tokyo, Japan" value={aDest} onChange={setADest} className={`h-10 ${errorClass("aDest")}`} autoFocus />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -312,7 +312,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
                   <>
                     <div className="space-y-1">
                       <Label className="text-xs">Destination *</Label>
-                      <PlaceAutocomplete placeholder="London, Tokyo..." value={rDest} onChange={setRDest} className={`h-10 ${errorClass("rDest")}`} autoFocus />
+                      <PlaceAutocomplete placeholder="e.g. Barcelona, Spain" value={rDest} onChange={setRDest} className={`h-10 ${errorClass("rDest")}`} autoFocus />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
