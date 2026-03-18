@@ -476,6 +476,11 @@ export default function AiPlanner() {
     const { introText, results, comparisons, trailingText } = parseMessageSections(content);
     const hasStructuredData = results.length > 0 || comparisons.length > 0;
 
+    // Debug: log what was parsed (remove after confirming fix)
+    if (hasStructuredData) {
+      console.log("[AiPlanner] Parsed:", { results: results.map(r => `${r.type}:${(r as any)[r.type]?.length ?? 0}`), comparisons: comparisons.length, introLen: introText.length });
+    }
+
     if (!hasStructuredData) {
       // Plain text message — render as markdown
       return (
