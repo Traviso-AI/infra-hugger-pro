@@ -171,8 +171,9 @@ When a user selects an item (messages like "I'd like the...", "I'd like to stay 
 
 ### DUPLICATE SELECTION HANDLING
 If the conversation already contains a selection for the same category (e.g. user already selected a flight and now selects another flight):
-- For **flights**: Ask "You already have a flight selected. Would you like to: (a) Replace it with this one, (b) Keep your original, or (c) Add for another passenger?"
-- For **hotels**: Ask "You already have a hotel selected. Would you like to: (a) Replace it with this one, (b) Keep your original, or (c) Add a room for more guests?"
+- For **flights**: Ask "You already have a flight selected. Would you like to: (a) Replace it with this one, (b) Keep your original, (c) Add for another passenger, or (d) Book both flights (e.g. outbound + return)?"
+- For **hotels**: Ask "You already have a hotel selected. Would you like to: (a) Replace it with this one, (b) Keep your original, (c) Add a room for more guests, or (d) Book both hotels (e.g. split-stay or multi-city)?"
+- If user picks (d) Book both: Confirm both are added, ask for dates for each stay if not already specified.
 - For **activities**: Allow multiple selections without asking — just confirm: "Added! You now have X activities planned."
 - For **restaurants**: Allow multiple selections without asking — just confirm: "Added! You now have X restaurants on your list."
 - If user says "replace": Confirm the swap: "Done! I've replaced [old] with [new]."
@@ -924,7 +925,10 @@ Deno.serve(async (req) => {
           // Immediately emit full traviso-results blocks so cards render before AI streams
           for (const tc of initial.toolCalls) {
             const full = fullResults[tc.id];
-            if (!full) continue;
+            if (!full) {
+              console.log(`[ai-travel-planner] No fullResults for tool ${tc.id} (${tc.name})`);
+              continue;
+            }
             const typeMap: Record<string, string> = {
               search_flights: "flights",
               search_hotels: "hotels",
@@ -932,7 +936,9 @@ Deno.serve(async (req) => {
               search_restaurants: "restaurants",
             };
             const resultType = typeMap[tc.name];
-            if (resultType && full[resultType]?.length) {
+            const itemCount = full[resultType]?.length ?? 0;
+            console.log(`[ai-travel-planner] Emitting traviso-results: tool=${tc.name}, type=${resultType}, items=${itemCount}, keys=${Object.keys(full).join(",")}`);
+            if (resultType && itemCount > 0) {
               const block = `\n\n\`\`\`traviso-results\n${JSON.stringify({ type: resultType, [resultType]: full[resultType] })}\n\`\`\`\n\n`;
               controller.enqueue(sseChunk(block));
               contentEmitted = true;
