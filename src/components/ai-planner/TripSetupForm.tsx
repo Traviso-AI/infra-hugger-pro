@@ -116,7 +116,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "full", label: "Full Trip", icon: ArrowRight },
+    { id: "full", label: "Package", icon: ArrowRight },
     { id: "flights", label: "Flights", icon: Plane },
     { id: "hotels", label: "Hotels", icon: Hotel },
     { id: "activities", label: "Activities", icon: Compass },
@@ -152,7 +152,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
           </div>
 
           {/* Tab content */}
-          <div className="p-4">
+          <div className="p-4 overflow-y-auto max-h-[60vh]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={tab}
@@ -343,9 +343,6 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
           </div>
         </div>
 
-        <p className="text-center text-[11px] text-muted-foreground mt-3">
-          Or just type a message below to chat with Nala directly.
-        </p>
       </div>
     </div>
   );
