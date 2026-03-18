@@ -277,6 +277,31 @@ const SEARCH_TOOLS = [
   },
 ];
 
+function getStatusMessage(toolName: string, args: Record<string, any>): string {
+  const dest = args.destination ?? args.destination_code ?? args.origin ?? "";
+  switch (toolName) {
+    case "search_flights":
+      return `✈️ Searching flights from ${args.origin ?? "?"} to ${args.destination ?? "?"}...\n\n`;
+    case "search_hotels":
+      return `🏨 Checking hotel availability in ${dest}...\n\n`;
+    case "search_activities":
+      return `🎯 Searching activities in ${dest}...\n\n`;
+    case "search_restaurants":
+      return `🍽️ Looking up restaurants in ${dest}...\n\n`;
+    default:
+      return "🔍 Searching...\n\n";
+  }
+}
+
+function getFoundMessage(toolName: string, data: any): string {
+  const count =
+    data.flights?.length ?? data.hotels?.length ?? data.activities?.length ?? data.restaurants?.length ?? 0;
+  if (count === 0) return "";
+  const label = toolName.replace("search_", "");
+  return `Found ${count} ${label}, selecting the best ones...\n\n`;
+}
+
+// Kept for backwards compat — unused now
 const STATUS_MESSAGES: Record<string, string> = {
   search_flights: "✈️ Searching live flights...\n\n",
   search_hotels: "🏨 Checking hotel availability...\n\n",
@@ -806,26 +831,40 @@ Deno.serve(async (req) => {
             controller.enqueue(sseChunk(initial.text));
           }
 
-          // Emit status messages
+          // Emit contextual status messages
           for (const tc of initial.toolCalls) {
-            const status = STATUS_MESSAGES[tc.name] ?? "🔍 Searching...\n\n";
-            controller.enqueue(sseChunk(status));
+            controller.enqueue(sseChunk(getStatusMessage(tc.name, tc.input)));
           }
 
           // Execute all tool calls in parallel
+          const fullResults: Record<string, any> = {}; // full data for client
           const toolResults = await Promise.all(
             initial.toolCalls.map(async (tc: any) => {
-              const result = await executeToolCall(tc.name, tc.input);
+              const resultStr = await executeToolCall(tc.name, tc.input);
+              const resultData = JSON.parse(resultStr);
+              fullResults[tc.id] = resultData;
+
+              // Emit "Found X results" status
+              const foundMsg = getFoundMessage(tc.name, resultData);
+              if (foundMsg) controller.enqueue(sseChunk(foundMsg));
+
+              // Trim for AI context — AI only needs top 5 to pick 3 for compare block
+              // Full data goes to client via traviso-results block instruction
+              const trimmed = { ...resultData };
+              if (trimmed.flights) trimmed.flights = trimmed.flights.slice(0, 5);
+              if (trimmed.hotels) trimmed.hotels = trimmed.hotels.slice(0, 5);
+              if (trimmed.activities) trimmed.activities = trimmed.activities.slice(0, 5);
+              if (trimmed.restaurants) trimmed.restaurants = trimmed.restaurants.slice(0, 5);
+
               return {
                 type: "tool_result" as const,
                 tool_use_id: tc.id,
-                content: result,
+                content: JSON.stringify(trimmed),
               };
             }),
           );
 
           // Build follow-up messages with tool results
-          // Anthropic format: assistant message with content blocks, then user message with tool_results
           const assistantContent: any[] = [];
           if (initial.text) {
             assistantContent.push({ type: "text", text: initial.text });

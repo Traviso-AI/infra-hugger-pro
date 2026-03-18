@@ -12,6 +12,21 @@ interface ActivitySearchRequest {
 }
 
 const VIATOR_BASE_URL = "https://api.viator.com/partner";
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const API_TIMEOUT_MS = 8000; // 8 second hard timeout
+
+// Simple in-memory cache keyed by destination+dates
+const cache = new Map<string, { data: any; timestamp: number }>();
+
+function getCacheKey(destination: string, start_date?: string, end_date?: string): string {
+  return `${destination.toLowerCase()}|${start_date ?? ""}|${end_date ?? ""}`;
+}
+
+function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,39 +54,46 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use freetext search to find products by destination name
+    // Check cache
+    const cacheKey = getCacheKey(destination, start_date, end_date);
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      console.log(`[search-activities] Cache hit for ${cacheKey}`);
+      return new Response(JSON.stringify(cached.data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Build search request
     const searchBody: Record<string, any> = {
       searchTerm: destination,
       searchTypes: [
         {
           searchType: "PRODUCTS",
-          pagination: {
-            start: 1,
-            count: 30,
-          },
+          pagination: { start: 1, count: 20 },
         },
       ],
       currency,
       filtering: {},
     };
 
-    if (start_date) {
-      searchBody.filtering.startDate = start_date;
-    }
-    if (end_date) {
-      searchBody.filtering.endDate = end_date;
-    }
+    if (start_date) searchBody.filtering.startDate = start_date;
+    if (end_date) searchBody.filtering.endDate = end_date;
 
-    const searchRes = await fetch(`${VIATOR_BASE_URL}/search/freetext`, {
-      method: "POST",
-      headers: {
-        "exp-api-key": VIATOR_API_KEY,
-        "Accept-Language": "en-US",
-        "Accept": "application/json;version=2.0",
-        "Content-Type": "application/json",
+    const searchRes = await fetchWithTimeout(
+      `${VIATOR_BASE_URL}/search/freetext`,
+      {
+        method: "POST",
+        headers: {
+          "exp-api-key": VIATOR_API_KEY,
+          "Accept-Language": "en-US",
+          "Accept": "application/json;version=2.0",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(searchBody),
       },
-      body: JSON.stringify(searchBody),
-    });
+      API_TIMEOUT_MS,
+    );
 
     if (!searchRes.ok) {
       const errBody = await searchRes.text();
@@ -91,12 +113,10 @@ Deno.serve(async (req) => {
       const fromPrice = summary.fromPrice ?? pricing.fromPrice ?? 0;
       const priceCents = Math.round(parseFloat(String(fromPrice)) * 100);
 
-      // Parse duration
       let durationMinutes: number | null = null;
       const duration = product.duration ?? product.itinerary?.duration;
       if (duration) {
         if (typeof duration === "string") {
-          // ISO 8601 duration like PT2H30M
           const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
           if (match) {
             durationMinutes = (parseInt(match[1] || "0") * 60) + parseInt(match[2] || "0");
@@ -108,7 +128,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Get the best image — prefer 720x480, fall back to 480x320 or largest
       const images = product.images ?? [];
       const coverImage = images.find((i: any) => i.isCover) ?? images[0];
       const variants = coverImage?.variants ?? [];
@@ -118,7 +137,6 @@ Deno.serve(async (req) => {
         variants[variants.length - 1]?.url ??
         null;
 
-      // Reviews
       const reviews = product.reviews ?? {};
       const rating = reviews.combinedAverageRating ?? product.rating ?? null;
       const reviewCount = reviews.totalReviews ?? product.reviewCount ?? 0;
@@ -139,10 +157,28 @@ Deno.serve(async (req) => {
       };
     });
 
-    return new Response(JSON.stringify({ activities }), {
+    const result = { activities };
+
+    // Store in cache
+    cache.set(cacheKey, { data: result, timestamp: Date.now() });
+
+    // Evict old entries (keep cache bounded)
+    if (cache.size > 50) {
+      const oldest = [...cache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp)[0];
+      if (oldest) cache.delete(oldest[0]);
+    }
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      console.error("[search-activities] Request timed out after 8s");
+      return new Response(
+        JSON.stringify({ error: "Search timed out. Please try again.", activities: [] }),
+        { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     console.error("search-activities error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
