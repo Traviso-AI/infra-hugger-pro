@@ -287,11 +287,10 @@ const SEARCH_TOOLS = [
         destination: { type: "string", description: "Destination airport IATA code (e.g. CDG, NRT, FCO)" },
         departure_date: { type: "string", description: "Departure date in YYYY-MM-DD format" },
         return_date: { type: "string", description: "Return date in YYYY-MM-DD format (optional for one-way)" },
-        passengers: { type: "number", description: "Number of passengers" },
-        user_confirmed_passengers: { type: "boolean", description: "Set to true ONLY if the user explicitly stated how many passengers are traveling in the conversation. If you are assuming or defaulting, set to false and DO NOT call this tool — ask the user first: 'How many passengers are traveling?'" },
+        passengers: { type: "number", description: "Number of passengers. REQUIRED — you MUST ask the user 'How many passengers are traveling?' before calling this tool if they have not explicitly stated a number. Never assume 1." },
         keyword: { type: "string", description: "Specific airline name to filter by (e.g. Delta, British Airways — optional)" },
       },
-      required: ["origin", "destination", "departure_date", "passengers", "user_confirmed_passengers"],
+      required: ["origin", "destination", "departure_date", "passengers"],
     },
   },
   {

@@ -10,7 +10,6 @@ interface FlightSearchRequest {
   departure_date: string;
   return_date?: string;
   passengers: number;
-  user_confirmed_passengers?: boolean;
   keyword?: string;
 }
 
@@ -37,12 +36,12 @@ Deno.serve(async (req) => {
     if (!DUFFEL_API_KEY) throw new Error("DUFFEL_API_KEY not configured");
 
     const body: FlightSearchRequest = await req.json();
-    const { origin, destination, departure_date, return_date, passengers, user_confirmed_passengers, keyword } = body;
+    const { origin, destination, departure_date, return_date, passengers, keyword } = body;
 
     if (!origin) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you flying from?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (!destination) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you flying to?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (!departure_date) return new Response(JSON.stringify({ error: "missing_param", message: "What date are you flying?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    if (!passengers || !user_confirmed_passengers) return new Response(JSON.stringify({ error: "missing_param", message: "How many passengers are traveling?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!passengers) return new Response(JSON.stringify({ error: "missing_param", message: "How many passengers are traveling?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     // Build slices for the Duffel offer request
     const slices: DuffelSlice[] = [

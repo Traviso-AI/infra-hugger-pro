@@ -26,6 +26,11 @@ import type { ComparisonData } from "@/components/ai-planner/ComparisonCard";
 function stripRawBlocks(text: string): string {
   let cleaned = text.replace(/```traviso-(?:compare|results)\s*\n[\s\S]*?```/g, "");
   cleaned = cleaned.replace(/```traviso-(?:compare|results)[\s\S]*$/g, "");
+  // Strip raw JSON code blocks (tool call arguments leaking into chat)
+  cleaned = cleaned.replace(/```json\s*\n[\s\S]*?```/g, "");
+  cleaned = cleaned.replace(/```json[\s\S]*$/g, "");
+  // Strip any remaining fenced code blocks that look like JSON objects
+  cleaned = cleaned.replace(/```\s*\n\s*\{[\s\S]*?```/g, "");
   return cleaned;
 }
 
