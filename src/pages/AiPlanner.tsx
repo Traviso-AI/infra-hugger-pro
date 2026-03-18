@@ -14,23 +14,93 @@ import { ChatHistoryDrawer } from "@/components/ai-planner/ChatHistoryDrawer";
 import { useConversations } from "@/hooks/useConversations";
 import { ComparisonCard, parseComparisonBlocks } from "@/components/ai-planner/ComparisonCard";
 import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
-import { SearchResultsBlock, parseSearchResultsBlocks } from "@/components/ai-planner/SearchResultsBlock";
+import { SearchResultsBlock, parseSearchResultsBlocks, type SearchResultsData } from "@/components/ai-planner/SearchResultsBlock";
 import { SearchLoadingCard, detectSearchStatus } from "@/components/ai-planner/SearchLoadingCard";
+import type { ComparisonData } from "@/components/ai-planner/ComparisonCard";
 
-// Strip incomplete or unparseable traviso fenced blocks so ReactMarkdown doesn't render raw JSON
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Strip traviso fenced blocks (complete or incomplete) before ReactMarkdown */
 function stripRawBlocks(text: string): string {
-  // Remove any complete traviso blocks that failed to parse (shouldn't be in textParts, but safety net)
   let cleaned = text.replace(/```traviso-(?:compare|results)\s*\n[\s\S]*?```/g, "");
-  // Remove any incomplete/in-progress traviso blocks (opening backticks without closing)
   cleaned = cleaned.replace(/```traviso-(?:compare|results)[\s\S]*$/g, "");
   return cleaned;
 }
 
+/** Strip emoji status lines that the backend streams before tool results */
+function stripStatusLines(text: string): string {
+  return text
+    .replace(/[✈️🏨🎯🍽️🔍]\s*(?:Search(?:ing)?|Check(?:ing)?|Find(?:ing)?|Look(?:ing)?\s*up)[^\n]*\.{3}\n*/gi, "")
+    .replace(/Found\s+\d+\s+\w+,?\s*[^\n]*\.{3}\n*/gi, "")
+    .trim();
+}
+
+/**
+ * Parse an assistant message into structured sections for clean rendering.
+ * Returns: intro text, all result blocks, all compare blocks, trailing text (tips).
+ */
+function parseMessageSections(content: string): {
+  introText: string;
+  results: SearchResultsData[];
+  comparisons: ComparisonData[];
+  trailingText: string;
+} {
+  const results: SearchResultsData[] = [];
+  const comparisons: ComparisonData[] = [];
+
+  // Extract all traviso-results blocks
+  const resultsRegex = /```traviso-results\s*\n([\s\S]*?)```/g;
+  let match;
+  while ((match = resultsRegex.exec(content)) !== null) {
+    try {
+      results.push(JSON.parse(match[1].trim()));
+    } catch { /* skip malformed */ }
+  }
+
+  // Extract all traviso-compare blocks
+  const compareRegex = /```traviso-compare\s*\n([\s\S]*?)```/g;
+  while ((match = compareRegex.exec(content)) !== null) {
+    try {
+      comparisons.push(JSON.parse(match[1].trim()));
+    } catch { /* skip malformed */ }
+  }
+
+  // Strip all blocks and status lines to get clean text
+  let cleanText = content
+    .replace(/```traviso-(?:compare|results)\s*\n[\s\S]*?```/g, "")
+    .replace(/```traviso-(?:compare|results)[\s\S]*$/g, "");
+  cleanText = stripStatusLines(cleanText);
+
+  // Split into intro (before first ---) and trailing (after last ---)
+  const hrParts = cleanText.split(/\n---\n/);
+  let introText = "";
+  let trailingText = "";
+
+  if (hrParts.length >= 2) {
+    introText = hrParts[0].trim();
+    trailingText = hrParts.slice(1).join("\n---\n").trim();
+  } else {
+    // No HR divider — if we have results, everything is intro
+    // If no results, everything is just text
+    introText = cleanText.trim();
+  }
+
+  return { introText, results, comparisons, trailingText };
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
 
 type Message = { role: "user" | "assistant"; content: string };
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 export default function AiPlanner() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +110,7 @@ export default function AiPlanner() {
   const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
   const [conversationCreated, setConversationCreated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const {
@@ -58,8 +129,14 @@ export default function AiPlanner() {
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
 
+  // Smart scroll: only auto-scroll if user is near the bottom
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceFromBottom < 200) {
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -154,7 +231,6 @@ export default function AiPlanner() {
       reader.readAsText(file);
     });
 
-  // Detect social media URLs in text
   const detectSocialUrl = (text: string): string | null => {
     const urlRegex = /(https?:\/\/)?(www\.)?(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|twitter\.com|x\.com|reddit\.com|threads\.net)[^\s]*/i;
     const match = text.match(urlRegex);
@@ -179,12 +255,9 @@ export default function AiPlanner() {
       );
       if (!resp.ok) return { content: null, failed: true };
       const data = await resp.json();
-      
-      // Check if extraction actually failed
       if (data.extractionFailed || (!data.content && !data.title)) {
         return { content: null, failed: true };
       }
-      
       if (data.success && data.content && data.content.trim().length > 0) {
         return {
           content: `📎 [Extracted content from ${url}]:\nTitle: ${data.title || "N/A"}\nDescription: ${data.description || "N/A"}\n\nContent:\n${data.content.slice(0, 8000)}`,
@@ -197,6 +270,9 @@ export default function AiPlanner() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Send message
+  // ---------------------------------------------------------------------------
   const sendMessage = async () => {
     const hasText = input.trim().length > 0;
     const hasFile = selectedFile !== null;
@@ -208,7 +284,6 @@ export default function AiPlanner() {
     let userText = input.trim();
     let imageUrl: string | undefined;
 
-    // Check for social media URLs
     const socialUrl = detectSocialUrl(userText);
     if (socialUrl) {
       toast.info("Extracting content from link...");
@@ -250,7 +325,6 @@ export default function AiPlanner() {
     setInput("");
 
     try {
-      // Ensure conversation exists
       if (!conversationCreated && user) {
         await createConversation(conversationId);
         setConversationCreated(true);
@@ -266,7 +340,6 @@ export default function AiPlanner() {
         touchConversation(conversationId);
       }
 
-      // Build messages for AI
       const aiMessages = [...messages, userMsg].map((m) => ({
         role: m.role,
         content: m.content,
@@ -289,7 +362,6 @@ export default function AiPlanner() {
 
       if (!resp.ok) throw new Error(`AI error (${resp.status})`);
 
-      // Stream response
       const reader = resp.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = "";
@@ -330,7 +402,6 @@ export default function AiPlanner() {
         });
       }
 
-      // Auto-update title if it was the first message
       if (messages.length === 0 && userText) {
         updateTitle(conversationId, generateTitle(userText));
       }
@@ -365,14 +436,93 @@ export default function AiPlanner() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------------
+  const handleComparisonSelect = (opt: ComparisonOption) => {
+    setInput(`I'd like to go with "${opt.name}" (${opt.price}). Please add it to my itinerary.`);
+  };
+
+  /** Renders a structured assistant message: intro → results → picks → tips */
+  const renderStructuredContent = (content: string) => {
+    const { introText, results, comparisons, trailingText } = parseMessageSections(content);
+    const hasStructuredData = results.length > 0 || comparisons.length > 0;
+
+    if (!hasStructuredData) {
+      // Plain text message — render as markdown
+      return (
+        <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
+          <ReactMarkdown>{stripRawBlocks(stripStatusLines(content))}</ReactMarkdown>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {/* 1. Nala's intro text */}
+        {introText && (
+          <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
+            <ReactMarkdown>{introText}</ReactMarkdown>
+          </div>
+        )}
+
+        {/* 2. ALL result cards grouped together */}
+        {results.length > 0 && (
+          <div className="not-prose space-y-2">
+            {results.map((r, i) => (
+              <SearchResultsBlock
+                key={`result-${i}`}
+                data={r}
+                onSelectFlight={(f) => setInput(`I'd like the ${f.airline_name} flight at $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`)}
+                onSelectHotel={(h) => setInput(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
+                onSelectActivity={(a) => setInput(`I'd like to do "${a.title}" ($${(a.price_cents / 100).toFixed(0)}/person). Please add it to my trip.`)}
+                onSelectRestaurant={(r) => setInput(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 3. Compare blocks (curated picks) below results */}
+        {comparisons.length > 0 && (
+          <div className="not-prose space-y-2">
+            {comparisons.map((c, i) => (
+              <ComparisonCard
+                key={`compare-${i}`}
+                data={c}
+                onSelect={handleComparisonSelect}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 4. Tips / trailing text at the bottom */}
+        {trailingText && (
+          <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
+            <ReactMarkdown>{trailingText}</ReactMarkdown>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ---------------------------------------------------------------------------
+  // Detect search-in-progress for loading card
+  // ---------------------------------------------------------------------------
+  const isSearching = loading && (() => {
+    const lastMsg = messages[messages.length - 1];
+    return lastMsg?.role === "assistant" ? detectSearchStatus(lastMsg.content) : null;
+  })();
+
   const isImage = selectedFile?.type.startsWith("image/");
   const canSend = (input.trim().length > 0 || selectedFile !== null) && !loading;
 
+  // ---------------------------------------------------------------------------
+  // JSX
+  // ---------------------------------------------------------------------------
   return (
     <div className="flex flex-col h-full">
-
-      {/* Chat area */}
-      <div className="relative flex-1 overflow-y-auto">
+      {/* Chat area — never locks scroll */}
+      <div ref={scrollContainerRef} className="relative flex-1 overflow-y-auto">
         {/* Gradient shimmer background */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-shimmer opacity-[0.035]"
@@ -434,130 +584,46 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          {messages.map((msg, i) => {
-            const hasComparison = msg.role === "assistant" && msg.content.includes("```traviso-compare");
-            const hasResults = msg.role === "assistant" && msg.content.includes("```traviso-results");
-            const parsedComparison = hasComparison ? parseComparisonBlocks(msg.content) : null;
-            const parsedResults = hasResults ? parseSearchResultsBlocks(msg.content) : null;
-
-            const handleComparisonSelect = (opt: ComparisonOption) => {
-              setInput(`I'd like to go with "${opt.name}" (${opt.price}). Please add it to my itinerary.`);
-            };
-
-            // Render assistant message content with embedded blocks
-            const renderAssistantContent = () => {
-              // Both block types can coexist — parse results first, then comparisons within text parts
-              if (parsedResults && parsedResults.results.some(Boolean)) {
-                return (
-                  <div className="prose prose-sm max-w-none dark:prose-invert nala-prose space-y-3">
-                    {parsedResults.textParts.map((text, j) => {
-                      // Within each text part, also check for comparison blocks
-                      const hasInnerComparison = text.includes("```traviso-compare");
-                      const innerParsed = hasInnerComparison ? parseComparisonBlocks(text) : null;
-
-                      return (
-                        <div key={`results-${j}`}>
-                          {innerParsed ? (
-                            innerParsed.textParts.map((innerText, k) => (
-                              <div key={`inner-${k}`}>
-                                {stripRawBlocks(innerText).trim() && <ReactMarkdown>{stripRawBlocks(innerText)}</ReactMarkdown>}
-                                {k < innerParsed.comparisons.length && innerParsed.comparisons[k] && (
-                                  <ComparisonCard
-                                    data={innerParsed.comparisons[k]!}
-                                    onSelect={handleComparisonSelect}
-                                  />
-                                )}
-                              </div>
-                            ))
-                          ) : (
-                            stripRawBlocks(text).trim() && <ReactMarkdown>{stripRawBlocks(text)}</ReactMarkdown>
-                          )}
-                          {j < parsedResults.results.length && parsedResults.results[j] && (
-                            <div className="not-prose">
-                            <SearchResultsBlock
-                              data={parsedResults.results[j]!}
-                              onSelectFlight={(f) => setInput(`I'd like the ${f.airline_name} flight at $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`)}
-                              onSelectHotel={(h) => setInput(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
-                              onSelectActivity={(a) => setInput(`I'd like to do "${a.title}" ($${(a.price_cents / 100).toFixed(0)}/person). Please add it to my trip.`)}
-                              onSelectRestaurant={(r) => setInput(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
-                            />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              }
-
-              if (parsedComparison) {
-                return (
-                  <div className="prose prose-sm max-w-none dark:prose-invert nala-prose space-y-3">
-                    {parsedComparison.textParts.map((text, j) => (
-                      <div key={`text-${j}`}>
-                        {stripRawBlocks(text).trim() && <ReactMarkdown>{stripRawBlocks(text)}</ReactMarkdown>}
-                        {j < parsedComparison.comparisons.length && parsedComparison.comparisons[j] && (
-                          <ComparisonCard
-                            data={parsedComparison.comparisons[j]!}
-                            onSelect={handleComparisonSelect}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                );
-              }
-
-              return (
-                <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
-                  <ReactMarkdown>{stripRawBlocks(msg.content)}</ReactMarkdown>
-                </div>
-              );
-            };
-
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}
+          {messages.map((msg, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} gap-2`}
+            >
+              {msg.role === "assistant" && <NalaAvatar />}
+              <div
+                className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 ${
+                  msg.role === "user"
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-card border"
+                }`}
               >
-                {msg.role === "assistant" && <NalaAvatar />}
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    msg.role === "user"
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-card border"
-                  }`}
-                >
-                  {msg.role === "assistant" ? renderAssistantContent() : (
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
+                {msg.role === "assistant"
+                  ? renderStructuredContent(msg.content)
+                  : <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                }
+              </div>
+            </motion.div>
+          ))}
 
-          {loading && (() => {
-            // Check if the latest assistant message has a search status
-            const lastMsg = messages[messages.length - 1];
-            const searchStatus = lastMsg?.role === "assistant"
-              ? detectSearchStatus(lastMsg.content)
-              : null;
-
-            return (
+          {/* Loading state — premium card for search, dots for text */}
+          <AnimatePresence>
+            {loading && (
               <motion.div
+                key="loading"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
                 className="flex justify-start gap-2"
               >
                 <NalaAvatar />
-                {searchStatus ? (
+                {isSearching ? (
                   <SearchLoadingCard
-                    searchType={searchStatus.searchType}
-                    statusText={searchStatus.statusText}
+                    searchType={isSearching.searchType}
+                    statusText={isSearching.statusText}
                   />
                 ) : (
                   <div className="rounded-2xl bg-card border px-4 py-3">
@@ -565,9 +631,10 @@ export default function AiPlanner() {
                   </div>
                 )}
               </motion.div>
-            );
-          })()}
+            )}
+          </AnimatePresence>
 
+          {/* Save as Trip button */}
           {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
