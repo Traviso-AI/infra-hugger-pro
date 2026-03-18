@@ -353,6 +353,9 @@ export default function AiPlanner() {
   // Send message (core logic, accepts optional override text)
   // ---------------------------------------------------------------------------
   const sendMessageWithText = async (overrideText?: string) => {
+    // Block AI while inline form is active (form submission clears pendingForm first)
+    if (pendingForm !== null && !overrideText) return;
+
     const directText = overrideText?.trim();
     const hasText = directText ? true : input.trim().length > 0;
     const hasFile = selectedFile !== null;
@@ -676,7 +679,7 @@ export default function AiPlanner() {
   })();
 
   const isImage = selectedFile?.type.startsWith("image/");
-  const canSend = (input.trim().length > 0 || selectedFile !== null) && !loading;
+  const canSend = (input.trim().length > 0 || selectedFile !== null) && !loading && pendingForm === null;
 
   // ---------------------------------------------------------------------------
   // JSX
@@ -978,10 +981,11 @@ export default function AiPlanner() {
               {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
             </Button>
             <Textarea
-              placeholder="Describe your dream trip..."
+              placeholder={pendingForm ? "Complete the form above to continue..." : "Describe your dream trip..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              disabled={pendingForm !== null}
               className="min-h-[40px] max-h-32 resize-none text-sm py-2.5 leading-5"
               rows={1}
             />
