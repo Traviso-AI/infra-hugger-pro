@@ -3,9 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Save, Paperclip, X, FileText, Image, Plane, Hotel } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Send, Loader2, Save, Paperclip, X, FileText, Image } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +17,7 @@ import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
 import { SearchResultsBlock, parseSearchResultsBlocks, type SearchResultsData } from "@/components/ai-planner/SearchResultsBlock";
 import { SearchLoadingCard, detectSearchStatus } from "@/components/ai-planner/SearchLoadingCard";
 import type { ComparisonData } from "@/components/ai-planner/ComparisonCard";
+import { TripSetupForm } from "@/components/ai-planner/TripSetupForm";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -128,14 +127,9 @@ export default function AiPlanner() {
   const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
   const [conversationCreated, setConversationCreated] = useState(false);
 
-  // Trip setup form — shown before conversation starts
+  // Trip setup
   const [tripSetupDone, setTripSetupDone] = useState(false);
-  const [setupDest, setSetupDest] = useState("");
-  const [setupOrigin, setSetupOrigin] = useState("");
-  const [setupCheckIn, setSetupCheckIn] = useState("");
-  const [setupCheckOut, setSetupCheckOut] = useState("");
-  const [setupTravelers, setSetupTravelers] = useState("2");
-  const [setupNeeds, setSetupNeeds] = useState({ flights: true, hotels: true, activities: false, restaurants: false });
+  const [tripNeeds, setTripNeeds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -463,28 +457,11 @@ export default function AiPlanner() {
     sendMessageWithText(text);
   };
 
-  // Trip setup form submission — sends complete message with all params
-  const handleTripSetup = () => {
-    if (!setupDest.trim()) { toast.error("Please enter a destination"); return; }
-    if (!setupCheckIn || !setupCheckOut) { toast.error("Please select your dates"); return; }
-
-    const needs: string[] = [];
-    if (setupNeeds.flights) needs.push("flights");
-    if (setupNeeds.hotels) needs.push("hotels");
-    if (setupNeeds.activities) needs.push("activities");
-    if (setupNeeds.restaurants) needs.push("restaurants");
-    if (needs.length === 0) { toast.error("Please select at least one option"); return; }
-
-    const parts: string[] = [];
-    parts.push(`I want to find ${needs.join(", ")} for ${setupDest.trim()}`);
-    if (setupOrigin.trim() && setupNeeds.flights) {
-      parts.push(`flying from ${setupOrigin.trim()}`);
-    }
-    parts.push(`from ${setupCheckIn} to ${setupCheckOut}`);
-    parts.push(`${setupTravelers} traveler${parseInt(setupTravelers) > 1 ? "s" : ""}`);
-
+  // Trip setup form callback
+  const handleBriefNala = (message: string, needs: string[]) => {
     setTripSetupDone(true);
-    sendMessageWithText(parts.join(", "));
+    setTripNeeds(needs);
+    sendMessageWithText(message);
   };
 
   const handleSaveTrip = async () => {
@@ -632,76 +609,23 @@ export default function AiPlanner() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className="py-8"
               >
-                <div className="flex justify-center mb-4">
-                  <NalaAvatar size="lg" showOnline />
-                </div>
-                <h2 className="font-display text-2xl font-bold mb-1 text-center">Where are you going?</h2>
-                <p className="text-xs text-accent font-medium mb-6 text-center">Tell Nala about your trip and she'll find the best options.</p>
-
-                <div className="max-w-md mx-auto space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Destination</Label>
-                      <Input placeholder="London, Paris, Tokyo..." value={setupDest} onChange={(e) => setSetupDest(e.target.value)} className="h-10" autoFocus />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Departure city</Label>
-                      <Input placeholder="New York, Seattle..." value={setupOrigin} onChange={(e) => setSetupOrigin(e.target.value)} className="h-10" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Check-in</Label>
-                      <Input type="date" value={setupCheckIn} min={new Date().toISOString().split("T")[0]} onChange={(e) => setSetupCheckIn(e.target.value)} className="h-10" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Check-out</Label>
-                      <Input type="date" value={setupCheckOut} min={setupCheckIn || new Date().toISOString().split("T")[0]} onChange={(e) => setSetupCheckOut(e.target.value)} className="h-10" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium">Travelers</Label>
-                    <Input type="number" min="1" max="9" value={setupTravelers} onChange={(e) => setSetupTravelers(e.target.value)} className="h-10 w-24" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">What do you need?</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {(["flights", "hotels", "activities", "restaurants"] as const).map((item) => (
-                        <button
-                          key={item}
-                          onClick={() => setSetupNeeds((prev) => ({ ...prev, [item]: !prev[item] }))}
-                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${
-                            setupNeeds[item]
-                              ? "bg-accent text-accent-foreground border-accent"
-                              : "bg-transparent text-muted-foreground border-muted hover:border-foreground/20"
-                          }`}
-                        >
-                          {item}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11 text-sm font-medium"
-                    onClick={handleTripSetup}
-                    disabled={loading}
-                  >
-                    Start Planning
-                  </Button>
-
-                  <p className="text-center text-[11px] text-muted-foreground">
-                    Or just type a message below to chat with Nala directly.
-                  </p>
-                </div>
+                <TripSetupForm onSubmit={handleBriefNala} loading={loading} />
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Edit trip details link */}
+          {tripSetupDone && messages.length > 0 && !loading && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setTripSetupDone(false)}
+                className="text-xs text-muted-foreground hover:text-accent transition-colors"
+              >
+                Edit trip details
+              </button>
+            </div>
+          )}
 
           {messages.map((msg, i) => (
             <motion.div
