@@ -518,9 +518,11 @@ export default function AiPlanner() {
 
     const dest = extractDestination(messages, text);
     const date = extractDate(messages, text);
+    const flightIntent = detectFlightIntent(text, messages);
+    console.log("[sendMessage] intent check:", { text, flightIntent, dest, date, msgCount: messages.length });
 
     // Flight intent: need origin + passengers
-    if (detectFlightIntent(text, messages) && dest && date) {
+    if (flightIntent && dest && date) {
       // Show the user's message in chat, then show inline form
       setMessages((prev) => [...prev, { role: "user", content: text }]);
       setInput("");
