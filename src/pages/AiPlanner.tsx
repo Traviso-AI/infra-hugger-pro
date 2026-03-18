@@ -107,59 +107,6 @@ function parseMessageSections(content: string): {
   return { introText, results, comparisons, trailingText };
 }
 
-// ---------------------------------------------------------------------------
-// Intent detection — runs client-side before AI is called
-// ---------------------------------------------------------------------------
-function detectFlightIntent(text: string, history: { role: string; content: string }[]): boolean {
-  const recentHistory = history.slice(-4).map((m) => m.content).join(" ");
-  // Direct flight keywords in current message
-  if (/\b(flight|fly|flying|flew|airport|airline|plane|flights)\b/i.test(text)) return true;
-  // Flight keywords in recent history + affirmative/all in current message
-  if (/\b(flight|fly|flying|flew|airport|airline|plane)\b/i.test(recentHistory) &&
-      /\b(all|yes|sure|ok|flights|both|everything|all of the above|all of them)\b/i.test(text)) return true;
-  return false;
-}
-
-function detectHotelIntent(text: string, history: { role: string; content: string }[]): boolean {
-  const recentHistory = history.slice(-4).map((m) => m.content).join(" ");
-  if (/\b(hotel|stay|accommodation|lodge|hostel|airbnb|resort|hotels)\b/i.test(text)) return true;
-  if (/\b(hotel|stay|accommodation|lodge|hostel|airbnb|resort)\b/i.test(recentHistory) &&
-      /\b(all|yes|sure|ok|hotels|both|everything|all of the above|all of them)\b/i.test(text)) return true;
-  return false;
-}
-
-/** Extract destination city from the conversation history */
-function extractDestination(messages: { role: string; content: string }[], currentText: string): string | null {
-  const allText = [...messages.map((m) => m.content), currentText].join(" ");
-  const cities = ["london","paris","tokyo","rome","barcelona","new york","nyc","los angeles","sydney","dubai","amsterdam","berlin","lisbon","bangkok","singapore","bali","cancun","tulum","vegas","las vegas","miami","seattle","san francisco","chicago","boston","toronto","vancouver","montreal","hawaii","maui","seoul","hong kong","taipei","istanbul","cairo","marrakech","prague","vienna","budapest","dublin","edinburgh","madrid","milan","florence","venice","naples","osaka","kyoto","mumbai","delhi","goa","rio","bogota","medellin","lima","cusco","cape town","zanzibar","nairobi","reykjavik","stockholm","copenhagen","oslo","helsinki","athens","santorini","mykonos","crete","phuket","hanoi","ho chi minh","kuala lumpur","jakarta","mexico city","cartagena"];
-  // Direct match: find any known city name in the text
-  const lowerText = allText.toLowerCase();
-  for (const city of cities) {
-    if (lowerText.includes(city)) {
-      return city.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-    }
-  }
-  return null;
-}
-
-/** Extract date from conversation */
-function extractDate(messages: { role: string; content: string }[], currentText: string): string | null {
-  const allText = [...messages.map((m) => m.content), currentText].join(" ");
-  // Match "April 14", "april 14th", "Apr 20 2026", "2026-04-14"
-  const isoMatch = allText.match(/\b(\d{4}-\d{2}-\d{2})\b/);
-  if (isoMatch) return isoMatch[1];
-  const naturalMatch = allText.match(/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*)\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s*(\d{4})?\b/i);
-  if (naturalMatch) {
-    const months: Record<string, string> = { jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06", jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
-    const mon = months[naturalMatch[1].slice(0, 3).toLowerCase()];
-    const day = naturalMatch[2].padStart(2, "0");
-    const year = naturalMatch[3] ?? new Date().getFullYear().toString();
-    if (mon) return `${year}-${mon}-${day}`;
-  }
-  return null;
-}
-
-type PendingForm = { type: "flight"; destination: string; date: string } | { type: "hotel"; destination: string } | null;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -181,13 +128,14 @@ export default function AiPlanner() {
   const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
   const [conversationCreated, setConversationCreated] = useState(false);
 
-  // Inline parameter forms — shown when intent detected but params missing
-  const [pendingForm, setPendingForm] = useState<PendingForm>(null);
-  const [formOrigin, setFormOrigin] = useState("");
-  const [formPassengers, setFormPassengers] = useState("2");
-  const [formCheckIn, setFormCheckIn] = useState("");
-  const [formCheckOut, setFormCheckOut] = useState("");
-  const [formGuests, setFormGuests] = useState("2");
+  // Trip setup form — shown before conversation starts
+  const [tripSetupDone, setTripSetupDone] = useState(false);
+  const [setupDest, setSetupDest] = useState("");
+  const [setupOrigin, setSetupOrigin] = useState("");
+  const [setupCheckIn, setSetupCheckIn] = useState("");
+  const [setupCheckOut, setSetupCheckOut] = useState("");
+  const [setupTravelers, setSetupTravelers] = useState("2");
+  const [setupNeeds, setSetupNeeds] = useState({ flights: true, hotels: true, activities: false, restaurants: false });
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -353,9 +301,6 @@ export default function AiPlanner() {
   // Send message (core logic, accepts optional override text)
   // ---------------------------------------------------------------------------
   const sendMessageWithText = async (overrideText?: string) => {
-    // Block AI while inline form is active (form submission clears pendingForm first)
-    if (pendingForm !== null && !overrideText) return;
-
     const directText = overrideText?.trim();
     const hasText = directText ? true : input.trim().length > 0;
     const hasFile = selectedFile !== null;
@@ -510,55 +455,36 @@ export default function AiPlanner() {
     const text = input.trim();
     if (!text || loading) return;
 
-    const dest = extractDestination(messages, text);
-    const date = extractDate(messages, text);
-    const flightIntent = detectFlightIntent(text, messages);
-    console.log("[sendMessage] intent check:", { text, flightIntent, dest, date, msgCount: messages.length });
-
-    // Flight intent: need origin + passengers
-    if (flightIntent && dest && date) {
-      // Show the user's message in chat, then show inline form
-      setMessages((prev) => [...prev, { role: "user", content: text }]);
-      setInput("");
-      setPendingForm({ type: "flight", destination: dest, date });
-      return;
-    }
-
-    // Hotel intent: need check-in/check-out + guests
-    if (detectHotelIntent(text, messages) && dest && !formCheckIn) {
-      setMessages((prev) => [...prev, { role: "user", content: text }]);
-      setInput("");
-      setPendingForm({ type: "hotel", destination: dest });
-      return;
-    }
-
-    // No interception needed — send directly
     sendMessageWithText();
   };
 
   const sendDirectMessage = (text: string) => {
-    // Force scroll to bottom when user selects a card
     setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     sendMessageWithText(text);
   };
 
-  // Handle flight form submission
-  const handleFlightFormSubmit = () => {
-    if (!pendingForm || pendingForm.type !== "flight" || !formOrigin.trim()) return;
-    const msg = `Find me flights from ${formOrigin.trim()} to ${pendingForm.destination} on ${pendingForm.date}, ${formPassengers} passenger${parseInt(formPassengers) > 1 ? "s" : ""}`;
-    setPendingForm(null);
-    setFormOrigin("");
-    sendMessageWithText(msg);
-  };
+  // Trip setup form submission — sends complete message with all params
+  const handleTripSetup = () => {
+    if (!setupDest.trim()) { toast.error("Please enter a destination"); return; }
+    if (!setupCheckIn || !setupCheckOut) { toast.error("Please select your dates"); return; }
 
-  // Handle hotel form submission
-  const handleHotelFormSubmit = () => {
-    if (!pendingForm || pendingForm.type !== "hotel" || !formCheckIn || !formCheckOut) return;
-    const msg = `Find me hotels in ${pendingForm.destination}, check-in ${formCheckIn}, check-out ${formCheckOut}, ${formGuests} guest${parseInt(formGuests) > 1 ? "s" : ""}`;
-    setPendingForm(null);
-    setFormCheckIn("");
-    setFormCheckOut("");
-    sendMessageWithText(msg);
+    const needs: string[] = [];
+    if (setupNeeds.flights) needs.push("flights");
+    if (setupNeeds.hotels) needs.push("hotels");
+    if (setupNeeds.activities) needs.push("activities");
+    if (setupNeeds.restaurants) needs.push("restaurants");
+    if (needs.length === 0) { toast.error("Please select at least one option"); return; }
+
+    const parts: string[] = [];
+    parts.push(`I want to find ${needs.join(", ")} for ${setupDest.trim()}`);
+    if (setupOrigin.trim() && setupNeeds.flights) {
+      parts.push(`flying from ${setupOrigin.trim()}`);
+    }
+    parts.push(`from ${setupCheckIn} to ${setupCheckOut}`);
+    parts.push(`${setupTravelers} traveler${parseInt(setupTravelers) > 1 ? "s" : ""}`);
+
+    setTripSetupDone(true);
+    sendMessageWithText(parts.join(", "));
   };
 
   const handleSaveTrip = async () => {
@@ -679,7 +605,7 @@ export default function AiPlanner() {
   })();
 
   const isImage = selectedFile?.type.startsWith("image/");
-  const canSend = (input.trim().length > 0 || selectedFile !== null) && !loading && pendingForm === null;
+  const canSend = (input.trim().length > 0 || selectedFile !== null) && !loading;
 
   // ---------------------------------------------------------------------------
   // JSX
@@ -699,51 +625,79 @@ export default function AiPlanner() {
         <div className="relative px-4 py-6">
         <div className="container max-w-3xl space-y-4">
           <AnimatePresence mode="wait">
-            {messages.length === 0 && (
+            {messages.length === 0 && !tripSetupDone && (
               <motion.div
-                key="welcome"
+                key="trip-setup"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className="text-center py-16"
+                className="py-8"
               >
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-                  className="flex justify-center"
-                >
+                <div className="flex justify-center mb-4">
                   <NalaAvatar size="lg" showOnline />
-                </motion.div>
-                <h2 className="font-display text-2xl font-bold mb-1 mt-4">Meet Nala 🐾</h2>
-                <p className="text-xs text-accent font-medium mb-3">AI Trip Planner · Online</p>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Your AI travel buddy. Describe a trip, <span className="text-accent font-medium">paste a TikTok/Instagram link</span>, or upload a group chat screenshot — Nala will build your itinerary.
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {[
-                    "3 days in Tokyo with friends, cherry blossoms and nightlife",
-                    "Weekend in Barcelona, food and architecture",
-                    "🔗 Paste a TikTok or Instagram travel link here",
-                    "Find me hotels in Tulum for March 15-20",
-                  ].map((suggestion, i) => (
-                    <motion.div
-                      key={suggestion}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => setInput(suggestion)}
-                      >
-                        {suggestion}
-                      </Button>
-                    </motion.div>
-                  ))}
+                </div>
+                <h2 className="font-display text-2xl font-bold mb-1 text-center">Where are you going?</h2>
+                <p className="text-xs text-accent font-medium mb-6 text-center">Tell Nala about your trip and she'll find the best options.</p>
+
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Destination</Label>
+                      <Input placeholder="London, Paris, Tokyo..." value={setupDest} onChange={(e) => setSetupDest(e.target.value)} className="h-10" autoFocus />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Departure city</Label>
+                      <Input placeholder="New York, Seattle..." value={setupOrigin} onChange={(e) => setSetupOrigin(e.target.value)} className="h-10" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Check-in</Label>
+                      <Input type="date" value={setupCheckIn} min={new Date().toISOString().split("T")[0]} onChange={(e) => setSetupCheckIn(e.target.value)} className="h-10" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Check-out</Label>
+                      <Input type="date" value={setupCheckOut} min={setupCheckIn || new Date().toISOString().split("T")[0]} onChange={(e) => setSetupCheckOut(e.target.value)} className="h-10" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Travelers</Label>
+                    <Input type="number" min="1" max="9" value={setupTravelers} onChange={(e) => setSetupTravelers(e.target.value)} className="h-10 w-24" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">What do you need?</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(["flights", "hotels", "activities", "restaurants"] as const).map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => setSetupNeeds((prev) => ({ ...prev, [item]: !prev[item] }))}
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${
+                            setupNeeds[item]
+                              ? "bg-accent text-accent-foreground border-accent"
+                              : "bg-transparent text-muted-foreground border-muted hover:border-foreground/20"
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11 text-sm font-medium"
+                    onClick={handleTripSetup}
+                    disabled={loading}
+                  >
+                    Start Planning
+                  </Button>
+
+                  <p className="text-center text-[11px] text-muted-foreground">
+                    Or just type a message below to chat with Nala directly.
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -772,119 +726,6 @@ export default function AiPlanner() {
               </div>
             </motion.div>
           ))}
-
-          {/* Inline parameter forms — shown when intent detected */}
-          <AnimatePresence>
-            {pendingForm?.type === "flight" && (
-              <motion.div
-                key="flight-form"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="flex justify-start gap-2"
-              >
-                <NalaAvatar />
-                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 bg-card border space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Plane className="h-4 w-4 text-accent" />
-                    <span>Flight to {pendingForm.destination} on {pendingForm.date}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Flying from</Label>
-                      <Input
-                        placeholder="City or airport"
-                        value={formOrigin}
-                        onChange={(e) => setFormOrigin(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleFlightFormSubmit(); }}
-                        className="h-9 text-sm"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Passengers</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="9"
-                        value={formPassengers}
-                        onChange={(e) => setFormPassengers(e.target.value)}
-                        className="h-9 text-sm"
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
-                    onClick={handleFlightFormSubmit}
-                    disabled={!formOrigin.trim()}
-                  >
-                    Search Flights
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-            {pendingForm?.type === "hotel" && (
-              <motion.div
-                key="hotel-form"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="flex justify-start gap-2"
-              >
-                <NalaAvatar />
-                <div className="max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 bg-card border space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Hotel className="h-4 w-4 text-accent" />
-                    <span>Hotels in {pendingForm.destination}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Check-in</Label>
-                      <Input
-                        type="date"
-                        value={formCheckIn}
-                        min={new Date().toISOString().split("T")[0]}
-                        onChange={(e) => setFormCheckIn(e.target.value)}
-                        className="h-9 text-sm"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Check-out</Label>
-                      <Input
-                        type="date"
-                        value={formCheckOut}
-                        min={formCheckIn || new Date().toISOString().split("T")[0]}
-                        onChange={(e) => setFormCheckOut(e.target.value)}
-                        className="h-9 text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Guests</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="9"
-                      value={formGuests}
-                      onChange={(e) => setFormGuests(e.target.value)}
-                      className="h-9 text-sm"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
-                    onClick={handleHotelFormSubmit}
-                    disabled={!formCheckIn || !formCheckOut}
-                  >
-                    Search Hotels
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Loading state — premium card for search, dots for text */}
           <AnimatePresence>
@@ -981,11 +822,10 @@ export default function AiPlanner() {
               {isImage ? <Image className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
             </Button>
             <Textarea
-              placeholder={pendingForm ? "Complete the form above to continue..." : "Describe your dream trip..."}
+              placeholder="Describe your dream trip..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              disabled={pendingForm !== null}
               className="min-h-[40px] max-h-32 resize-none text-sm py-2.5 leading-5"
               rows={1}
             />
