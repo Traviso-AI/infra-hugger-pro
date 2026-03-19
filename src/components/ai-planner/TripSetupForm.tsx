@@ -135,19 +135,19 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
       <div className="max-w-md mx-auto">
         <div className="bg-card/80 backdrop-blur border border-border/50 rounded-2xl shadow-xl overflow-visible">
           {/* Tab bar */}
-          <div className="flex border-b overflow-x-auto">
+          <div className="flex border-b">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => { setTab(t.id); setErrors(new Set()); }}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-xs font-medium border-b-2 transition-colors min-w-0 ${
                   tab === t.id
                     ? "border-accent text-accent"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <t.icon className="h-3.5 w-3.5" />
-                {t.label}
+                <t.icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate hidden sm:inline">{t.label}</span>
               </button>
             ))}
           </div>
