@@ -704,7 +704,7 @@ async function streamToSSE(
   // Still failing — fall back to OpenAI streaming
   if (!res.ok) {
     const errText = await res.text();
-    console.error(`[ai-travel-planner] Anthropic stream error ${res.status} after retry:`, errText);
+    console.error(`[ai-travel-planner] Anthropic stream error ${res.status} after retry:`, errText, "messages:", messages.length, "lastRole:", messages[messages.length - 1]?.role);
     console.log("[ai-travel-planner] Falling back to OpenAI GPT-4o streaming...");
     await streamOpenAIToSSE(messages, controller);
     return;
@@ -751,7 +751,7 @@ async function streamOpenAIToSSE(
 ): Promise<void> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   if (!OPENAI_API_KEY) {
-    console.error("[ai-travel-planner] OPENAI_API_KEY not set, cannot fall back");
+    console.error("[ai-travel-planner] OPENAI_API_KEY not set, cannot fall back. Message count:", messages.length);
     controller.enqueue(sseChunk("\n\nSorry, I'm having trouble right now. Please try again in a moment."));
     return;
   }
@@ -777,7 +777,7 @@ async function streamOpenAIToSSE(
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error("[ai-travel-planner] OpenAI stream fallback error:", res.status, errText);
+    console.error("[ai-travel-planner] OpenAI stream fallback error:", res.status, errText, "messages:", messages.length, "lastRole:", messages[messages.length - 1]?.role);
     controller.enqueue(sseChunk("\n\nSorry, I'm having trouble right now. Please try again in a moment."));
     return;
   }
