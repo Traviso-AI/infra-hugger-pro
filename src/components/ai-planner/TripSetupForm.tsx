@@ -135,7 +135,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
       <div className="max-w-md mx-auto w-full min-w-0">
         <div className="bg-card/80 backdrop-blur border border-border/50 rounded-2xl shadow-xl overflow-visible">
           {/* Tab bar */}
-          <div className="flex border-b">
+          <div className="flex border-b overflow-hidden rounded-t-2xl">
             {tabs.map((t) => (
               <button
                 key={t.id}
