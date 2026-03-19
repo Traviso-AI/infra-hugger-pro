@@ -132,7 +132,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
       <h2 className="font-display text-2xl font-bold mb-1 text-center">Brief Nala</h2>
       <p className="text-xs text-muted-foreground mb-6 text-center">Tell me about your trip and I'll handle the rest.</p>
 
-      <div className="w-full max-w-lg mx-auto px-4 sm:px-0">
+      <div className="w-full max-w-[560px] mx-auto px-4 sm:px-0">
         <div className="bg-card/80 backdrop-blur border border-border/50 rounded-2xl shadow-xl overflow-hidden">
           {/* Tab bar */}
           <div className="flex border-b px-[1px]">
@@ -147,7 +147,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
                 }`}
               >
                 <t.icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{t.label}</span>
+                <span className="hidden sm:inline truncate">{t.label}</span>
               </button>
             ))}
           </div>
