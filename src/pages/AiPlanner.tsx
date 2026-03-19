@@ -14,10 +14,15 @@ import { ChatHistoryDrawer } from "@/components/ai-planner/ChatHistoryDrawer";
 import { useConversations } from "@/hooks/useConversations";
 import { ComparisonCard, parseComparisonBlocks } from "@/components/ai-planner/ComparisonCard";
 import type { ComparisonOption } from "@/components/ai-planner/ComparisonCard";
-import { SearchResultsBlock, parseSearchResultsBlocks, type SearchResultsData } from "@/components/ai-planner/SearchResultsBlock";
+import { SearchResultsBlock, type SearchResultsData } from "@/components/ai-planner/SearchResultsBlock";
 import { SearchLoadingCard, detectSearchStatus } from "@/components/ai-planner/SearchLoadingCard";
 import type { ComparisonData } from "@/components/ai-planner/ComparisonCard";
 import { TripSetupForm } from "@/components/ai-planner/TripSetupForm";
+import { TripSummaryCard } from "@/components/ai-planner/TripSummaryCard";
+import type { FlightData } from "@/components/ai-planner/FlightCard";
+import type { HotelData } from "@/components/ai-planner/HotelCard";
+import type { ActivityData } from "@/components/ai-planner/ActivityCard";
+import type { RestaurantData } from "@/components/ai-planner/RestaurantCard";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -98,8 +103,6 @@ function parseMessageSections(content: string): {
     introText = hrParts[0].trim();
     trailingText = hrParts.slice(1).join("\n---\n").trim();
   } else {
-    // No HR divider — if we have results, everything is intro
-    // If no results, everything is just text
     introText = cleanText.trim();
   }
 
@@ -114,6 +117,16 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
 
 type Message = { role: "user" | "assistant"; content: string };
+
+interface BriefContext {
+  destination: string;
+  origin: string;
+  departure: string;
+  returnDate: string;
+  travelers: string;
+  needs: string[];
+  preferences: string;
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -132,6 +145,17 @@ export default function AiPlanner() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Booking state
+  const [activitiesAdded, setActivitiesAdded] = useState(0);
+  const [showDoneActivities, setShowDoneActivities] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState<FlightData | null>(null);
+  const [selectedHotel, setSelectedHotel] = useState<HotelData | null>(null);
+  const [selectedActivities, setSelectedActivities] = useState<ActivityData[]>([]);
+  const [selectedRestaurants, setSelectedRestaurants] = useState<RestaurantData[]>([]);
+  const [tripSessionId, setTripSessionId] = useState<string | null>(null);
+  const [showTripSummary, setShowTripSummary] = useState(false);
+  const [briefContext, setBriefContext] = useState<BriefContext | null>(null);
 
   const {
     conversations,
@@ -444,11 +468,10 @@ export default function AiPlanner() {
     }
   };
 
-  // Public wrappers — intercept intents before calling AI
+  // Public wrappers
   const sendMessage = () => {
     const text = input.trim();
     if (!text || loading) return;
-
     sendMessageWithText();
   };
 
@@ -457,17 +480,85 @@ export default function AiPlanner() {
     sendMessageWithText(text);
   };
 
+  // ---------------------------------------------------------------------------
+  // Trip session persistence
+  // ---------------------------------------------------------------------------
+  const checkAndShowSummary = (
+    newFlight: FlightData | null,
+    newHotel: HotelData | null,
+    newActivities: ActivityData[],
+    newRestaurants: RestaurantData[],
+    needs: string[]
+  ) => {
+    const flightDone = !needs.includes("flights") || newFlight !== null;
+    const hotelDone = !needs.includes("hotels") || newHotel !== null;
+    const activitiesDone = !needs.includes("activities") || newActivities.length > 0;
+    const restaurantsDone = !needs.includes("restaurants") || newRestaurants.length > 0;
+    if (flightDone && hotelDone && activitiesDone && restaurantsDone) {
+      setShowTripSummary(true);
+    }
+  };
+
+  const upsertTripSession = async (updates: {
+    selected_flights?: FlightData[];
+    selected_hotels?: HotelData[];
+    selected_activities?: ActivityData[];
+    selected_restaurants?: RestaurantData[];
+    total_amount_cents?: number;
+  }) => {
+    if (!user) return null;
+    const sessionId = tripSessionId ?? crypto.randomUUID();
+    if (!tripSessionId) setTripSessionId(sessionId);
+    const { error } = await (supabase as any)
+      .from("trip_sessions")
+      .upsert(
+        {
+          id: sessionId,
+          user_id: user.id,
+          status: "pending",
+          updated_at: new Date().toISOString(),
+          ...updates,
+        },
+        { onConflict: "id" },
+      );
+    if (error) console.error("[upsertTripSession]", error);
+    return sessionId;
+  };
+
   // Trip setup form callback — show friendly summary to user, send structured brief to AI
   const handleBriefNala = (briefMessage: string, needs: string[]) => {
     setTripSetupDone(true);
 
-    // Build friendly summary from the structured brief
+    // Parse the structured brief
     const params = Object.fromEntries(
       briefMessage.replace("[TRAVISO BRIEF] ", "").split(" ").map((p) => {
         const [k, ...v] = p.split("=");
         return [k, v.join("=")];
       }),
     );
+
+    // Store brief context for use in selection handlers
+    setBriefContext({
+      destination: params.destination ?? "",
+      origin: params.origin ?? "none",
+      departure: params.departure ?? "",
+      returnDate: params.return ?? "null",
+      travelers: params.travelers ?? "2",
+      needs,
+      preferences: params.preferences ?? "none",
+    });
+
+    // Reset booking state
+    setActivitiesAdded(0);
+    setShowDoneActivities(false);
+    setSelectedFlight(null);
+    setSelectedHotel(null);
+    setSelectedActivities([]);
+    setSelectedRestaurants([]);
+    setTripSessionId(null);
+    setShowTripSummary(false);
+
+    // Build friendly summary
     const icons: Record<string, string> = { flights: "✈️", hotels: "🏨", activities: "🎯", restaurants: "🍽️" };
     const needIcons = needs.map((n) => icons[n] ?? "").join(" ");
     const dest = params.destination ?? "";
@@ -517,7 +608,6 @@ export default function AiPlanner() {
     const hasStructuredData = results.length > 0 || comparisons.length > 0;
 
     if (!hasStructuredData) {
-      // Plain text message — render as markdown
       return (
         <div className="prose prose-sm max-w-none dark:prose-invert nala-prose">
           <ReactMarkdown>{stripRawBlocks(stripStatusLines(content))}</ReactMarkdown>
@@ -549,13 +639,73 @@ export default function AiPlanner() {
                   const date = dep.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   const flightNum = f.flight_number ? ` ${f.flight_number}` : "";
                   const stopsText = f.stops === 0 ? "nonstop" : `${f.stops} stop${f.stops > 1 ? "s" : ""}`;
-                  sendDirectMessage(`I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`);
+                  let msg = `I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`;
+                  if (briefContext?.needs.includes("hotels")) {
+                    const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
+                    const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
+                    msg += ` Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults.`;
+                  }
+                  sendDirectMessage(msg);
+                  setSelectedFlight(f);
+                  upsertTripSession({ selected_flights: [f], total_amount_cents: f.price_cents });
+                  checkAndShowSummary(f, selectedHotel, selectedActivities, selectedRestaurants, briefContext?.needs ?? []);
                 }}
-                onSelectHotel={(h) => sendDirectMessage(`I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`)}
-                onSelectActivity={(a) => sendDirectMessage(`I'd like to add "${a.title}" at $${(a.price_cents / 100).toFixed(0)}/person. Please add it to my trip.`)}
-                onSelectRestaurant={(r) => sendDirectMessage(`I'd like to dine at ${r.name}. Please add it to my trip.`)}
+                onSelectHotel={(h) => {
+                  let msg = `I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`;
+                  if (briefContext?.needs.includes("activities")) {
+                    msg += ` Now immediately search activities in ${briefContext.destination}.`;
+                  }
+                  sendDirectMessage(msg);
+                  setSelectedHotel(h);
+                  const flightCents = selectedFlight?.price_cents ?? 0;
+                  upsertTripSession({ selected_hotels: [h], total_amount_cents: flightCents + h.total_price_cents });
+                  checkAndShowSummary(selectedFlight, h, selectedActivities, selectedRestaurants, briefContext?.needs ?? []);
+                }}
+                onSelectActivity={(a) => {
+                  const msg = `I'd like to add "${a.title}" at $${(a.price_cents / 100).toFixed(0)}/person. Please add it to my trip.`;
+                  sendDirectMessage(msg);
+                  const newActivities = [...selectedActivities, a];
+                  setSelectedActivities(newActivities);
+                  if (briefContext?.needs.includes("restaurants")) {
+                    setActivitiesAdded((n) => n + 1);
+                    setShowDoneActivities(true);
+                  }
+                  const flightCents = selectedFlight?.price_cents ?? 0;
+                  const hotelCents = selectedHotel?.total_price_cents ?? 0;
+                  const actCents = newActivities.reduce((s, x) => s + x.price_cents, 0);
+                  upsertTripSession({ selected_activities: newActivities, total_amount_cents: flightCents + hotelCents + actCents });
+                  checkAndShowSummary(selectedFlight, selectedHotel, newActivities, selectedRestaurants, briefContext?.needs ?? []);
+                }}
+                onSelectRestaurant={(r) => {
+                  sendDirectMessage(`I'd like to dine at ${r.name}. Please add it to my trip.`);
+                  const newRestaurants = [...selectedRestaurants, r];
+                  setSelectedRestaurants(newRestaurants);
+                  const flightCents = selectedFlight?.price_cents ?? 0;
+                  const hotelCents = selectedHotel?.total_price_cents ?? 0;
+                  const actCents = selectedActivities.reduce((s, x) => s + x.price_cents, 0);
+                  upsertTripSession({ selected_restaurants: newRestaurants, total_amount_cents: flightCents + hotelCents + actCents });
+                  checkAndShowSummary(selectedFlight, selectedHotel, selectedActivities, newRestaurants, briefContext?.needs ?? []);
+                }}
               />
             ))}
+          </div>
+        )}
+
+        {/* Done with activities button */}
+        {showDoneActivities && briefContext?.needs.includes("restaurants") && (
+          <div className="not-prose flex justify-end pt-1">
+            <button
+              onClick={() => {
+                setShowDoneActivities(false);
+                setActivitiesAdded(0);
+                sendDirectMessage(
+                  `I've added ${activitiesAdded} activit${activitiesAdded === 1 ? "y" : "ies"}. Now immediately search restaurants in ${briefContext.destination}.`
+                );
+              }}
+              className="text-xs px-4 py-2 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 transition-colors"
+            >
+              Done with activities → Find restaurants
+            </button>
           </div>
         )}
 
@@ -677,8 +827,33 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          {/* Save as Trip + Edit trip details */}
-          {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
+          {/* TripSummaryCard — appears after all selections complete */}
+          {showTripSummary && tripSessionId && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="not-prose w-full"
+            >
+              <TripSummaryCard
+                trip={{
+                  destination: briefContext?.destination ?? "Your Trip",
+                  dates: briefContext
+                    ? `${briefContext.departure}${briefContext.returnDate !== "null" ? ` – ${briefContext.returnDate}` : ""}`
+                    : "",
+                  travelers: parseInt(briefContext?.travelers ?? "2"),
+                  flight: selectedFlight ?? undefined,
+                  hotel: selectedHotel ?? undefined,
+                  activities: selectedActivities,
+                  restaurants: selectedRestaurants,
+                }}
+                onCheckout={() => navigate(`/booking/${tripSessionId}`)}
+              />
+            </motion.div>
+          )}
+
+          {/* Save as Trip — only for freeform conversations outside a brief session */}
+          {!showTripSummary && messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
