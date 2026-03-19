@@ -490,6 +490,7 @@ export default function AiPlanner() {
     newRestaurants: RestaurantData[],
     needs: string[]
   ) => {
+    if (needs.length === 0) return;
     const flightDone = !needs.includes("flights") || newFlight !== null;
     const hotelDone = !needs.includes("hotels") || newHotel !== null;
     const activitiesDone = !needs.includes("activities") || newActivities.length > 0;
