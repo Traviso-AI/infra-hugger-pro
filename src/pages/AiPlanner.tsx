@@ -129,7 +129,6 @@ export default function AiPlanner() {
 
   // Trip setup
   const [tripSetupDone, setTripSetupDone] = useState(false);
-  const [tripNeeds, setTripNeeds] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -294,7 +293,7 @@ export default function AiPlanner() {
   // ---------------------------------------------------------------------------
   // Send message (core logic, accepts optional override text)
   // ---------------------------------------------------------------------------
-  const sendMessageWithText = async (overrideText?: string) => {
+  const sendMessageWithText = async (overrideText?: string, opts?: { displayText?: string }) => {
     const directText = overrideText?.trim();
     const hasText = directText ? true : input.trim().length > 0;
     const hasFile = selectedFile !== null;
@@ -342,7 +341,8 @@ export default function AiPlanner() {
       setUploadLoading(false);
     }
 
-    const userMsg: Message = { role: "user", content: userText };
+    const displayContent = opts?.displayText ?? userText;
+    const userMsg: Message = { role: "user", content: displayContent };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
@@ -357,7 +357,7 @@ export default function AiPlanner() {
           user_id: user.id,
           conversation_id: conversationId,
           role: "user",
-          content: userText,
+          content: displayContent,
         });
         touchConversation(conversationId);
       }
@@ -457,11 +457,28 @@ export default function AiPlanner() {
     sendMessageWithText(text);
   };
 
-  // Trip setup form callback
-  const handleBriefNala = (message: string, needs: string[]) => {
+  // Trip setup form callback — show friendly summary to user, send structured brief to AI
+  const handleBriefNala = (briefMessage: string, needs: string[]) => {
     setTripSetupDone(true);
-    setTripNeeds(needs);
-    sendMessageWithText(message);
+
+    // Build friendly summary from the structured brief
+    const params = Object.fromEntries(
+      briefMessage.replace("[TRAVISO BRIEF] ", "").split(" ").map((p) => {
+        const [k, ...v] = p.split("=");
+        return [k, v.join("=")];
+      }),
+    );
+    const icons: Record<string, string> = { flights: "✈️", hotels: "🏨", activities: "🎯", restaurants: "🍽️" };
+    const needIcons = needs.map((n) => icons[n] ?? "").join(" ");
+    const dest = params.destination ?? "";
+    const origin = params.origin && params.origin !== "none" ? ` from ${params.origin}` : "";
+    const dep = params.departure ?? "";
+    const ret = params.return && params.return !== "null" ? ` – ${params.return}` : "";
+    const travelers = params.travelers ?? "2";
+    const friendlyMsg = `Trip to ${dest}${origin}, ${dep}${ret}, ${travelers} travelers ${needIcons}`.trim();
+
+    // Send structured brief to AI, but display friendly version in chat + DB
+    sendMessageWithText(briefMessage, { displayText: friendlyMsg });
   };
 
   const handleSaveTrip = async () => {
@@ -498,11 +515,6 @@ export default function AiPlanner() {
   const renderStructuredContent = (content: string) => {
     const { introText, results, comparisons, trailingText } = parseMessageSections(content);
     const hasStructuredData = results.length > 0 || comparisons.length > 0;
-
-    // Debug: log what was parsed (remove after confirming fix)
-    if (hasStructuredData) {
-      console.log("[AiPlanner] Parsed:", { results: results.map(r => `${r.type}:${(r as any)[r.type]?.length ?? 0}`), comparisons: comparisons.length, introLen: introText.length });
-    }
 
     if (!hasStructuredData) {
       // Plain text message — render as markdown
@@ -615,18 +627,6 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          {/* Edit trip details link */}
-          {tripSetupDone && messages.length > 0 && !loading && (
-            <div className="flex justify-center">
-              <button
-                onClick={() => setTripSetupDone(false)}
-                className="text-xs text-muted-foreground hover:text-accent transition-colors"
-              >
-                Edit trip details
-              </button>
-            </div>
-          )}
-
           {messages.map((msg, i) => (
             <motion.div
               key={i}
@@ -677,13 +677,13 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          {/* Save as Trip button */}
+          {/* Save as Trip + Edit trip details */}
           {messages.length > 0 && messages[messages.length - 1]?.role === "assistant" && !loading && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.25, delay: 0.15 }}
-              className="flex justify-start pl-9"
+              className="flex items-center justify-start pl-9 gap-3"
             >
               <Button
                 size="sm"
@@ -692,6 +692,14 @@ export default function AiPlanner() {
               >
                 <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Trip
               </Button>
+              {tripSetupDone && (
+                <button
+                  onClick={() => setTripSetupDone(false)}
+                  className="text-xs text-muted-foreground hover:text-accent transition-colors"
+                >
+                  Edit trip details
+                </button>
+              )}
             </motion.div>
           )}
 
