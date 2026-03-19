@@ -24,100 +24,142 @@ Deno.serve(async (req) => {
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
-
-    // Use anon client with the auth header for RLS-scoped queries
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader } } },
     );
 
-    // Use getClaims to validate the JWT — this works in edge functions unlike getUser
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      console.error("Claims error:", claimsError);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const { trip_session_id, traveler } = await req.json();
 
-    const { trip_id, hotel_id, check_in, check_out, guests, total_price } = await req.json();
-
-    if (!trip_id || !total_price) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+    if (!trip_session_id) {
+      return new Response(JSON.stringify({ error: "Missing trip_session_id" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { data: trip } = await supabase
-      .from("trips")
-      .select("title, destination")
-      .eq("id", trip_id)
+    const { data: session, error: sessionError } = await supabase
+      .from("trip_sessions" as any)
+      .select("*")
+      .eq("id", trip_session_id)
+      .eq("user_id", user.id)
       .single();
 
-    const tripName = trip ? `${trip.title} - ${trip.destination}` : "Trip Booking";
-
-    const stripe = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
-    });
-
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
-    let customerId: string;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: { user_id: userId },
+    if (sessionError || !session) {
+      console.error("Trip session load error:", sessionError);
+      return new Response(JSON.stringify({ error: "Trip session not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      customerId = customer.id;
     }
 
+    if (traveler) {
+      const updatedFlights = ((session as any).selected_flights ?? []).map((f: any) => ({
+        ...f,
+        passenger_name: `${traveler.first_name} ${traveler.last_name}`,
+        passenger_email: traveler.email ?? user.email,
+        passenger_phone: traveler.phone ?? "+10000000000",
+        passenger_dob: "1990-01-01",
+      }));
+      const updatedHotels = ((session as any).selected_hotels ?? []).map((h: any) => ({
+        ...h,
+        holder_name: `${traveler.first_name} ${traveler.last_name}`,
+      }));
+      await supabase
+        .from("trip_sessions" as any)
+        .update({
+          selected_flights: updatedFlights,
+          selected_hotels: updatedHotels,
+          traveler_info: traveler,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", trip_session_id);
+    }
+
+    const flights = (session as any).selected_flights ?? [];
+    const hotels = (session as any).selected_hotels ?? [];
+    const activities = (session as any).selected_activities ?? [];
+    const lineItems: any[] = [];
+
+    if (flights[0]) {
+      lineItems.push({
+        price_data: {
+          currency: "usd",
+          unit_amount: flights[0].price_cents,
+          product_data: {
+            name: `${flights[0].airline_name} Flight${flights[0].flight_number ? " " + flights[0].flight_number : ""}`,
+            description: `${flights[0].cabin_class ?? "economy"} · ${flights[0].stops === 0 ? "Nonstop" : flights[0].stops + " stop(s)"}`,
+          },
+        },
+        quantity: 1,
+      });
+    }
+
+    if (hotels[0]) {
+      lineItems.push({
+        price_data: {
+          currency: "usd",
+          unit_amount: hotels[0].total_price_cents,
+          product_data: {
+            name: hotels[0].name,
+            description: hotels[0].cancellation_policy ?? "",
+          },
+        },
+        quantity: 1,
+      });
+    }
+
+    for (const activity of activities) {
+      lineItems.push({
+        price_data: {
+          currency: "usd",
+          unit_amount: activity.price_cents,
+          product_data: { name: activity.title },
+        },
+        quantity: 1,
+      });
+    }
+
+    if (lineItems.length === 0) {
+      return new Response(JSON.stringify({ error: "No bookable items in session" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
     const origin = req.headers.get("origin") || "https://infra-hugger-pro.lovable.app";
 
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+    const stripeSession = await stripe.checkout.sessions.create({
+      customer_email: user.email,
       mode: "payment",
       currency: "usd",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            unit_amount: Math.round(total_price * 100),
-            product_data: {
-              name: tripName,
-              description: `${check_in} to ${check_out} · ${guests} guest${guests > 1 ? "s" : ""}`,
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}&trip_id=${trip_id}&hotel_id=${hotel_id || ""}&check_in=${check_in}&check_out=${check_out}&guests=${guests}&total_price=${total_price}`,
-      cancel_url: `${origin}/booking/${trip_id}`,
+      line_items: lineItems,
+      success_url: `${origin}/booking/progress?trip_session_id=${trip_session_id}`,
+      cancel_url: `${origin}/ai-planner`,
       metadata: {
-        user_id: userId,
-        trip_id,
-        hotel_id: hotel_id || "",
-        check_in,
-        check_out,
-        guests: String(guests),
+        trip_session_id,
+        user_id: user.id,
       },
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: stripeSession.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("create-checkout-session error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,27 +11,6 @@ import {
   CheckCircle, Plane, Hotel, Activity, Calendar,
   Share2, Copy, ExternalLink, DollarSign, Sparkles,
 } from "lucide-react";
-
-// These tables don't exist yet — stub the data
-interface TripSession {
-  id: string;
-  selected_flights: any[] | null;
-  selected_hotels: any[] | null;
-  selected_activities: any[] | null;
-  total_amount_cents: number;
-}
-
-interface BookingItem {
-  type: string;
-  status: string;
-  provider_reference: string | null;
-  created_at: string;
-}
-
-interface CommissionRecord {
-  amount_cents: number;
-  creator_percentage: number;
-}
 
 export default function BookingSuccess() {
   const [searchParams] = useSearchParams();
@@ -44,11 +24,24 @@ export default function BookingSuccess() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Stub: tables don't exist yet
-  const session: TripSession | null = null;
-  const isLoading = false;
-  const bookingItems: BookingItem[] = [];
-  const commission: CommissionRecord | null = null;
+  const [session, setSession] = useState<any | null>(null);
+  const [bookingItems, setBookingItems] = useState<any[]>([]);
+  const [commission, setCommission] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tripSessionId || !user) return;
+    Promise.all([
+      (supabase as any).from("trip_sessions").select("*").eq("id", tripSessionId).eq("user_id", user.id).single(),
+      (supabase as any).from("booking_items").select("*").eq("trip_session_id", tripSessionId),
+      (supabase as any).from("commission_ledger").select("*").eq("trip_session_id", tripSessionId).maybeSingle(),
+    ]).then(([sessionRes, itemsRes, commissionRes]: any[]) => {
+      if (sessionRes.data) setSession(sessionRes.data);
+      if (itemsRes.data) setBookingItems(itemsRes.data);
+      if (commissionRes.data) setCommission(commissionRes.data);
+      setIsLoading(false);
+    });
+  }, [tripSessionId, user]);
 
   const flights = session?.selected_flights ?? [];
   const hotels = session?.selected_hotels ?? [];

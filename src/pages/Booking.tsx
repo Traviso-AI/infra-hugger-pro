@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,21 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plane, Hotel, Activity, Shield, Users, Loader2 } from "lucide-react";
+import { Plane, Hotel, Activity, Shield, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { getReferral } from "@/lib/referral";
-
-// trip_sessions table doesn't exist yet — define the shape locally
-interface TripSession {
-  id: string;
-  status: string;
-  selected_hotels: any[] | null;
-  selected_flights: any[] | null;
-  selected_activities: any[] | null;
-  total_amount_cents: number;
-  created_at: string;
-}
-
 export default function Booking() {
   const { tripId } = useParams();
   const [searchParams] = useSearchParams();
@@ -36,10 +23,22 @@ export default function Booking() {
   const [phone, setPhone] = useState("");
   const [passport, setPassport] = useState("");
 
-  // Stub: trip_sessions table doesn't exist yet
-  const session: TripSession | null = null;
-  const sessionLoading = false;
-  const bookingCount = 0;
+  const [session, setSession] = useState<any | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tripSessionId || !user) return;
+    (supabase as any)
+      .from("trip_sessions")
+      .select("*")
+      .eq("id", tripSessionId)
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data, error }: any) => {
+        if (!error && data) setSession(data);
+        setSessionLoading(false);
+      });
+  }, [tripSessionId, user]);
 
   const flights = useMemo(() => (session?.selected_flights as any[] | null) ?? [], [session]);
   const hotels = useMemo(() => (session?.selected_hotels as any[] | null) ?? [], [session]);
@@ -57,17 +56,9 @@ export default function Booking() {
     if (!user || !session) return;
     setLoading(true);
     try {
-      const referral = getReferral();
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
-          trip_session_id: session.id,
-          trip_id: null,
-          hotel_id: null,
-          check_in: hotels[0]?.check_in_date ?? null,
-          check_out: hotels[0]?.check_out_date ?? null,
-          guests: 1,
-          total_price: totalCents / 100,
-          referral_creator: referral,
+          trip_session_id: tripSessionId,
           traveler: { first_name: firstName, last_name: lastName, email, phone, passport: passport || undefined },
         },
       });
@@ -108,13 +99,6 @@ export default function Booking() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-display text-2xl md:text-3xl font-bold mb-1">Complete Your Booking</h1>
         <p className="text-muted-foreground text-sm mb-6">Review your selections and enter traveler details.</p>
-
-        {bookingCount > 0 && (
-          <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-accent/5 border border-accent/15 text-sm">
-            <Users className="h-4 w-4 text-accent" />
-            <span><strong>{bookingCount}</strong> people booked trips this month</span>
-          </div>
-        )}
 
         <div className="space-y-5">
           <Card>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2, CreditCard, Plane, Hotel, FileText, PartyPopper, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,43 @@ export default function BookingProgress() {
   const [completed, setCompleted] = useState(false);
   const [references, setReferences] = useState<{ type: string; ref: string }[]>([]);
 
-  // Note: booking_status_events table doesn't exist yet.
-  // When created, re-enable the Supabase queries and realtime subscription here.
+  useEffect(() => {
+    if (!tripSessionId) return;
+
+    (supabase as any)
+      .from("booking_status_events")
+      .select("*")
+      .eq("trip_session_id", tripSessionId)
+      .order("created_at", { ascending: true })
+      .then(({ data }: any) => {
+        if (data?.length) {
+          setEvents(data);
+          processEvents(data);
+        }
+      });
+
+    const channel = supabase
+      .channel(`booking_progress_${tripSessionId}`)
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "booking_status_events",
+          filter: `trip_session_id=eq.${tripSessionId}`,
+        },
+        (payload: any) => {
+          setEvents((prev) => {
+            const next = [...prev, payload.new as StatusEvent];
+            processEvents(next);
+            return next;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [tripSessionId]);
 
   const processEvents = (evts: StatusEvent[]) => {
     const refs: { type: string; ref: string }[] = [];
