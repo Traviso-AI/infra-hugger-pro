@@ -140,14 +140,14 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
               <button
                 key={t.id}
                 onClick={() => { setTab(t.id); setErrors(new Set()); }}
-                className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-xs font-medium border-b-2 transition-colors min-w-0 ${
+                className={`flex w-1/5 items-center justify-center gap-1 py-2.5 text-xs font-medium border-b-2 transition-colors min-w-0 ${
                   tab === t.id
                     ? "border-accent text-accent"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <t.icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate hidden sm:inline">{t.label}</span>
+                <span className="truncate">{t.label}</span>
               </button>
             ))}
           </div>
