@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
     }
     const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
     const user = { id: payload.sub, email: payload.email };
+    console.log("[checkout] Decoded user:", user.id, user.email);
     if (!user.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -50,7 +51,9 @@ Deno.serve(async (req) => {
     );
 
     const { trip_session_id, traveler } = await req.json();
+    console.log("[checkout] Body received:", trip_session_id, JSON.stringify(traveler));
 
+    try {
     if (!trip_session_id) {
       return new Response(JSON.stringify({ error: "Missing trip_session_id" }), {
         status: 400,
@@ -148,7 +151,7 @@ Deno.serve(async (req) => {
     }
 
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
-    const origin = req.headers.get("origin") || "https://infra-hugger-pro.lovable.app";
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.split("/").slice(0, 3).join("/") || "http://localhost:8080";
 
     const stripeSession = await stripe.checkout.sessions.create({
       customer_email: user.email,
@@ -166,6 +169,13 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ url: stripeSession.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+    } catch (innerErr: any) {
+      console.error("[checkout] Inner error:", innerErr?.message, innerErr?.stack);
+      return new Response(JSON.stringify({ error: innerErr?.message ?? "Unknown error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   } catch (e) {
     console.error("create-checkout-session error:", e);
     return new Response(
