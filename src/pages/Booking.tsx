@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Plane, Hotel, Activity, Shield, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 export default function Booking() {
   const { tripId } = useParams();
   const [searchParams] = useSearchParams();
@@ -49,7 +51,7 @@ export default function Booking() {
 
   const hasFlights = flights.length > 0;
 
-  const canSubmit = firstName.trim() && lastName.trim() && email.trim() &&
+  const canSubmit = firstName.trim() && lastName.trim() && email.trim() && phone.trim() &&
     (!hasFlights || passport.trim());
 
   const handleCheckout = async () => {
@@ -59,7 +61,7 @@ export default function Booking() {
       const { data, error } = await supabase.functions.invoke("create-checkout-session", {
         body: {
           trip_session_id: tripSessionId,
-          traveler: { first_name: firstName, last_name: lastName, email, phone, passport: passport || undefined },
+          traveler: { first_name: firstName, last_name: lastName, email, phone: phone || undefined, passport: passport || undefined },
         },
       });
       if (error) throw error;
@@ -156,8 +158,17 @@ export default function Booking() {
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 123-4567" />
+                <Label>Phone *</Label>
+                <PhoneInput
+                  defaultCountry="us"
+                  value={phone}
+                  onChange={(phone) => setPhone(phone)}
+                  inputClassName="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  countrySelectorStyleProps={{
+                    buttonClassName: "h-10 border border-input bg-background px-2 rounded-l-md border-r-0",
+                  }}
+                />
+                <p className="text-[11px] text-muted-foreground">Used for flight notifications</p>
               </div>
               {hasFlights && (
                 <div className="space-y-2">
