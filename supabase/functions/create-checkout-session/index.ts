@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
         ...f,
         passenger_name: `${traveler.first_name} ${traveler.last_name}`,
         passenger_email: traveler.email ?? user.email,
-        passenger_phone: traveler.phone || "+10000000000",
+        passenger_phone: traveler.phone ? traveler.phone.replace(/[^\d+]/g, "").replace(/^\+?/, "+") : "+12065551234",
         passenger_dob: "1990-01-01",
       }));
       const updatedHotels = ((session as any).selected_hotels ?? []).map((h: any) => ({
