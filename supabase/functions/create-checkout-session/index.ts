@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const authHeader = req.headers.get("Authorization");
+    console.log("[checkout] Auth header:", authHeader ? authHeader.substring(0, 50) + "..." : "MISSING");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -67,7 +68,7 @@ Deno.serve(async (req) => {
         ...f,
         passenger_name: `${traveler.first_name} ${traveler.last_name}`,
         passenger_email: traveler.email ?? user.email,
-        passenger_phone: traveler.phone ?? "+10000000000",
+        passenger_phone: traveler.phone || "+10000000000",
         passenger_dob: "1990-01-01",
       }));
       const updatedHotels = ((session as any).selected_hotels ?? []).map((h: any) => ({
