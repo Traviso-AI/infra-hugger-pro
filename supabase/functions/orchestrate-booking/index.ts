@@ -79,6 +79,13 @@ async function bookFlight(
         type: "instant",
         selected_offers: [bookingToken],
         passengers,
+        payments: [
+          {
+            type: "balance",
+            currency: "USD",
+            amount: "0",
+          },
+        ],
       },
     }),
   });
