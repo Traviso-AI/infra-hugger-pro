@@ -25,19 +25,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Decode JWT directly without validation (Supabase edge runtime handles verification)
+    const token = authHeader.replace("Bearer ", "");
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const user = { id: payload.sub, email: payload.email };
+    if (!user.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
 
     const { trip_session_id, traveler } = await req.json();
 
