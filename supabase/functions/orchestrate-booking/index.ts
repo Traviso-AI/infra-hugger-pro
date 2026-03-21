@@ -241,19 +241,18 @@ Deno.serve(async (req) => {
     // --- Step 3: Book flights ---
     if (selectedFlights?.length) {
       const flight = selectedFlights[0];
-      const passengers = flight.passengers ?? [
-        {
-          id: flight.passenger_ids?.[0] ?? flight.passenger_id ?? crypto.randomUUID(),
-          given_name: flight.passenger_name?.split(" ")[0] ?? "Traveler",
-          family_name: flight.passenger_name?.split(" ").slice(1).join(" ") ?? "Guest",
-          born_on: flight.passenger_dob ?? "1990-01-01",
-          type: "adult",
-          gender: flight.passenger_gender ?? "m",
-          title: "mr",
-          email: flight.passenger_email ?? session.user_email ?? "booking@traviso.ai",
-          phone_number: flight.passenger_phone ?? "+1234567890",
-        },
-      ];
+      const passengerIds = flight.passenger_ids ?? [flight.passenger_id ?? crypto.randomUUID()];
+      const passengers = flight.passengers ?? passengerIds.map((pid: string, idx: number) => ({
+        id: pid,
+        given_name: idx === 0 ? (flight.passenger_name?.split(" ")[0] ?? "Traveler") : "Traveler",
+        family_name: idx === 0 ? (flight.passenger_name?.split(" ").slice(1).join(" ") ?? "Guest") : "Guest",
+        born_on: flight.passenger_dob ?? "1990-01-01",
+        type: "adult",
+        gender: flight.passenger_gender ?? "m",
+        title: "mr",
+        email: flight.passenger_email ?? session.user_email ?? "booking@traviso.ai",
+        phone_number: flight.passenger_phone ?? "+1234567890",
+      }));
 
       const flightResult = await bookFlight(flight.booking_token, passengers);
 
