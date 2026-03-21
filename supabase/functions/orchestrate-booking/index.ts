@@ -63,6 +63,7 @@ async function generateHotelbedsSig(): Promise<string> {
 async function bookFlight(
   bookingToken: string,
   passengers: any[],
+  priceCents: number,
 ): Promise<{ success: boolean; reference?: string; error?: string }> {
   const DUFFEL_API_KEY = Deno.env.get("DUFFEL_API_KEY");
   if (!DUFFEL_API_KEY) return { success: false, error: "DUFFEL_API_KEY not configured" };
@@ -83,7 +84,7 @@ async function bookFlight(
           {
             type: "balance",
             currency: "USD",
-            amount: "0",
+            amount: (priceCents / 100).toFixed(2),
           },
         ],
       },
@@ -254,7 +255,7 @@ Deno.serve(async (req) => {
         phone_number: flight.passenger_phone ?? "+1234567890",
       }));
 
-      const flightResult = await bookFlight(flight.booking_token, passengers);
+      const flightResult = await bookFlight(flight.booking_token, passengers, flight.price_cents ?? 0);
 
       if (!flightResult.success) {
         // --- Step 4: Flight failed — full refund ---
