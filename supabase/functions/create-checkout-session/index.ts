@@ -153,6 +153,7 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" });
     const origin = req.headers.get("origin") || req.headers.get("referer")?.split("/").slice(0, 3).join("/") || "http://localhost:8080";
 
+    console.log("[checkout] Creating Stripe session with trip_session_id:", trip_session_id, "origin:", origin);
     const stripeSession = await stripe.checkout.sessions.create({
       customer_email: user.email,
       mode: "payment",
