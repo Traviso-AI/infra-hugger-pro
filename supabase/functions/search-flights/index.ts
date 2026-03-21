@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
         currency: offer.total_currency ?? "USD",
         cabin_class: firstSegment?.passengers?.[0]?.cabin_class ?? "economy",
         booking_token: offer.id,
+        passenger_ids: offer.passengers?.map((p: any) => p.id) ?? [],
       };
     });
 

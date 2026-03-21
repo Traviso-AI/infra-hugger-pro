@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
       const flight = selectedFlights[0];
       const passengers = flight.passengers ?? [
         {
-          id: flight.passenger_id ?? crypto.randomUUID(),
+          id: flight.passenger_ids?.[0] ?? flight.passenger_id ?? crypto.randomUUID(),
           given_name: flight.passenger_name?.split(" ")[0] ?? "Traveler",
           family_name: flight.passenger_name?.split(" ").slice(1).join(" ") ?? "Guest",
           born_on: flight.passenger_dob ?? "1990-01-01",
