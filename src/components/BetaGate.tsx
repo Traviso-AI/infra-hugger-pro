@@ -17,6 +17,15 @@ export function BetaGate({ children }: { children: React.ReactNode }) {
   // If beta mode is off, let everyone through
   if (!isBetaMode) return <>{children}</>;
 
+  // If profile hasn't loaded yet, show spinner
+  if (!profile && !authLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
   // If still loading auth, show spinner
   if (authLoading) {
     return (
