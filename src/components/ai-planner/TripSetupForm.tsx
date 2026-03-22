@@ -107,7 +107,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
       onSubmit(msg, ["hotels"]);
     } else if (tab === "activities") {
       if (!validate({ aDest })) return;
-      const msg = `[TRAVISO BRIEF] destination=${aDest} origin=none departure=${aStart || "null"} return=${aEnd || "null"} travelers=${aPeople} needs=activities preferences=${aInterests || "none"}`;
+      const msg = `[TRAVISO BRIEF] destination=${aDest} origin=none departure=${aStart || "null"} return=${aEnd || "null"} travelers=${aPeople} needs=activities preferences=${aInterests || "none"} Now immediately search activities in ${aDest}.`;
       onSubmit(msg, ["activities"]);
     } else if (tab === "restaurants") {
       if (!validate({ rDest })) return;
