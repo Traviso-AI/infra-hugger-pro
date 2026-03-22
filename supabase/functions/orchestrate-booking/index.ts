@@ -154,6 +154,7 @@ async function bookHotel(
     },
     body: JSON.stringify({
       holder,
+      clientReference: `TRAVISO-${Date.now()}`,
       rooms: [
         {
           rateKey,
