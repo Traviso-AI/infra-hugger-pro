@@ -30,9 +30,28 @@ export default function BookingProgress() {
   const [failMessage, setFailMessage] = useState("");
   const [completed, setCompleted] = useState(false);
   const [references, setReferences] = useState<{ type: string; ref: string }[]>([]);
+  const [sessionData, setSessionData] = useState<any | null>(null);
+
+  const activeSteps = STEP_CONFIG.filter((step) => {
+    if (step.key === "payment") return true;
+    if (step.key === "done") return true;
+    if (step.key === "writing") return true;
+    if (step.key === "flight") return sessionData ? (sessionData.selected_flights?.length > 0) : true;
+    if (step.key === "hotel") return sessionData ? (sessionData.selected_hotels?.length > 0) : true;
+    return true;
+  });
 
   useEffect(() => {
     if (!tripSessionId) return;
+
+    (supabase as any)
+      .from("trip_sessions")
+      .select("selected_flights, selected_hotels, selected_activities, selected_restaurants")
+      .eq("id", tripSessionId)
+      .single()
+      .then(({ data }: any) => {
+        if (data) setSessionData(data);
+      });
 
     (supabase as any)
       .from("booking_status_events")
@@ -103,7 +122,7 @@ export default function BookingProgress() {
 
   const getStepStatus = (step: typeof STEP_CONFIG[number]): "done" | "active" | "pending" | "failed" => {
     if (failed) {
-      const failedIdx = STEP_CONFIG.findIndex((s) =>
+      const failedIdx = activeSteps.findIndex((s) =>
         s.matches.some((m) => events.some((e) => e.event_type === "failed" && e.message.toLowerCase().includes(s.key))),
       );
       const stepIdx = STEP_CONFIG.indexOf(step);
@@ -112,7 +131,7 @@ export default function BookingProgress() {
       return "pending";
     }
     if (step.matches.some((m) => completedTypes.has(m))) return "done";
-    const firstIncomplete = STEP_CONFIG.find((s) => !s.matches.some((m) => completedTypes.has(m)));
+    const firstIncomplete = activeSteps.find((s) => !s.matches.some((m) => completedTypes.has(m)));
     if (firstIncomplete === step) return "active";
     return "pending";
   };
@@ -155,7 +174,7 @@ export default function BookingProgress() {
 
         <div className="space-y-1 mb-8">
           <AnimatePresence>
-            {STEP_CONFIG.map((step, i) => {
+            {activeSteps.map((step, i) => {
               const status = getStepStatus(step);
               const Icon = step.icon;
               return (
