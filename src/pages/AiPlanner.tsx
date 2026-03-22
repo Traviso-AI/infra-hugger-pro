@@ -116,7 +116,7 @@ function parseMessageSections(content: string): {
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "text/plain"];
 const MAX_FILE_SIZE_MB = 10;
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant"; content: string; aiContent?: string };
 
 interface BriefContext {
   destination: string;
@@ -366,7 +366,7 @@ export default function AiPlanner() {
     }
 
     const displayContent = opts?.displayText ?? userText;
-    const userMsg: Message = { role: "user", content: displayContent };
+    const userMsg: Message = { role: "user", content: displayContent, ...(opts?.displayText ? { aiContent: userText } : {}) };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
 
@@ -388,7 +388,7 @@ export default function AiPlanner() {
 
       const aiMessages = [...messages, userMsg].map((m) => ({
         role: m.role,
-        content: m.content,
+        content: m.aiContent ?? m.content,
       }));
 
       const resp = await fetch(
