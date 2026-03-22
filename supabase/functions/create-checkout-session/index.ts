@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
         .update({
           selected_flights: updatedFlights,
           selected_hotels: updatedHotels,
-          traveler_info: traveler,
+          traveler_info: { ...((session as any).traveler_info ?? {}), ...traveler },
           updated_at: new Date().toISOString(),
         })
         .eq("id", trip_session_id);

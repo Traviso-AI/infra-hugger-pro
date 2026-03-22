@@ -518,6 +518,7 @@ export default function AiPlanner() {
           user_id: user.id,
           status: "pending",
           updated_at: new Date().toISOString(),
+          ...(briefContext?.destination ? { traveler_info: { destination: briefContext.destination } } : {}),
           ...updates,
         },
         { onConflict: "id" },

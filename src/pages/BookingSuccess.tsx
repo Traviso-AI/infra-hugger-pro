@@ -51,7 +51,8 @@ export default function BookingSuccess() {
   const flightRef = bookingItems.find((b) => b.type === "flight" && b.status === "booked")?.provider_reference;
   const hotelRef = bookingItems.find((b) => b.type === "hotel" && b.status === "booked")?.provider_reference;
 
-  const destination = hotels[0]?.address?.split(",").pop()?.trim() ??
+  const destination = (session?.traveler_info as any)?.destination ??
+    hotels[0]?.address?.split(",").pop()?.trim() ??
     (flights[0]?.airline_name ? "your destination" : "your trip");
 
   const shareUrl = typeof window !== "undefined" ? window.location.origin : "";
