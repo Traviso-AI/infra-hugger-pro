@@ -111,7 +111,7 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
       onSubmit(msg, ["activities"]);
     } else if (tab === "restaurants") {
       if (!validate({ rDest })) return;
-      const msg = `[TRAVISO BRIEF] destination=${rDest} origin=none departure=${rDate || "null"} return=null travelers=${rParty} needs=restaurants preferences=${rCuisine || "none"}`;
+      const msg = `[TRAVISO BRIEF] destination=${rDest} origin=none departure=${rDate || "null"} return=null travelers=${rParty} needs=restaurants preferences=${rCuisine || "none"} Now immediately search restaurants in ${rDest}.`;
       onSubmit(msg, ["restaurants"]);
     }
   };
