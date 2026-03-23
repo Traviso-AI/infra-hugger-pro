@@ -377,7 +377,7 @@ export default function MyTrips() {
                     <CardContent className="p-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium">Trip to {destination}</h3>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-end gap-1 shrink-0">
                           <Badge variant={statusColor}>{session.status}</Badge>
                           <span className="text-sm font-medium">${totalDollars}</span>
                         </div>
