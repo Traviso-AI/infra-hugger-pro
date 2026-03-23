@@ -370,54 +370,59 @@ Deno.serve(async (req) => {
     }
 
     // --- Step 7: Calculate creator commission ---
-    if (session.user_id) {
-      // Check if this trip was created from a creator's itinerary
-      // Look for a creator_id in the session metadata or trip reference
-      const creatorId = (session as any).creator_id ?? null;
+    // Look up creator via source_trip_id
+    let creatorId: string | null = null;
+    const sourceTripId = (session as any).source_trip_id ?? null;
+    if (sourceTripId) {
+      const { data: sourceTrip } = await supabase
+        .from("trips")
+        .select("creator_id")
+        .eq("id", sourceTripId)
+        .single();
+      creatorId = sourceTrip?.creator_id ?? null;
+    }
 
-      if (creatorId && session.total_amount_cents) {
-        const creatorPercentage = 25;
-        const creatorAmountCents = Math.floor(session.total_amount_cents * creatorPercentage / 100);
-        const travisoMarginCents = session.total_amount_cents - creatorAmountCents;
+    if (creatorId && session.total_amount_cents && creatorId !== session.user_id) {
+      const creatorPercentage = 25;
+      const creatorAmountCents = Math.floor(session.total_amount_cents * creatorPercentage / 100);
+      const travisoMarginCents = session.total_amount_cents - creatorAmountCents;
 
-        await supabase.from("commission_ledger").insert({
-          trip_session_id: trip_session_id,
-          creator_id: creatorId,
-          booking_type: "exact_itinerary",
-          amount_cents: session.total_amount_cents,
-          creator_percentage: creatorPercentage,
-          traviso_margin_cents: travisoMarginCents,
-        });
+      await supabase.from("commission_ledger").insert({
+        trip_session_id: trip_session_id,
+        creator_id: creatorId,
+        booking_type: "exact_itinerary",
+        amount_cents: session.total_amount_cents,
+        creator_percentage: creatorPercentage,
+        traviso_margin_cents: travisoMarginCents,
+      });
 
-        // Upsert creator earnings
-        const { data: existingEarnings } = await supabase
+      const { data: existingEarnings } = await supabase
+        .from("creator_earnings")
+        .select("pending_payout_cents")
+        .eq("creator_id", creatorId)
+        .single();
+
+      if (existingEarnings) {
+        await supabase
           .from("creator_earnings")
-          .select("pending_payout_cents")
-          .eq("creator_id", creatorId)
-          .single();
-
-        if (existingEarnings) {
-          await supabase
-            .from("creator_earnings")
-            .update({
-              pending_payout_cents: existingEarnings.pending_payout_cents + creatorAmountCents,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("creator_id", creatorId);
-        } else {
-          await supabase.from("creator_earnings").insert({
-            creator_id: creatorId,
-            pending_payout_cents: creatorAmountCents,
-            total_paid_out_cents: 0,
-          });
-        }
-
-        await logEvent(
-          trip_session_id,
-          "commission_recorded",
-          `Creator commission: $${(creatorAmountCents / 100).toFixed(2)} (${creatorPercentage}%)`,
-        );
+          .update({
+            pending_payout_cents: existingEarnings.pending_payout_cents + creatorAmountCents,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("creator_id", creatorId);
+      } else {
+        await supabase.from("creator_earnings").insert({
+          creator_id: creatorId,
+          pending_payout_cents: creatorAmountCents,
+          total_paid_out_cents: 0,
+        });
       }
+
+      await logEvent(
+        trip_session_id,
+        "commission_recorded",
+        `Creator commission: ${(creatorAmountCents / 100).toFixed(2)} (${creatorPercentage}%)`,
+      );
     }
 
     // --- Step 8: Mark completed ---
@@ -452,6 +457,7 @@ Deno.serve(async (req) => {
           type: "booking_confirmation",
           record: {
             trip_session_id: trip_session_id,
+            source_trip_id: sourceTripId,
             user_id: session.user_id,
             user_email: userEmail,
             user_name: profile?.full_name ?? "Traveler",

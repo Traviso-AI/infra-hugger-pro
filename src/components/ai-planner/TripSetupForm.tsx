@@ -23,6 +23,8 @@ interface TripSetupFormProps {
     curatedHotel?: string;
     curatedActivities?: string;
     priceEstimate?: string;
+    sourceTripId?: string;
+    creatorId?: string;
   };
 }
 

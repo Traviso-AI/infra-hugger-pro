@@ -172,6 +172,7 @@ export default function AiPlanner() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [sourceTripId, setSourceTripId] = useState<string | null>(null);
 
   const [searchParams] = useSearchParams();
   const initialValues = useMemo(() => {
@@ -189,7 +190,15 @@ export default function AiPlanner() {
       curatedHotel: searchParams.get("curatedHotel") ?? undefined,
       curatedActivities: searchParams.get("curatedActivities") ?? undefined,
       priceEstimate: searchParams.get("priceEstimate") ?? undefined,
+      sourceTripId: searchParams.get("sourceTripId") ?? undefined,
+      creatorId: searchParams.get("creatorId") ?? undefined,
     };
+  }, []);
+
+  useEffect(() => {
+    if (initialValues?.sourceTripId) {
+      setSourceTripId(initialValues.sourceTripId);
+    }
   }, []);
 
   // Smart scroll: only auto-scroll if user is near the bottom
@@ -538,6 +547,7 @@ export default function AiPlanner() {
         {
           id: sessionId,
           user_id: user.id,
+          ...(sourceTripId ? { source_trip_id: sourceTripId } : {}),
           status: "pending",
           updated_at: new Date().toISOString(),
           ...(briefContext?.destination ? { traveler_info: { destination: briefContext.destination } } : {}),

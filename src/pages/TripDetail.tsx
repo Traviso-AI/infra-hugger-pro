@@ -209,6 +209,8 @@ export default function TripDetail() {
     if (hotelItem?.title) params.set("curatedHotel", hotelItem.title);
     if (activityItems.length > 0) params.set("curatedActivities", activityItems.map((a: any) => a.title).join("|"));
     if (trip.price_estimate) params.set("priceEstimate", String(trip.price_estimate));
+    params.set("sourceTripId", trip.id);
+    if (trip.creator_id) params.set("creatorId", trip.creator_id);
 
     navigate(`/ai-planner?${params.toString()}`);
   };

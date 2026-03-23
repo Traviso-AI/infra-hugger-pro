@@ -12,7 +12,7 @@ const SENDER_DOMAIN = "notify.traviso.ai";
 const FROM_DOMAIN = "traviso.ai";
 
 interface NotificationEmailPayload {
-  type: "booking_confirmation" | "new_follower" | "new_review" | "group_invite";
+  type: "booking_confirmation" | "new_follower" | "new_review" | "group_invite" | "creator_booking_notification";
   record: Record<string, unknown>;
 }
 
@@ -150,27 +150,57 @@ Deno.serve(async (req) => {
       subject = `${inviterName} invited you to plan "${tripTitle}" ✈️`;
       html = buildGroupInviteHtml(inviterName, tripTitle, inviteLink);
 
-    } else if (type === "booking_confirmation" && record.trip_id && record.user_id) {
-      const { data: bookerProfile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", record.user_id)
-        .single();
+    } else if (type === "booking_confirmation" && record.user_id) {
+      const bookerEmail = record.user_email as string;
+      const bookerName = (record.user_name as string) ?? "Traveler";
+      const totalCents = (record.total_amount_cents as number) ?? 0;
+      const totalDollars = (totalCents / 100).toFixed(2);
 
-      const { data: trip } = await supabase
-        .from("trips")
-        .select("title, creator_id")
-        .eq("id", record.trip_id)
-        .single();
+      if (bookerEmail) {
+        recipientEmail = bookerEmail;
+        subject = `✈️ Your Traviso booking is confirmed!`;
+        html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><div style="max-width:520px;margin:0 auto;padding:40px 24px;"><div style="text-align:center;margin-bottom:32px;"><img src="https://hmogswuliehwbmcyzfie.supabase.co/storage/v1/object/public/email-assets/traviso-logo-email.png" alt="Traviso" style="height:32px;" /></div><div style="background:#f8faf9;border-radius:16px;padding:32px 24px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">🎉</div><h1 style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 8px;">Your trip is confirmed!</h1><p style="font-size:15px;color:#666;margin:0 0 20px;line-height:1.5;">Hi ${bookerName}, your booking is all set. Total paid: <strong style="color:#1a1a1a;">$${totalDollars}</strong>.</p><p style="font-size:14px;color:#888;margin:0;">Check your Traviso dashboard for full booking details and references.</p></div><p style="text-align:center;font-size:12px;color:#aaa;margin-top:24px;">Questions? Reply to this email and we'll help.</p></div></body></html>`;
+      }
 
-      if (trip) {
-        const { data: { user: creatorUser } } = await supabase.auth.admin.getUserById(trip.creator_id);
-        if (creatorUser?.email) {
-          recipientEmail = creatorUser.email;
-          subject = `🎉 New booking on "${trip.title}"`;
-          html = buildBookingHtml(bookerProfile?.display_name || "Someone", trip.title);
+      const sourceTripId = record.source_trip_id as string;
+      if (sourceTripId) {
+        const { data: sourceTrip } = await supabase
+          .from("trips")
+          .select("title, creator_id")
+          .eq("id", sourceTripId)
+          .single();
+
+        if (sourceTrip) {
+          const { data: { user: creatorUser } } = await supabase.auth.admin.getUserById(sourceTrip.creator_id);
+          if (creatorUser?.email) {
+            fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceRoleKey}` },
+              body: JSON.stringify({
+                type: "creator_booking_notification",
+                record: {
+                  creator_email: creatorUser.email,
+                  booker_name: bookerName,
+                  trip_title: sourceTrip.title,
+                  total_amount_cents: totalCents,
+                },
+              }),
+            }).catch(() => {});
+          }
         }
       }
+
+    } else if (type === "creator_booking_notification" && record.creator_email) {
+      const creatorEmail = record.creator_email as string;
+      const bookerName = (record.booker_name as string) ?? "Someone";
+      const tripTitle = (record.trip_title as string) ?? "your trip";
+      const totalCents = (record.total_amount_cents as number) ?? 0;
+      const commission = ((totalCents * 0.25) / 100).toFixed(2);
+
+      recipientEmail = creatorEmail;
+      subject = `🎉 New booking on "${tripTitle}"`;
+      html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><div style="max-width:520px;margin:0 auto;padding:40px 24px;"><div style="text-align:center;margin-bottom:32px;"><img src="https://hmogswuliehwbmcyzfie.supabase.co/storage/v1/object/public/email-assets/traviso-logo-email.png" alt="Traviso" style="height:32px;" /></div><div style="background:#f8faf9;border-radius:16px;padding:32px 24px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">💰</div><h1 style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 8px;">You earned a commission!</h1><p style="font-size:15px;color:#666;margin:0 0 20px;line-height:1.5;"><strong style="color:#1a1a1a;">${bookerName}</strong> just booked <strong style="color:#1a1a1a;">"${tripTitle}"</strong>.</p><p style="font-size:24px;font-weight:700;color:#29A38B;margin:0 0 8px;">+$${commission}</p><p style="font-size:14px;color:#888;">25% commission added to your pending payout balance.</p></div></div></body></html>`;
+
     } else if (type === "new_follower" && record.follower_id && record.following_id) {
       const { data: follower } = await supabase
         .from("profiles")
