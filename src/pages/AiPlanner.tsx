@@ -497,7 +497,8 @@ export default function AiPlanner() {
     const hotelDone = !needs.includes("hotels") || newHotel !== null;
     const activitiesDone = !needs.includes("activities") || newActivities.length > 0;
     const restaurantsDone = !needs.includes("restaurants") || newRestaurants.length > 0;
-    if (flightDone && hotelDone && activitiesDone && restaurantsDone) {
+    const hasBookableItem = newFlight !== null || newHotel !== null || newActivities.length > 0;
+    if (flightDone && hotelDone && activitiesDone && restaurantsDone && hasBookableItem) {
       setShowTripSummary(true);
     }
   };
