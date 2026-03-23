@@ -875,6 +875,64 @@ Deno.serve(async (req) => {
             return;
           }
 
+          // --- Forced hotel search for curated itinerary flow ---
+          // When a flight has been selected and CURATED_ITINERARY is present,
+          // force search_hotels immediately without relying on Nala's decision
+          const lastUserMsg = messages[messages.length - 1]?.content ?? "";
+          const hasCuratedItinerary = messages.some((m: any) =>
+            typeof m.content === "string" && m.content.includes("[CURATED_ITINERARY]")
+          );
+          const isFlightSelection = typeof lastUserMsg === "string" &&
+            lastUserMsg.toLowerCase().includes("please add it to my trip") &&
+            lastUserMsg.toLowerCase().includes("now immediately search hotels");
+
+          if (hasCuratedItinerary && isFlightSelection) {
+            // Extract hotel search params from the TRAVISO BRIEF in conversation history
+            const briefMsg = messages.find((m: any) =>
+              typeof m.content === "string" && m.content.includes("[TRAVISO BRIEF]")
+            )?.content as string ?? "";
+
+            const briefParams = Object.fromEntries(
+              briefMsg.replace("[TRAVISO BRIEF]", "").split(" ")
+                .filter((p: string) => p.includes("="))
+                .map((p: string) => {
+                  const [k, ...v] = p.split("=");
+                  return [k.trim(), v.join("=").trim()];
+                })
+            );
+
+            const destination = briefParams.destination ?? "";
+            const checkIn = briefParams.departure ?? "";
+            const checkOut = briefParams.return && briefParams.return !== "null" ? briefParams.return : "";
+            const adults = parseInt(briefParams.travelers ?? "2");
+
+            if (destination && checkIn && checkOut) {
+              console.log("[ai-travel-planner] Forcing hotel search for curated itinerary");
+
+              const hotelArgs = { destination_code: destination, check_in: checkIn, check_out: checkOut, adults };
+              controller.enqueue(sseChunk(`🏨 Searching for hotels in ${destination}...\n\n`));
+
+              const hotelResultStr = await executeToolCall("search_hotels", hotelArgs);
+              const hotelData = JSON.parse(hotelResultStr);
+              const hotels = hotelData.hotels ?? [];
+
+              if (hotels.length > 0) {
+                const block = `\n\n\`\`\`traviso-results\n${JSON.stringify({ type: "hotels", hotels })}\n\`\`\`\n\n`;
+                controller.enqueue(sseChunk(block));
+
+                // Tell Nala what we found so it can comment naturally
+                const hotelNames = hotels.slice(0, 3).map((h: any) => h.name).join(", ");
+                controller.enqueue(sseChunk(`Park Hyatt Tokyo wasn't available for your dates — here are the closest alternatives in the same area: ${hotelNames}. Which would you like?\n\n`));
+              } else {
+                controller.enqueue(sseChunk("I couldn't find available hotels in Tokyo for those dates. Would you like to try different dates?\n\n"));
+              }
+
+              controller.enqueue(sseDone());
+              controller.close();
+              return;
+            }
+          }
+
           // --- Text path: check for tool calls first ---
           console.log("[ai-travel-planner] Text → Anthropic with tools");
           const anthropicMessages = toAnthropicMessages(messages);
