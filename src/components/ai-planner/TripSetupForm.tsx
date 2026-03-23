@@ -19,6 +19,7 @@ interface TripSetupFormProps {
     travelers?: string;
     needs?: string[];
     autosubmit?: boolean;
+    origin?: string;
     curatedHotel?: string;
     curatedActivities?: string;
     priceEstimate?: string;
@@ -101,7 +102,7 @@ export function TripSetupForm({ onSubmit, loading, initialValues }: TripSetupFor
         curatedInstruction = ` [CURATED_ITINERARY] ${hotelPart} ${activitiesPart}`.trim();
       }
 
-      const msg = `[TRAVISO BRIEF] destination=${initialValues.destination} origin=none departure=${initialValues.departure} return=${initialValues.returnDate ?? "null"} travelers=${initialValues.travelers ?? "2"} needs=${needsList.join(",")} preferences=none${curatedInstruction}`;
+      const msg = `[TRAVISO BRIEF] destination=${initialValues.destination} origin=${initialValues.origin ?? "none"} departure=${initialValues.departure} return=${initialValues.returnDate ?? "null"} travelers=${initialValues.travelers ?? "2"} needs=${needsList.join(",")} preferences=none${curatedInstruction}`;
       onSubmit(msg, needsList);
     }, 300);
     return () => clearTimeout(timer);

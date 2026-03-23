@@ -185,6 +185,7 @@ export default function AiPlanner() {
       travelers: searchParams.get("travelers") ?? "2",
       needs: searchParams.get("needs")?.split(",") ?? ["flights", "hotels", "activities"],
       autosubmit: searchParams.get("autosubmit") === "true",
+      origin: searchParams.get("origin") ?? undefined,
       curatedHotel: searchParams.get("curatedHotel") ?? undefined,
       curatedActivities: searchParams.get("curatedActivities") ?? undefined,
       priceEstimate: searchParams.get("priceEstimate") ?? undefined,

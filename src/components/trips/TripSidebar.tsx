@@ -4,23 +4,26 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Star } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { CalendarIcon, Star } from "lucide-react";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
+import { PlaceAutocomplete } from "@/components/ai-planner/PlaceAutocomplete";
 
 interface TripSidebarProps {
   trip: any;
   creator: any;
-  onBook: (params: { checkIn: string; checkOut: string; travelers: string }) => void;
+  onBook: (params: { checkIn: string; checkOut: string; travelers: string; flyingFrom: string }) => void;
   searchParams: URLSearchParams;
   user: any;
 }
 
 export function TripSidebar({ trip, creator, onBook, searchParams, user }: TripSidebarProps) {
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
+  const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
+  const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
   const [travelers, setTravelers] = useState("2");
+  const [flyingFrom, setFlyingFrom] = useState("");
 
   return (
     <div className="space-y-6">
@@ -29,28 +32,57 @@ export function TripSidebar({ trip, creator, onBook, searchParams, user }: TripS
           <div className="space-y-3 mb-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Check in</Label>
-                <Input
-                  type="date"
-                  value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                  className="text-sm h-9"
-                />
+                <p className="text-xs text-muted-foreground">Check in</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-9 justify-start text-left text-sm font-normal">
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                      {checkIn ? format(checkIn, "MMM d") : <span className="text-muted-foreground">Pick date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={checkIn}
+                      onSelect={(date) => { setCheckIn(date); }}
+                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Check out</Label>
-                <Input
-                  type="date"
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  min={checkIn || new Date().toISOString().split("T")[0]}
-                  className="text-sm h-9"
-                />
+                <p className="text-xs text-muted-foreground">Check out</p>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full h-9 justify-start text-left text-sm font-normal">
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                      {checkOut ? format(checkOut, "MMM d") : <span className="text-muted-foreground">Pick date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={checkOut}
+                      onSelect={(date) => { setCheckOut(date); }}
+                      disabled={(date) => date <= (checkIn ?? new Date(new Date().setHours(0,0,0,0)))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Travelers</Label>
+              <p className="text-xs text-muted-foreground">Flying from</p>
+              <PlaceAutocomplete
+                value={flyingFrom}
+                onChange={setFlyingFrom}
+                placeholder="Departure city"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Travelers</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -69,7 +101,12 @@ export function TripSidebar({ trip, creator, onBook, searchParams, user }: TripS
           <Button
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
             size="lg"
-            onClick={() => onBook({ checkIn, checkOut, travelers })}
+            onClick={() => onBook({
+              checkIn: checkIn ? format(checkIn, "yyyy-MM-dd") : "",
+              checkOut: checkOut ? format(checkOut, "yyyy-MM-dd") : "",
+              travelers,
+              flyingFrom,
+            })}
             disabled={!checkIn || !checkOut}
           >
             {checkIn && checkOut ? "Check Availability →" : "Select dates to continue"}

@@ -186,7 +186,7 @@ export default function TripDetail() {
     </div>
   );
 
-  const handleBook = ({ checkIn, checkOut, travelers }: { checkIn: string; checkOut: string; travelers: string }) => {
+  const handleBook = ({ checkIn, checkOut, travelers, flyingFrom }: { checkIn: string; checkOut: string; travelers: string; flyingFrom: string }) => {
     if (!user) { toast.error("Please sign in to book this trip"); navigate("/login"); return; }
 
     // Extract curated hotel and top activities from the itinerary
@@ -205,6 +205,7 @@ export default function TripDetail() {
       autosubmit: "true",
     });
 
+    if (flyingFrom) params.set("origin", flyingFrom);
     if (hotelItem?.title) params.set("curatedHotel", hotelItem.title);
     if (activityItems.length > 0) params.set("curatedActivities", activityItems.map((a: any) => a.title).join("|"));
     if (trip.price_estimate) params.set("priceEstimate", String(trip.price_estimate));
