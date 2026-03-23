@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Star, MapPin, Lock } from "lucide-react";
+import { Star, MapPin, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -75,32 +75,25 @@ export function RestaurantCard({ restaurant, onSelect }: RestaurantCardProps) {
             )}
           </div>
 
-          <div className="flex flex-col items-end mt-2 gap-1.5">
-            <div className="flex items-center gap-1.5">
-              {restaurant.affiliate_enabled && restaurant.opentable_url ? (
-                <Button size="sm" variant="outline" className="text-xs px-2" asChild>
-                  <a href={restaurant.opentable_url} target="_blank" rel="noopener noreferrer">
-                    Reserve a Table
-                  </a>
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" className="text-xs px-2 opacity-50 cursor-not-allowed" disabled>
-                  <Lock className="h-3 w-3 mr-1" />
-                  Reserve a Table
-                </Button>
-              )}
-              {onSelect && (
-                <Button
-                  size="sm"
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
-                  onClick={() => onSelect(restaurant)}
+          <div className="flex items-center justify-end mt-2 gap-1.5">
+            <Button size="sm" variant="outline" className="text-xs px-2" asChild>
+              <a
+                href={restaurant.opentable_url ?? `https://www.google.com/maps/search/${encodeURIComponent(restaurant.name + " " + (restaurant.address ?? ""))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Reserve a Table
+              </a>
+            </Button>
+            {onSelect && (
+              <Button
+                size="sm"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs"
+                onClick={() => onSelect(restaurant)}
               >
                 Add to trip
               </Button>
-            )}
-            </div>
-            {!restaurant.affiliate_enabled && (
-              <p className="text-[10px] text-muted-foreground/60">Reservation booking coming soon</p>
             )}
           </div>
         </div>
