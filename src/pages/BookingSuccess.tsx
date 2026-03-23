@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  CheckCircle, Plane, Hotel, Activity, Calendar,
+  CheckCircle, Plane, Hotel, Activity, Calendar, Utensils,
   Share2, Copy, ExternalLink, DollarSign, Sparkles,
 } from "lucide-react";
 
@@ -46,6 +46,7 @@ export default function BookingSuccess() {
   const flights = session?.selected_flights ?? [];
   const hotels = session?.selected_hotels ?? [];
   const activities = session?.selected_activities ?? [];
+  const restaurants = session?.selected_restaurants ?? [];
   const totalDollars = ((session?.total_amount_cents ?? 0) / 100).toFixed(2);
 
   const flightRef = bookingItems.find((b) => b.type === "flight" && b.status === "booked")?.provider_reference;
@@ -178,6 +179,34 @@ export default function BookingSuccess() {
           <p className="text-xs text-muted-foreground">
             You earned <strong className="text-foreground">${((commission.amount_cents * (commission.creator_percentage / 100)) / 100).toFixed(2)}</strong> ({commission.creator_percentage}% commission) from this booking.
           </p>
+        </motion.div>
+      )}
+
+      {restaurants.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="mb-6">
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Utensils className="h-4 w-4 text-accent" />
+                <p className="text-sm font-semibold">Recommended Restaurants</p>
+              </div>
+              <div className="space-y-2">
+                {restaurants.map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{[r.cuisine, r.price_range].filter(Boolean).join(" · ")}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="text-xs" asChild>
+                      <a href={r.opentable_url ?? `https://www.google.com/maps/search/${encodeURIComponent(r.name + " " + (r.address ?? ""))}`} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3 mr-1" />Reserve
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       )}
 
