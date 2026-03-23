@@ -60,10 +60,11 @@ export default function MyTrips() {
   const { data: myBookings } = useQuery({
     queryKey: ["my-bookings", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("bookings")
-        .select("*, trips(title, destination, cover_image_url, duration_days)")
+      const { data } = await (supabase as any)
+        .from("trip_sessions")
+        .select("*, booking_items(*)")
         .eq("user_id", user!.id)
+        .in("status", ["completed", "confirmed", "processing"])
         .order("created_at", { ascending: false });
       return data || [];
     },
@@ -100,16 +101,20 @@ export default function MyTrips() {
   const events: CalendarEvent[] = useMemo(() => {
     const result: CalendarEvent[] = [];
     (myBookings || []).forEach((b: any) => {
-      if (!b.check_in || !b.trips) return;
+      const hotels = b.selected_hotels ?? [];
+      const destination = (b.traveler_info as any)?.destination ?? "Trip";
+      const checkIn = hotels[0]?.check_in_date;
+      if (!checkIn) return;
+      const checkOut = hotels[0]?.check_out_date;
       result.push({
         id: b.id,
-        title: b.trips.title,
-        destination: b.trips.destination,
-        startDate: new Date(b.check_in),
-        endDate: b.check_out ? new Date(b.check_out) : new Date(b.check_in),
+        title: `Trip to ${destination}`,
+        destination,
+        startDate: new Date(checkIn),
+        endDate: checkOut ? new Date(checkOut) : new Date(checkIn),
         type: "booking",
-        tripId: b.trip_id,
-        coverImage: b.trips.cover_image_url,
+        tripId: b.id,
+        coverImage: hotels[0]?.image_url ?? null,
       });
     });
     (groupCollabs || []).forEach((g: any) => {
@@ -353,30 +358,59 @@ export default function MyTrips() {
         <TabsContent value="bookings">
           {myBookings && myBookings.length > 0 ? (
             <div className="space-y-3">
-              {myBookings.map((booking: any) => (
-                <Card key={booking.id} className="transition-all duration-200 hover:shadow-lg hover:scale-[1.01] hover:border-l-4 hover:border-l-accent">
-                  <CardContent className="flex items-center justify-between p-4">
-                    <div>
-                      <h3 className="font-medium">{booking.trips?.title || "Trip"}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {booking.check_in} → {booking.check_out} · {booking.guests} guest(s)
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={booking.status === "confirmed" ? "default" : "secondary"}>{booking.status}</Badge>
-                      {booking.total_price && <span className="text-sm font-medium">${booking.total_price}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {myBookings.map((session: any) => {
+                const destination = (session.traveler_info as any)?.destination ?? "Trip";
+                const flights = session.selected_flights ?? [];
+                const hotels = session.selected_hotels ?? [];
+                const activities = session.selected_activities ?? [];
+                const totalDollars = ((session.total_amount_cents ?? 0) / 100).toFixed(2);
+                const flightRef = (session.booking_items ?? []).find((b: any) => b.type === "flight" && b.status === "booked")?.provider_reference;
+                const hotelRef = (session.booking_items ?? []).find((b: any) => b.type === "hotel" && b.status === "booked")?.provider_reference;
+                const statusColor = session.status === "completed" ? "default" : session.status === "confirmed" ? "default" : "secondary";
+
+                return (
+                  <Card
+                    key={session.id}
+                    className="transition-all duration-200 hover:shadow-lg hover:scale-[1.01] hover:border-l-4 hover:border-l-accent cursor-pointer"
+                    onClick={() => navigate(`/booking/confirmation?trip_session_id=${session.id}`)}
+                  >
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">Trip to {destination}</h3>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={statusColor}>{session.status}</Badge>
+                          <span className="text-sm font-medium">${totalDollars}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        {flights.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Plane className="h-3 w-3" />
+                            {flights[0].airline_name}{flightRef ? ` · ${flightRef}` : ""}
+                          </span>
+                        )}
+                        {hotels.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {hotels[0].name}{hotelRef ? ` · ${hotelRef}` : ""}
+                          </span>
+                        )}
+                        {activities.length > 0 && (
+                          <span>{activities.length} activit{activities.length === 1 ? "y" : "ies"}</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <EmptyState
               icon={MapPin}
               title="No bookings yet"
-              description="Browse curated trips from top creators and book your next adventure."
-              actionLabel="Explore Trips"
-              actionHref="/explore"
+              description="Plan a trip with Nala and book your next adventure."
+              actionLabel="Plan a Trip"
+              actionHref="/ai-planner"
             />
           )}
         </TabsContent>
