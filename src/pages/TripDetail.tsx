@@ -186,17 +186,30 @@ export default function TripDetail() {
     </div>
   );
 
-  const handleBook = (params: { checkIn: string; checkOut: string; travelers: string }) => {
+  const handleBook = ({ checkIn, checkOut, travelers }: { checkIn: string; checkOut: string; travelers: string }) => {
     if (!user) { toast.error("Please sign in to book this trip"); navigate("/login"); return; }
-    const urlParams = new URLSearchParams({
+
+    // Extract curated hotel and top activities from the itinerary
+    const allActivities = (days ?? []).flatMap((day: any) => day.trip_activities ?? []);
+    const hotelItem = allActivities.find((a: any) => a.type === "hotel");
+    const activityItems = allActivities
+      .filter((a: any) => a.type === "activity")
+      .slice(0, 3);
+
+    const params = new URLSearchParams({
       destination: trip.destination,
-      departure: params.checkIn,
-      return: params.checkOut,
-      travelers: params.travelers,
+      departure: checkIn,
+      return: checkOut,
+      travelers,
       needs: "flights,hotels,activities",
       autosubmit: "true",
     });
-    navigate(`/ai-planner?${urlParams.toString()}`);
+
+    if (hotelItem?.title) params.set("curatedHotel", hotelItem.title);
+    if (activityItems.length > 0) params.set("curatedActivities", activityItems.map((a: any) => a.title).join("|"));
+    if (trip.price_estimate) params.set("priceEstimate", String(trip.price_estimate));
+
+    navigate(`/ai-planner?${params.toString()}`);
   };
 
   const creator = trip.profiles as any;
@@ -210,7 +223,7 @@ export default function TripDetail() {
         activityImages={activityImages}
       />
 
-      <div className="container -mt-16 relative pb-16">
+      <div className="container -mt-4 relative pb-16">
         <Button variant="ghost" size="sm" className="mb-4 -ml-2 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Back
         </Button>

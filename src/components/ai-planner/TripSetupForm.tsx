@@ -19,6 +19,9 @@ interface TripSetupFormProps {
     travelers?: string;
     needs?: string[];
     autosubmit?: boolean;
+    curatedHotel?: string;
+    curatedActivities?: string;
+    priceEstimate?: string;
   };
 }
 
@@ -86,7 +89,19 @@ export function TripSetupForm({ onSubmit, loading, initialValues }: TripSetupFor
     if (!initialValues.destination || !initialValues.departure) return;
     const timer = setTimeout(() => {
       const needsList = initialValues.needs ?? ["flights", "hotels", "activities"];
-      const msg = `[TRAVISO BRIEF] destination=${initialValues.destination} origin=none departure=${initialValues.departure} return=${initialValues.returnDate ?? "null"} travelers=${initialValues.travelers ?? "2"} needs=${needsList.join(",")} preferences=none`;
+
+      let curatedInstruction = "";
+      if (initialValues.curatedHotel || initialValues.curatedActivities) {
+        const hotelPart = initialValues.curatedHotel
+          ? `Hotel: search specifically for "${initialValues.curatedHotel}". If unavailable, find the most similar alternative in the same neighbourhood, same star rating, and within 20% of the estimated price.`
+          : "";
+        const activitiesPart = initialValues.curatedActivities
+          ? `Activities: search for and add these specific experiences: ${initialValues.curatedActivities.split("|").map((a: string) => `"${a}"`).join(", ")}. If any are unavailable, suggest the most similar alternative.`
+          : "";
+        curatedInstruction = ` [CURATED_ITINERARY] ${hotelPart} ${activitiesPart}`.trim();
+      }
+
+      const msg = `[TRAVISO BRIEF] destination=${initialValues.destination} origin=none departure=${initialValues.departure} return=${initialValues.returnDate ?? "null"} travelers=${initialValues.travelers ?? "2"} needs=${needsList.join(",")} preferences=none${curatedInstruction}`;
       onSubmit(msg, needsList);
     }, 300);
     return () => clearTimeout(timer);
