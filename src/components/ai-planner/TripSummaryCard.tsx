@@ -94,16 +94,19 @@ export function TripSummaryCard({ trip, onCheckout }: TripSummaryCardProps) {
           />
         ))}
 
-        {trip.restaurants.map((r) => (
-          <LineItem
-            key={r.id}
-            icon={Utensils}
-            label={r.name}
-            detail={[r.cuisine, r.price_range].filter(Boolean).join(" · ")}
-            amount=""
-          />
-        ))}
       </div>
+
+      {trip.restaurants.length > 0 && (
+        <div className="px-4 py-2 border-t">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Recommended Restaurants</p>
+          {trip.restaurants.map((r) => (
+            <div key={r.id} className="flex items-center justify-between py-1">
+              <span className="flex items-center gap-2 text-sm"><Utensils className="h-3.5 w-3.5 text-muted-foreground" />{r.name}</span>
+              <span className="text-xs text-muted-foreground">Added</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Total + CTA */}
       <div className="px-4 py-3 border-t bg-muted/30">
