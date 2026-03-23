@@ -23,6 +23,133 @@ async function generateSignature(apiKey: string, secret: string): Promise<string
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function resolveDestinationCode(input: string): string {
+  // If it already looks like a Hotelbeds code (2-4 uppercase letters), use it directly
+  if (/^[A-Z]{2,4}$/.test(input.trim())) return input.trim();
+
+  // Normalize input for matching
+  const normalized = input.toLowerCase().split(",")[0].trim();
+
+  // Comprehensive Hotelbeds destination code mapping
+  const codeMap: Record<string, string> = {
+    // Asia Pacific
+    "tokyo": "TKY", "osaka": "OSA", "kyoto": "UKY", "hiroshima": "HIJ",
+    "sapporo": "CTS", "fukuoka": "FUK", "naha": "OKA", "nagoya": "NGO",
+    "bangkok": "BKK", "phuket": "HKT", "chiang mai": "CNX", "pattaya": "PYX",
+    "bali": "DPS", "jakarta": "JKT", "lombok": "LOP", "yogyakarta": "JOG",
+    "singapore": "SIN", "kuala lumpur": "KUL", "penang": "PEN", "langkawi": "LGK",
+    "hong kong": "HKG", "macau": "MFM", "taipei": "TPE", "seoul": "SEL",
+    "busan": "PUS", "jeju": "CJU", "beijing": "BJS", "shanghai": "SHA",
+    "guangzhou": "CAN", "shenzhen": "SZX", "chengdu": "CTU", "xian": "XIY",
+    "mumbai": "BOM", "delhi": "DEL", "goa": "GOI", "jaipur": "JAI",
+    "agra": "AGR", "chennai": "MAA", "bangalore": "BLR", "hyderabad": "HYD",
+    "colombo": "CMB", "maldives": "MLE", "male": "MLE", "kathmandu": "KTM",
+    "dhaka": "DAC", "karachi": "KHI", "lahore": "LHE", "islamabad": "ISB",
+    "sydney": "SYD", "melbourne": "MEL", "brisbane": "BNE", "perth": "PER",
+    "adelaide": "ADL", "cairns": "CNS", "gold coast": "OOL", "darwin": "DRW",
+    "auckland": "AKL", "queenstown": "ZQN", "christchurch": "CHC", "wellington": "WLG",
+    "manila": "MNL", "cebu": "CEB", "boracay": "MPH", "palawan": "PPS",
+    "ho chi minh": "SGN", "hanoi": "HAN", "da nang": "DAD", "hoi an": "DAD",
+    "phnom penh": "PNH", "siem reap": "REP", "vientiane": "VTE", "luang prabang": "LPQ",
+    "yangon": "RGN", "mandalay": "MDL", "naypyidaw": "NYT",
+    // Middle East
+    "dubai": "DXB", "abu dhabi": "AUH", "sharjah": "SHJ", "ras al khaimah": "RKT",
+    "doha": "DOH", "riyadh": "RUH", "jeddah": "JED", "mecca": "MCC",
+    "muscat": "MCT", "kuwait city": "KWI", "manama": "BAH", "amman": "AMM",
+    "beirut": "BEY", "tel aviv": "TLV", "jerusalem": "JRS", "eilat": "ETH",
+    "istanbul": "IST", "ankara": "ANK", "antalya": "AYT", "bodrum": "BJV",
+    "cappadocia": "GZM", "izmir": "IZM", "trabzon": "TZX",
+    // Europe
+    "london": "LON", "manchester": "MAN", "edinburgh": "EDI", "glasgow": "GLA",
+    "birmingham": "BHX", "liverpool": "LPL", "bristol": "BRS", "bath": "BAT",
+    "paris": "PAR", "nice": "NCE", "marseille": "MRS", "lyon": "LYS",
+    "bordeaux": "BOD", "toulouse": "TLS", "strasbourg": "SXB", "lille": "LIL",
+    "amsterdam": "AMS", "rotterdam": "RTM", "the hague": "HAG", "utrecht": "UTC",
+    "berlin": "BER", "munich": "MUC", "hamburg": "HAM", "frankfurt": "FRA",
+    "cologne": "CGN", "dusseldorf": "DUS", "stuttgart": "STR", "dresden": "DRS",
+    "rome": "ROM", "milan": "MIL", "venice": "VCE", "florence": "FLR",
+    "naples": "NAP", "amalfi": "NAP", "amalfi coast": "NAP", "positano": "NAP",
+    "sicily": "PMO", "palermo": "PMO", "catania": "CTA", "sardinia": "CAG",
+    "madrid": "MAD", "barcelona": "BCN", "seville": "SVQ", "valencia": "VLC",
+    "malaga": "AGP", "bilbao": "BIO", "granada": "GRX", "ibiza": "IBZ",
+    "mallorca": "PMI", "tenerife": "TFN", "gran canaria": "LPA",
+    "lisbon": "LIS", "porto": "OPO", "algarve": "FAO", "funchal": "FNC",
+    "athens": "ATH", "thessaloniki": "SKG", "santorini": "JTR", "mykonos": "JMK",
+    "crete": "HER", "heraklion": "HER", "rhodes": "RHO", "corfu": "CFU",
+    "vienna": "VIE", "salzburg": "SZG", "innsbruck": "INN", "graz": "GRZ",
+    "zurich": "ZRH", "geneva": "GVA", "basel": "BSL", "bern": "BRN",
+    "brussels": "BRU", "bruges": "BGY", "ghent": "GNT", "antwerp": "ANR",
+    "copenhagen": "CPH", "aarhus": "AAR", "oslo": "OSL", "bergen": "BGO",
+    "stockholm": "STO", "gothenburg": "GOT", "malmo": "MMA",
+    "helsinki": "HEL", "tampere": "TMP", "turku": "TKU",
+    "reykjavik": "REK", "warsaw": "WAW", "krakow": "KRK", "gdansk": "GDN",
+    "prague": "PRG", "brno": "BRQ", "bratislava": "BTS",
+    "budapest": "BUD", "debrecen": "DEB", "bucharest": "BUH", "cluj": "CLJ",
+    "sofia": "SOF", "plovdiv": "PDV", "zagreb": "ZAG", "split": "SPU",
+    "dubrovnik": "DBV", "sarajevo": "SJJ", "belgrade": "BEG", "podgorica": "TGD",
+    "tirana": "TIA", "skopje": "SKP", "valletta": "MLA", "nicosia": "NIC",
+    "riga": "RIX", "tallinn": "TLL", "vilnius": "VNO",
+    "moscow": "MOW", "saint petersburg": "LED", "st petersburg": "LED",
+    "kiev": "IEV", "lviv": "LWO", "odessa": "ODS",
+    // Africa
+    "cairo": "CAI", "alexandria": "ALY", "luxor": "LXR", "aswan": "ASW",
+    "hurghada": "HRG", "sharm el sheikh": "SSH", "marrakech": "RAK",
+    "casablanca": "CAS", "fez": "FEZ", "agadir": "AGA", "tangier": "TNG",
+    "tunis": "TUN", "sousse": "SUS", "djerba": "DJE",
+    "algiers": "ALG", "oran": "ORN", "nairobi": "NBI", "mombasa": "MBA",
+    "dar es salaam": "DAR", "zanzibar": "ZNZ", "arusha": "ARK",
+    "kampala": "EBB", "kigali": "KGL", "addis ababa": "ADD",
+    "cape town": "CPT", "johannesburg": "JNB", "durban": "DUR",
+    "pretoria": "PRY", "port elizabeth": "PLZ", "kruger": "HDS",
+    "victoria falls": "VFA", "windhoek": "WDH", "gaborone": "GBE",
+    "lusaka": "LUN", "harare": "HRE", "maputo": "MPM", "antananarivo": "TNR",
+    "mauritius": "MRU", "reunion": "RUN", "seychelles": "SEZ", "mahe": "SEZ",
+    "dakar": "DKR", "abidjan": "ABJ", "accra": "ACC", "lagos": "LOS",
+    "abuja": "ABV", "douala": "DLA", "libreville": "LBV",
+    // Americas
+    "new york": "NYC", "manhattan": "NYC", "brooklyn": "NYC",
+    "los angeles": "LAX", "san francisco": "SFO", "las vegas": "LAS",
+    "miami": "MIA", "orlando": "ORL", "chicago": "CHI", "boston": "BOS",
+    "washington": "WAS", "seattle": "SEA", "portland": "POR",
+    "denver": "DEN", "dallas": "DAL", "houston": "HOU", "atlanta": "ATL",
+    "new orleans": "MSY", "nashville": "BNA", "austin": "AUS",
+    "san diego": "SAN", "phoenix": "PHX", "minneapolis": "MSP",
+    "detroit": "DET", "cleveland": "CLE", "pittsburgh": "PIT",
+    "toronto": "TOR", "montreal": "MON", "vancouver": "VAN",
+    "calgary": "YYC", "ottawa": "YOW", "quebec city": "YQB",
+    "mexico city": "MEX", "cancun": "CUN", "playa del carmen": "CUN",
+    "tulum": "CUN", "cabo san lucas": "SJD", "los cabos": "SJD",
+    "puerto vallarta": "PVR", "guadalajara": "GDL", "monterrey": "MTY",
+    "oaxaca": "OAX", "merida": "MID", "san jose": "SJO",
+    "panama city": "PTY", "havana": "HAV", "santo domingo": "SDQ",
+    "san juan": "SJU", "kingston": "KIN", "bridgetown": "BGI",
+    "nassau": "NAS", "bogota": "BOG", "medellin": "MDE", "cartagena": "CTG",
+    "lima": "LIM", "cusco": "CUZ", "quito": "UIO", "guayaquil": "GYE",
+    "caracas": "CCS", "buenos aires": "BUE", "mendoza": "MDZ",
+    "santiago": "SCL", "valparaiso": "VAP", "montevideo": "MVD",
+    "sao paulo": "SAO", "rio de janeiro": "RIO", "brasilia": "BSB",
+    "salvador": "SSA", "recife": "REC", "fortaleza": "FOR",
+    "la paz": "LPB", "santa cruz": "VVI", "asuncion": "ASU",
+    "paramaribo": "PBM", "georgetown": "GEO",
+    // Caribbean
+    "punta cana": "PUJ", "puerto plata": "POP", "la romana": "LRM",
+    "montego bay": "MBJ", "negril": "NEG", "aruba": "AUA",
+    "curacao": "CUR", "st maarten": "SXM", "st lucia": "SLU",
+    "barbados": "BGI", "trinidad": "POS", "tobago": "TAB",
+    "antigua": "ANU", "st kitts": "SKB", "turks and caicos": "PLS",
+  };
+
+  // Try exact match first, then partial match
+  if (codeMap[normalized]) return codeMap[normalized];
+
+  // Try partial match
+  const partialKey = Object.keys(codeMap).find(k => normalized.includes(k) || k.includes(normalized));
+  if (partialKey) return codeMap[partialKey];
+
+  // Return input unchanged as last resort
+  return input.trim();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -43,7 +170,8 @@ Deno.serve(async (req) => {
     }
 
     const body: HotelSearchRequest = await req.json();
-    const { destination_code, check_in, check_out, adults, rooms = 1, keyword } = body;
+    const { destination_code: raw_destination_code, check_in, check_out, adults, rooms = 1, keyword } = body;
+    const destination_code = resolveDestinationCode(raw_destination_code);
 
     if (!destination_code) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you looking for hotels in?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (!check_in || !check_out) return new Response(JSON.stringify({ error: "missing_param", message: "What are your check-in and check-out dates?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });

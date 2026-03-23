@@ -909,43 +909,7 @@ Deno.serve(async (req) => {
             if (destination && checkIn && checkOut) {
               console.log("[ai-travel-planner] Forcing hotel search for curated itinerary");
 
-              // Dynamically resolve city name to Hotelbeds destination code
-              const HOTELBEDS_API_KEY = Deno.env.get("HOTELBEDS_API_KEY") ?? "";
-              const HOTELBEDS_SECRET = Deno.env.get("HOTELBEDS_SECRET") ?? "";
-
-              let hotelDestCode = destination;
-
-              try {
-                const cityQuery = destination.split(",")[0].trim();
-                const typeaheadSig = Array.from(new Uint8Array(
-                  await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
-                    HOTELBEDS_API_KEY + HOTELBEDS_SECRET + Math.floor(Date.now() / 1000)
-                  ))
-                )).map(b => b.toString(16).padStart(2, "0")).join("");
-
-                const typeRes = await fetch(
-                  `https://api.test.hotelbeds.com/hotel-content-api/1.0/locations/destinations?fields=code,name&language=ENG&from=1&to=5&useSecondaryLanguage=false&name=${encodeURIComponent(cityQuery)}`,
-                  {
-                    method: "GET",
-                    headers: {
-                      "Api-key": HOTELBEDS_API_KEY,
-                      "X-Signature": typeaheadSig,
-                      "Accept": "application/json",
-                    },
-                  }
-                );
-
-                if (typeRes.ok) {
-                  const typeData = await typeRes.json();
-                  const destinations = typeData.destinations ?? [];
-                  if (destinations.length > 0) {
-                    hotelDestCode = destinations[0].code;
-                    console.log(`[ai-travel-planner] Resolved "${destination}" to Hotelbeds code: ${hotelDestCode}`);
-                  }
-                }
-              } catch (e) {
-                console.error("[ai-travel-planner] Destination code lookup failed, using raw destination:", e);
-              }
+              const hotelDestCode = destination; // search-hotels will resolve it internally now
 
               // Extract curated hotel name from [CURATED_ITINERARY] block
               const curatedMatch = briefMsg.match(/Hotel: search specifically for "([^"]+)"/);
