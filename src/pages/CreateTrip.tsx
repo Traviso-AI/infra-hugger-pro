@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getDestinationCover } from "@/lib/destination-covers";
+
 import { StepProgressBar } from "@/components/creator-studio/StepProgressBar";
 import { StepTripBasics, TripBasicsData, TripBasicsErrors } from "@/components/creator-studio/StepTripBasics";
 import { StepBuildItinerary, DayForm, ItineraryErrors } from "@/components/creator-studio/StepBuildItinerary";
@@ -146,11 +146,13 @@ export default function CreateTrip() {
 
     setLoading(true);
     try {
-      const coverUrl = basics.coverImageUrl || getDestinationCover(basics.destination);
+      const coverUrl = basics.coverImageUrl || null;
+      const tripId = crypto.randomUUID();
 
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
+          id: tripId,
           creator_id: user.id,
           title: toTitleCase(basics.title),
           description: basics.description,
@@ -165,6 +167,13 @@ export default function CreateTrip() {
         .single();
 
       if (tripError) throw tripError;
+
+      // Fire-and-forget — assigns unique destination photo if user did not upload one
+      if (!coverUrl) {
+        supabase.functions.invoke("assign-cover-image", {
+          body: { trip_id: tripId, destination: basics.destination },
+        }).catch((e) => console.error("[assign-cover-image]", e));
+      }
 
       for (let i = 0; i < days.length; i++) {
         const day = days[i];

@@ -19,3 +19,5 @@ project_id = "hmogswuliehwbmcyzfie"
     verify_jwt = false
   [functions.export-data]
     verify_jwt = false
+  [functions.assign-cover-image]
+    verify_jwt = false
