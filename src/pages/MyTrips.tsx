@@ -375,7 +375,7 @@ export default function MyTrips() {
                     onClick={() => navigate(`/booking/confirmation?trip_session_id=${session.id}`)}
                   >
                     <CardContent className="p-4 space-y-2">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-start justify-between">
                         <h3 className="font-medium">Trip to {destination}</h3>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <Badge variant={statusColor}>{session.status}</Badge>
