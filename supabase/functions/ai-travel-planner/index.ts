@@ -909,7 +909,56 @@ Deno.serve(async (req) => {
             if (destination && checkIn && checkOut) {
               console.log("[ai-travel-planner] Forcing hotel search for curated itinerary");
 
-              const hotelArgs = { destination_code: destination, check_in: checkIn, check_out: checkOut, adults };
+              // Dynamically resolve city name to Hotelbeds destination code
+              const HOTELBEDS_API_KEY = Deno.env.get("HOTELBEDS_API_KEY") ?? "";
+              const HOTELBEDS_SECRET = Deno.env.get("HOTELBEDS_SECRET") ?? "";
+
+              let hotelDestCode = destination;
+
+              try {
+                const cityQuery = destination.split(",")[0].trim();
+                const typeaheadSig = Array.from(new Uint8Array(
+                  await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
+                    HOTELBEDS_API_KEY + HOTELBEDS_SECRET + Math.floor(Date.now() / 1000)
+                  ))
+                )).map(b => b.toString(16).padStart(2, "0")).join("");
+
+                const typeRes = await fetch(
+                  `https://api.test.hotelbeds.com/hotel-content-api/1.0/locations/destinations?fields=code,name&language=ENG&from=1&to=5&useSecondaryLanguage=false&name=${encodeURIComponent(cityQuery)}`,
+                  {
+                    method: "GET",
+                    headers: {
+                      "Api-key": HOTELBEDS_API_KEY,
+                      "X-Signature": typeaheadSig,
+                      "Accept": "application/json",
+                    },
+                  }
+                );
+
+                if (typeRes.ok) {
+                  const typeData = await typeRes.json();
+                  const destinations = typeData.destinations ?? [];
+                  if (destinations.length > 0) {
+                    hotelDestCode = destinations[0].code;
+                    console.log(`[ai-travel-planner] Resolved "${destination}" to Hotelbeds code: ${hotelDestCode}`);
+                  }
+                }
+              } catch (e) {
+                console.error("[ai-travel-planner] Destination code lookup failed, using raw destination:", e);
+              }
+
+              // Extract curated hotel name from [CURATED_ITINERARY] block
+              const curatedMatch = briefMsg.match(/Hotel: search specifically for "([^"]+)"/);
+              const curatedHotelName = curatedMatch?.[1] ?? undefined;
+
+              const hotelArgs: Record<string, any> = {
+                destination_code: hotelDestCode,
+                check_in: checkIn,
+                check_out: checkOut,
+                adults,
+                ...(curatedHotelName ? { keyword: curatedHotelName } : {}),
+              };
+
               controller.enqueue(sseChunk(`🏨 Searching for hotels in ${destination}...\n\n`));
 
               const hotelResultStr = await executeToolCall("search_hotels", hotelArgs);
@@ -922,9 +971,12 @@ Deno.serve(async (req) => {
 
                 // Tell Nala what we found so it can comment naturally
                 const hotelNames = hotels.slice(0, 3).map((h: any) => h.name).join(", ");
-                controller.enqueue(sseChunk(`Park Hyatt Tokyo wasn't available for your dates — here are the closest alternatives in the same area: ${hotelNames}. Which would you like?\n\n`));
+                const notFoundMsg = curatedHotelName
+                  ? `${curatedHotelName} wasn't available for your dates — here are the closest alternatives in the same area:\n\n`
+                  : `Here are the top hotels available in ${destination.split(",")[0]}:\n\n`;
+                controller.enqueue(sseChunk(notFoundMsg));
               } else {
-                controller.enqueue(sseChunk("I couldn't find available hotels in Tokyo for those dates. Would you like to try different dates?\n\n"));
+                controller.enqueue(sseChunk(`I couldn't find available hotels in ${destination.split(",")[0]} for those dates. Would you like to try different dates?\n\n`));
               }
 
               controller.enqueue(sseDone());
