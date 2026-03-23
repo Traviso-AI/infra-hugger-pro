@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Save, Paperclip, X, FileText, Image } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { NalaAvatar } from "@/components/ai-planner/NalaAvatar";
 import { TypingDots } from "@/components/ai-planner/TypingDots";
@@ -172,6 +172,21 @@ export default function AiPlanner() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+
+  const [searchParams] = useSearchParams();
+  const initialValues = useMemo(() => {
+    const destination = searchParams.get("destination");
+    const departure = searchParams.get("departure");
+    if (!destination || !departure) return undefined;
+    return {
+      destination,
+      departure,
+      returnDate: searchParams.get("return") ?? undefined,
+      travelers: searchParams.get("travelers") ?? "2",
+      needs: searchParams.get("needs")?.split(",") ?? ["flights", "hotels", "activities"],
+      autosubmit: searchParams.get("autosubmit") === "true",
+    };
+  }, []);
 
   // Smart scroll: only auto-scroll if user is near the bottom
   useEffect(() => {
@@ -777,7 +792,7 @@ export default function AiPlanner() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <TripSetupForm onSubmit={handleBriefNala} loading={loading} />
+                <TripSetupForm onSubmit={handleBriefNala} loading={loading} initialValues={initialValues} />
               </motion.div>
             )}
           </AnimatePresence>

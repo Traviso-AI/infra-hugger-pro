@@ -186,9 +186,17 @@ export default function TripDetail() {
     </div>
   );
 
-  const handleBook = () => {
+  const handleBook = (params: { checkIn: string; checkOut: string; travelers: string }) => {
     if (!user) { toast.error("Please sign in to book this trip"); navigate("/login"); return; }
-    navigate(`/booking/${trip.id}`);
+    const urlParams = new URLSearchParams({
+      destination: trip.destination,
+      departure: params.checkIn,
+      return: params.checkOut,
+      travelers: params.travelers,
+      needs: "flights,hotels,activities",
+      autosubmit: "true",
+    });
+    navigate(`/ai-planner?${urlParams.toString()}`);
   };
 
   const creator = trip.profiles as any;
@@ -203,7 +211,7 @@ export default function TripDetail() {
       />
 
       <div className="container -mt-16 relative pb-16">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="sm" className="mb-4 -ml-2 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Back
         </Button>
 

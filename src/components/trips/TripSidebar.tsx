@@ -1,32 +1,78 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Star } from "lucide-react";
 import { ShareTripModal } from "@/components/sharing/ShareTripModal";
 
 interface TripSidebarProps {
   trip: any;
   creator: any;
-  onBook: () => void;
+  onBook: (params: { checkIn: string; checkOut: string; travelers: string }) => void;
   searchParams: URLSearchParams;
   user: any;
 }
 
 export function TripSidebar({ trip, creator, onBook, searchParams, user }: TripSidebarProps) {
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [travelers, setTravelers] = useState("2");
+
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="p-6">
-          {trip.price_estimate && (
-            <div className="mb-4">
-              <span className="text-3xl font-bold">${trip.price_estimate.toLocaleString()}</span>
-              <span className="text-muted-foreground"> / person</span>
+          <div className="space-y-3 mb-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Check in</Label>
+                <Input
+                  type="date"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="text-sm h-9"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Check out</Label>
+                <Input
+                  type="date"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  min={checkIn || new Date().toISOString().split("T")[0]}
+                  className="text-sm h-9"
+                />
+              </div>
             </div>
-          )}
-          <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" onClick={onBook}>
-            Check Availability →
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Travelers</Label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTravelers(String(Math.max(1, parseInt(travelers) - 1)))}
+                  className="h-9 w-9 rounded-md border flex items-center justify-center text-lg font-medium hover:bg-muted transition-colors"
+                >−</button>
+                <span className="flex-1 text-center text-sm font-medium">{travelers} {parseInt(travelers) === 1 ? "traveler" : "travelers"}</span>
+                <button
+                  type="button"
+                  onClick={() => setTravelers(String(Math.min(10, parseInt(travelers) + 1)))}
+                  className="h-9 w-9 rounded-md border flex items-center justify-center text-lg font-medium hover:bg-muted transition-colors"
+                >+</button>
+              </div>
+            </div>
+          </div>
+          <Button
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
+            size="lg"
+            onClick={() => onBook({ checkIn, checkOut, travelers })}
+            disabled={!checkIn || !checkOut}
+          >
+            {checkIn && checkOut ? "Check Availability →" : "Select dates to continue"}
           </Button>
           <div className="mt-2">
             <ShareTripModal trip={trip} creator={creator} />

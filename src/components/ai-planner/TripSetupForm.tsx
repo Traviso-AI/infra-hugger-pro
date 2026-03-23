@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,14 @@ type Tab = "full" | "flights" | "hotels" | "activities" | "restaurants";
 interface TripSetupFormProps {
   onSubmit: (message: string, needs: string[]) => void;
   loading?: boolean;
+  initialValues?: {
+    destination?: string;
+    departure?: string;
+    returnDate?: string;
+    travelers?: string;
+    needs?: string[];
+    autosubmit?: boolean;
+  };
 }
 
 function PillToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -30,16 +38,16 @@ function PillToggle({ label, active, onClick }: { label: string; active: boolean
   );
 }
 
-export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
+export function TripSetupForm({ onSubmit, loading, initialValues }: TripSetupFormProps) {
   const [tab, setTab] = useState<Tab>("full");
 
   // Full trip state
-  const [dest, setDest] = useState("");
+  const [dest, setDest] = useState(initialValues?.destination ?? "");
   const [origin, setOrigin] = useState("");
-  const [depDate, setDepDate] = useState("");
-  const [retDate, setRetDate] = useState("");
+  const [depDate, setDepDate] = useState(initialValues?.departure ?? "");
+  const [retDate, setRetDate] = useState(initialValues?.returnDate ?? "");
   const [roundTrip, setRoundTrip] = useState(false);
-  const [travelers, setTravelers] = useState("2");
+  const [travelers, setTravelers] = useState(initialValues?.travelers ?? "2");
   const [needs, setNeeds] = useState({ flights: true, hotels: true, activities: false, restaurants: false });
   const [special, setSpecial] = useState("");
 
@@ -72,6 +80,17 @@ export function TripSetupForm({ onSubmit, loading }: TripSetupFormProps) {
   const [rCuisine, setRCuisine] = useState("");
 
   const [errors, setErrors] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!initialValues?.autosubmit) return;
+    if (!initialValues.destination || !initialValues.departure) return;
+    const timer = setTimeout(() => {
+      const needsList = initialValues.needs ?? ["flights", "hotels", "activities"];
+      const msg = `[TRAVISO BRIEF] destination=${initialValues.destination} origin=none departure=${initialValues.departure} return=${initialValues.returnDate ?? "null"} travelers=${initialValues.travelers ?? "2"} needs=${needsList.join(",")} preferences=none`;
+      onSubmit(msg, needsList);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   const today = new Date().toISOString().split("T")[0];
 
