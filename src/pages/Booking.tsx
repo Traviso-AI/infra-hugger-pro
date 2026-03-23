@@ -45,6 +45,7 @@ export default function Booking() {
   const flights = useMemo(() => (session?.selected_flights as any[] | null) ?? [], [session]);
   const hotels = useMemo(() => (session?.selected_hotels as any[] | null) ?? [], [session]);
   const activities = useMemo(() => (session?.selected_activities as any[] | null) ?? [], [session]);
+  const restaurants = useMemo(() => (session?.selected_restaurants as any[] | null) ?? [], [session]);
 
   const totalCents = session?.total_amount_cents ?? 0;
   const totalDollars = (totalCents / 100).toFixed(2);
@@ -179,6 +180,32 @@ export default function Booking() {
               )}
             </CardContent>
           </Card>
+
+          {restaurants.length > 0 && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                Don't forget to reserve your restaurants
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Restaurant reservations are not included in checkout — please book directly before your trip.
+              </p>
+              <div className="space-y-1.5 pt-1">
+                {restaurants.map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between">
+                    <span className="text-sm">{r.name}</span>
+                    <a
+                      href={r.opentable_url ?? `https://www.google.com/maps/search/${encodeURIComponent(r.name + " " + (r.address ?? ""))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-accent underline underline-offset-2"
+                    >
+                      Reserve →
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
