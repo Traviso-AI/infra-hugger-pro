@@ -195,6 +195,7 @@ Deno.serve(async (req) => {
         "Api-key": HOTELBEDS_API_KEY,
         "X-Signature": signature,
         "Accept": "application/json",
+        "Accept-Encoding": "gzip",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -239,6 +240,7 @@ Deno.serve(async (req) => {
             "Api-key": HOTELBEDS_API_KEY,
             "X-Signature": contentSignature,
             "Accept": "application/json",
+            "Accept-Encoding": "gzip",
           },
         },
       );
