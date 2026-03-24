@@ -394,6 +394,20 @@ Deno.serve(async (req) => {
         surname: hotel.holder_name?.split(" ").slice(1).join(" ") ?? "Guest",
       };
 
+      // Packaging rate guard — opaque rates require a flight bundle per Hotelbeds certification
+      if (hotel.packaging === true && (!selectedFlights || selectedFlights.length === 0)) {
+        console.log("[orchestrate] Packaging rate selected without flight — blocking booking");
+        await failAndRefund(
+          trip_session_id,
+          paymentIntentId,
+          "This hotel rate requires a flight booking. Please select a flight and hotel together to access this discounted package rate — full refund issued.",
+        );
+        return new Response(JSON.stringify({ status: "failed", reason: "packaging_rate_requires_flight" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
       // CheckRate required for RECHECK rates before booking
       let bookingRateKey = hotel.booking_token;
       if (hotel.rate_type === "RECHECK") {
