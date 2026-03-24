@@ -259,9 +259,17 @@ async function bookHotel(
 
   const data = await res.json();
   const booking = data.booking;
+  const room = booking?.hotel?.rooms?.[0];
+  const rate = room?.rates?.[0];
   return {
     success: true,
     reference: booking?.reference ?? booking?.clientReference ?? "unknown",
+    room_name: room?.name ?? null,
+    board_name: rate?.boardName ?? null,
+    rate_comments: rate?.rateComments ?? null,
+    supplier_name: rate?.supplier?.name ?? null,
+    supplier_vat: rate?.supplier?.vatNumber ?? null,
+    cancellation_policies: rate?.cancellationPolicies ?? [],
   };
 }
 
@@ -459,7 +467,18 @@ Deno.serve(async (req) => {
         provider_reference: hotelResult.reference,
         status: "booked",
         amount_cents: hotel.total_price_cents ?? 0,
-        provider_response: { reference: hotelResult.reference },
+        provider_response: {
+          reference: hotelResult.reference,
+          room_name: hotelResult.room_name ?? hotel.room_name ?? null,
+          board_name: hotelResult.board_name ?? hotel.board_name ?? null,
+          rate_comments: hotelResult.rate_comments ?? null,
+          supplier_name: hotelResult.supplier_name ?? null,
+          supplier_vat: hotelResult.supplier_vat ?? null,
+          cancellation_policies: hotelResult.cancellation_policies ?? hotel.cancellation_policies ?? [],
+          hotel_name: hotel.name ?? null,
+          check_in: hotel.check_in ?? null,
+          check_out: hotel.check_out ?? null,
+        },
       });
 
       await logEvent(trip_session_id, "hotel_confirmed", `Hotel confirmed: ${hotelResult.reference}`);
