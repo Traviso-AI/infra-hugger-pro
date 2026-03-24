@@ -29,3 +29,5 @@ project_id = "hmogswuliehwbmcyzfie"
     verify_jwt = false
   [functions.search-restaurants]
     verify_jwt = false
+  [functions.orchestrate-booking]
+    verify_jwt = false

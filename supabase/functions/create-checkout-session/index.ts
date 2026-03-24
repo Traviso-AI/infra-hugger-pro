@@ -105,16 +105,17 @@ Deno.serve(async (req) => {
     const lineItems: any[] = [];
 
     if (flights[0]) {
+      const passengerCount = flights[0].passenger_ids?.length ?? 1;
       lineItems.push({
         price_data: {
           currency: "usd",
           unit_amount: flights[0].price_cents,
           product_data: {
             name: `${flights[0].airline_name} Flight${flights[0].flight_number ? " " + flights[0].flight_number : ""}`,
-            description: `${flights[0].cabin_class ?? "economy"} · ${flights[0].stops === 0 ? "Nonstop" : flights[0].stops + " stop(s)"}`,
+            description: `${flights[0].cabin_class ?? "economy"} · ${flights[0].stops === 0 ? "Nonstop" : flights[0].stops + " stop(s)"} · ${passengerCount} passenger${passengerCount > 1 ? "s" : ""}`,
           },
         },
-        quantity: 1,
+        quantity: passengerCount,
       });
     }
 

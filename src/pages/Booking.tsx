@@ -117,9 +117,9 @@ export default function Booking() {
                 <div key={i} className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
                     <Plane className="h-4 w-4 text-muted-foreground" />
-                    {f.airline_name ?? "Flight"} — {f.cabin_class ?? "economy"}
+                    {f.airline_name ?? "Flight"} — {f.cabin_class ?? "economy"}{(f.passenger_ids?.length ?? 1) > 1 ? ` · $${(f.price_cents / 100).toFixed(0)}/person × ${f.passenger_ids.length}` : ""}
                   </span>
-                  <span className="font-medium">${(f.price_cents / 100).toFixed(0)}</span>
+                  <span className="font-medium">${((f.price_cents * (f.passenger_ids?.length ?? 1)) / 100).toFixed(0)}{(f.passenger_ids?.length ?? 1) > 1 ? ` (${f.passenger_ids.length} passengers)` : ""}</span>
                 </div>
               ))}
               {hotels.map((h: any, i: number) => (

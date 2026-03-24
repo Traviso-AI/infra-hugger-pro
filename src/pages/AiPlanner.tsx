@@ -537,6 +537,7 @@ export default function AiPlanner() {
     selected_activities?: ActivityData[];
     selected_restaurants?: RestaurantData[];
     total_amount_cents?: number;
+    traveler_info?: Record<string, any>;
   }) => {
     if (!user) return null;
     const sessionId = tripSessionId ?? crypto.randomUUID();
@@ -550,7 +551,7 @@ export default function AiPlanner() {
           ...(sourceTripId ? { source_trip_id: sourceTripId } : {}),
           status: "pending",
           updated_at: new Date().toISOString(),
-          ...(briefContext?.destination ? { traveler_info: { destination: briefContext.destination } } : {}),
+          ...(updates.traveler_info ? { traveler_info: updates.traveler_info } : briefContext?.destination ? { traveler_info: { destination: briefContext.destination } } : {}),
           ...updates,
         },
         { onConflict: "id" },
@@ -673,15 +674,23 @@ export default function AiPlanner() {
                   const date = dep.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   const flightNum = f.flight_number ? ` ${f.flight_number}` : "";
                   const stopsText = f.stops === 0 ? "nonstop" : `${f.stops} stop${f.stops > 1 ? "s" : ""}`;
-                  let msg = `I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip. DO NOT search for flights again.`;
-                  if (briefContext?.needs.includes("hotels")) {
-                    const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
-                    const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
-                    msg += ` Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults.`;
+                  // Only message Nala if we have brief context — in free-form mode, skip to avoid duplicate searches
+                  if (briefContext) {
+                    let msg = `I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip. DO NOT search for flights again.`;
+                    if (briefContext.needs.includes("hotels")) {
+                      const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
+                      const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
+                      msg += ` Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults.`;
+                    }
+                    sendDirectMessage(msg);
                   }
-                  sendDirectMessage(msg);
                   setSelectedFlight(f);
-                  upsertTripSession({ selected_flights: [f], total_amount_cents: f.price_cents });
+                  const passengerCount = f.passenger_ids?.length ?? 1;
+                  upsertTripSession({
+                    selected_flights: [f],
+                    total_amount_cents: f.price_cents * passengerCount,
+                    traveler_info: { destination: briefContext?.destination ?? f.airline_name },
+                  });
                   checkAndShowSummary(f, selectedHotel, selectedActivities, selectedRestaurants, briefContext?.needs ?? ["flights"]);
                 }}
                 onSelectHotel={(h) => {
@@ -691,7 +700,8 @@ export default function AiPlanner() {
                   }
                   sendDirectMessage(msg);
                   setSelectedHotel(h);
-                  const flightCents = selectedFlight?.price_cents ?? 0;
+                  const passengerCount = selectedFlight?.passenger_ids?.length ?? 1;
+                  const flightCents = (selectedFlight?.price_cents ?? 0) * passengerCount;
                   upsertTripSession({ selected_hotels: [h], total_amount_cents: flightCents + h.total_price_cents });
                   checkAndShowSummary(selectedFlight, h, selectedActivities, selectedRestaurants, briefContext?.needs ?? ["hotels"]);
                 }}
