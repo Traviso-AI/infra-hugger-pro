@@ -138,6 +138,33 @@ async function cancelFlight(
 }
 
 // ---------------------------------------------------------------------------
+// Hotelbeds: cancel booking
+// ---------------------------------------------------------------------------
+async function cancelHotel(
+  reference: string,
+): Promise<void> {
+  const HOTELBEDS_API_KEY = Deno.env.get("HOTELBEDS_API_KEY");
+  const HOTELBEDS_SECRET = Deno.env.get("HOTELBEDS_SECRET");
+  if (!HOTELBEDS_API_KEY || !HOTELBEDS_SECRET) return;
+
+  try {
+    const signature = await generateHotelbedsSig();
+    const res = await fetch(`https://api.test.hotelbeds.com/hotel-api/1.0/bookings/${reference}`, {
+      method: "DELETE",
+      headers: {
+        "Api-key": HOTELBEDS_API_KEY,
+        "X-Signature": signature,
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+      },
+    });
+    console.log(`[orchestrate] Hotelbeds booking ${reference} cancellation response: ${res.status}`);
+  } catch (e) {
+    console.error("[orchestrate] Hotelbeds cancellation failed:", e);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Hotelbeds: confirm booking
 // ---------------------------------------------------------------------------
 async function bookHotel(
