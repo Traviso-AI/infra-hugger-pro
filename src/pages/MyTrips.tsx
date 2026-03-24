@@ -396,7 +396,7 @@ export default function MyTrips() {
                   <Card
                     key={session.id}
                     className="transition-all duration-200 hover:shadow-lg hover:scale-[1.01] hover:border-l-4 hover:border-l-accent cursor-pointer"
-                    onClick={() => navigate(`/booking/confirmation?trip_session_id=${session.id}`)}
+                    onClick={() => navigate(`/booking/success?trip_session_id=${session.id}`)}
                   >
                     <CardContent className="p-4 space-y-2">
                       <div className="flex items-start justify-between">
