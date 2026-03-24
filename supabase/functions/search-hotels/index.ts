@@ -5,7 +5,10 @@ const corsHeaders = {
 };
 
 interface HotelSearchRequest {
-  destination_code: string;
+  destination_code?: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
   check_in: string;
   check_out: string;
   adults: number;
@@ -33,17 +36,17 @@ function resolveDestinationCode(input: string): string {
   // Comprehensive Hotelbeds destination code mapping
   const codeMap: Record<string, string> = {
     // Asia Pacific
-    "tokyo": "TKY", "osaka": "OSA", "kyoto": "UKY", "hiroshima": "HIJ",
+    "tokyo": "NRT", "osaka": "OSA", "kyoto": "UKY", "hiroshima": "HIJ",
     "sapporo": "CTS", "fukuoka": "FUK", "naha": "OKA", "nagoya": "NGO",
     "bangkok": "BKK", "phuket": "HKT", "chiang mai": "CNX", "pattaya": "PYX",
-    "bali": "DPS", "jakarta": "JKT", "lombok": "LOP", "yogyakarta": "JOG",
+    "bali": "BAI", "jakarta": "JKT", "lombok": "LOP", "yogyakarta": "JOG",
     "singapore": "SIN", "kuala lumpur": "KUL", "penang": "PEN", "langkawi": "LGK",
     "hong kong": "HKG", "macau": "MFM", "taipei": "TPE", "seoul": "SEL",
     "busan": "PUS", "jeju": "CJU", "beijing": "BJS", "shanghai": "SHA",
     "guangzhou": "CAN", "shenzhen": "SZX", "chengdu": "CTU", "xian": "XIY",
     "mumbai": "BOM", "delhi": "DEL", "goa": "GOI", "jaipur": "JAI",
     "agra": "AGR", "chennai": "MAA", "bangalore": "BLR", "hyderabad": "HYD",
-    "colombo": "CMB", "maldives": "MLE", "male": "MLE", "kathmandu": "KTM",
+    "colombo": "CMB", "maldives": "MAL", "male": "MAL", "kathmandu": "KTM",
     "dhaka": "DAC", "karachi": "KHI", "lahore": "LHE", "islamabad": "ISB",
     "sydney": "SYD", "melbourne": "MEL", "brisbane": "BNE", "perth": "PER",
     "adelaide": "ADL", "cairns": "CNS", "gold coast": "OOL", "darwin": "DRW",
@@ -118,7 +121,7 @@ function resolveDestinationCode(input: string): string {
     "toronto": "TOR", "montreal": "MON", "vancouver": "VAN",
     "calgary": "YYC", "ottawa": "YOW", "quebec city": "YQB",
     "mexico city": "MEX", "cancun": "CUN", "playa del carmen": "CUN",
-    "tulum": "CUN", "cabo san lucas": "SJD", "los cabos": "SJD",
+    "tulum": "CUN", "cabo san lucas": "CAB", "los cabos": "CAB",
     "puerto vallarta": "PVR", "guadalajara": "GDL", "monterrey": "MTY",
     "oaxaca": "OAX", "merida": "MID", "san jose": "SJO",
     "panama city": "PTY", "havana": "HAV", "santo domingo": "SDQ",
@@ -170,10 +173,10 @@ Deno.serve(async (req) => {
     }
 
     const body: HotelSearchRequest = await req.json();
-    const { destination_code: raw_destination_code, check_in, check_out, adults, rooms = 1, keyword } = body;
-    const destination_code = resolveDestinationCode(raw_destination_code);
+    const { destination_code, latitude, longitude, radius, check_in, check_out, adults, rooms = 1, keyword } = body;
 
-    if (!destination_code) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you looking for hotels in?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const hasDestination = destination_code || (latitude && longitude);
+    if (!hasDestination) return new Response(JSON.stringify({ error: "missing_param", message: "What city are you looking for hotels in?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (!check_in || !check_out) return new Response(JSON.stringify({ error: "missing_param", message: "What are your check-in and check-out dates?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     if (!adults) return new Response(JSON.stringify({ error: "missing_param", message: "How many guests?" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -200,9 +203,10 @@ Deno.serve(async (req) => {
           checkOut: check_out,
         },
         occupancies,
-        destination: {
-          code: destination_code,
-        },
+        ...(latitude && longitude
+          ? { geolocation: { latitude, longitude, radius: radius ?? 20, unit: "km" } }
+          : { destination: { code: resolveDestinationCode(destination_code!) } }
+        ),
       }),
     });
 

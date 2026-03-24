@@ -909,19 +909,44 @@ Deno.serve(async (req) => {
             if (destination && checkIn && checkOut) {
               console.log("[ai-travel-planner] Forcing hotel search for curated itinerary");
 
-              const hotelDestCode = destination; // search-hotels will resolve it internally now
-
               // Extract curated hotel name from [CURATED_ITINERARY] block
               const curatedMatch = briefMsg.match(/Hotel: search specifically for "([^"]+)"/);
               const curatedHotelName = curatedMatch?.[1] ?? undefined;
 
-              const hotelArgs: Record<string, any> = {
-                destination_code: hotelDestCode,
+              // Resolve destination to lat/lng via Google Geocoding API
+              const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? "";
+              let hotelArgs: Record<string, any> = {
+                destination_code: destination,
                 check_in: checkIn,
                 check_out: checkOut,
                 adults,
                 ...(curatedHotelName ? { keyword: curatedHotelName } : {}),
               };
+
+              if (GOOGLE_PLACES_API_KEY) {
+                try {
+                  const cityQuery = destination.split(",")[0].trim();
+                  const geoRes = await fetch(
+                    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityQuery)}&key=${GOOGLE_PLACES_API_KEY}`
+                  );
+                  const geoData = await geoRes.json();
+                  const location = geoData.results?.[0]?.geometry?.location;
+                  if (location?.lat && location?.lng) {
+                    console.log(`[ai-travel-planner] Resolved "${destination}" to lat=${location.lat} lng=${location.lng}`);
+                    hotelArgs = {
+                      latitude: location.lat,
+                      longitude: location.lng,
+                      radius: 20,
+                      check_in: checkIn,
+                      check_out: checkOut,
+                      adults,
+                      ...(curatedHotelName ? { keyword: curatedHotelName } : {}),
+                    };
+                  }
+                } catch (e) {
+                  console.error("[ai-travel-planner] Geocoding failed, falling back to destination code:", e);
+                }
+              }
 
               controller.enqueue(sseChunk(`🏨 Searching for hotels in ${destination}...\n\n`));
 
