@@ -408,6 +408,19 @@ export default function MyTrips() {
                               {checkOut && checkOut !== checkIn ? ` — ${new Date(checkOut + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
                             </p>
                           )}
+                          {(() => {
+                            const firstName = (session.traveler_info as any)?.first_name;
+                            const lastName = (session.traveler_info as any)?.last_name;
+                            const passengerCount = (session.selected_flights?.[0]?.passenger_ids?.length) ?? 1;
+                            const name = [firstName, lastName].filter(Boolean).join(" ");
+                            return (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {name && <span>{name}</span>}
+                                {name && <span className="mx-1">·</span>}
+                                <span>{passengerCount} {passengerCount === 1 ? "traveler" : "travelers"}</span>
+                              </p>
+                            );
+                          })()}
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <Badge variant={statusColor}>{session.status}</Badge>
