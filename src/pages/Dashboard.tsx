@@ -29,17 +29,32 @@ export default function Dashboard() {
     queryKey: ["my-bookings", user?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("bookings")
-        .select("id")
-        .eq("user_id", user!.id);
+        .from("trip_sessions")
+        .select("id, total_amount_cents, status")
+        .eq("user_id", user!.id)
+        .in("status", ["confirmed", "completed"]);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: myCommissions } = useQuery({
+    queryKey: ["my-commissions", user?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("commission_ledger")
+        .select("amount_cents, creator_percentage")
+        .eq("creator_id", user!.id);
       return data || [];
     },
     enabled: !!user,
   });
 
   const publishedCount = myTrips?.filter((t) => t.is_published).length || 0;
-  const totalBookings = myTrips?.reduce((sum, t) => sum + (t.total_bookings || 0), 0) || 0;
-  const totalRevenue = myTrips?.reduce((sum, t) => sum + (t.total_revenue || 0), 0) || 0;
+  const totalBookings = myBookings?.length || 0;
+  const totalRevenue = (myCommissions || []).reduce((sum: number, c: any) => {
+    return sum + Math.round((c.amount_cents * (c.creator_percentage / 100)) / 100);
+  }, 0);
 
   return (
     <div className="container px-4 py-6 md:py-12">
