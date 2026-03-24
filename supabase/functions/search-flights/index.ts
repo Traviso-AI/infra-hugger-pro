@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
         cabin_class: firstSegment?.passengers?.[0]?.cabin_class ?? "economy",
         booking_token: offer.id,
         passenger_ids: offer.passengers?.map((p: any) => p.id) ?? [],
+        origin_country: outboundSlice?.origin?.iata_country_code ?? null,
+        destination_country: outboundSlice?.destination?.iata_country_code ?? null,
       };
     });
 

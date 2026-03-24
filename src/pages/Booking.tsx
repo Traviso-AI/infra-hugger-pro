@@ -51,9 +51,15 @@ export default function Booking() {
   const totalDollars = (totalCents / 100).toFixed(2);
 
   const hasFlights = flights.length > 0;
+  const isInternational = flights.some((f: any) => {
+    const origin = f.origin_country;
+    const dest = f.destination_country;
+    if (!origin || !dest) return true; // default to requiring passport if unknown
+    return origin !== dest;
+  });
 
   const canSubmit = firstName.trim() && lastName.trim() && email.trim() && phone.trim() &&
-    (!hasFlights || passport.trim());
+    (!hasFlights || !isInternational || passport.trim());
 
   const handleCheckout = async () => {
     if (!user || !session) return;
@@ -171,7 +177,7 @@ export default function Booking() {
                 />
                 <p className="text-[11px] text-muted-foreground">Used for flight notifications</p>
               </div>
-              {hasFlights && (
+              {hasFlights && isInternational && (
                 <div className="space-y-2">
                   <Label>Passport Number *</Label>
                   <Input value={passport} onChange={(e) => setPassport(e.target.value)} placeholder="AB1234567" />
