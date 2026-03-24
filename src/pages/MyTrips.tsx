@@ -38,6 +38,30 @@ export default function MyTrips() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
+  const getBookingDates = (session: any): { checkIn: string | null; checkOut: string | null } => {
+    const hotels = session.selected_hotels ?? [];
+    const flights = session.selected_flights ?? [];
+
+    // Try hotel booking_token first — format is YYYYMMDD|YYYYMMDD|...
+    if (hotels[0]?.booking_token) {
+      const parts = hotels[0].booking_token.split("|");
+      if (parts.length >= 2 && parts[0].length === 8 && parts[1].length === 8) {
+        const fmt = (s: string) => `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+        return { checkIn: fmt(parts[0]), checkOut: fmt(parts[1]) };
+      }
+    }
+
+    // Fall back to flight departure/arrival dates
+    if (flights[0]?.departure_time) {
+      return {
+        checkIn: flights[0].departure_time.split("T")[0],
+        checkOut: flights[0].arrival_time ? flights[0].arrival_time.split("T")[0] : null,
+      };
+    }
+
+    return { checkIn: null, checkOut: null };
+  };
+
   usePageSEO({
     title: "My Trips | Traviso AI",
     description: "View your trips, bookings, saved itineraries, and travel calendar.",
@@ -101,14 +125,12 @@ export default function MyTrips() {
   const events: CalendarEvent[] = useMemo(() => {
     const result: CalendarEvent[] = [];
     (myBookings || []).forEach((b: any) => {
-      const hotels = b.selected_hotels ?? [];
-      const destination = (b.traveler_info as any)?.destination ?? "Trip";
-      const checkIn = hotels[0]?.check_in_date;
+      const destination = (b.traveler_info as any)?.destination ?? "";
+      const { checkIn, checkOut } = getBookingDates(b);
       if (!checkIn) return;
-      const checkOut = hotels[0]?.check_out_date;
       result.push({
         id: b.id,
-        title: `Trip to ${destination}`,
+        title: destination ? `Trip to ${destination}` : "My Trip",
         destination,
         startDate: new Date(checkIn),
         endDate: checkOut ? new Date(checkOut) : new Date(checkIn),
@@ -359,10 +381,11 @@ export default function MyTrips() {
           {myBookings && myBookings.length > 0 ? (
             <div className="space-y-3">
               {myBookings.map((session: any) => {
-                const destination = (session.traveler_info as any)?.destination ?? "Trip";
+                const destination = (session.traveler_info as any)?.destination ?? "";
                 const flights = session.selected_flights ?? [];
                 const hotels = session.selected_hotels ?? [];
                 const activities = session.selected_activities ?? [];
+                const { checkIn, checkOut } = getBookingDates(session);
                 const totalDollars = ((session.total_amount_cents ?? 0) / 100).toFixed(2);
                 const flightRef = (session.booking_items ?? []).find((b: any) => b.type === "flight" && b.status === "booked")?.provider_reference;
                 const hotelRef = (session.booking_items ?? []).find((b: any) => b.type === "hotel" && b.status === "booked")?.provider_reference;
@@ -376,7 +399,15 @@ export default function MyTrips() {
                   >
                     <CardContent className="p-4 space-y-2">
                       <div className="flex items-start justify-between">
-                        <h3 className="font-medium">Trip to {destination}</h3>
+                        <div>
+                          <h3 className="font-medium">{destination ? `Trip to ${destination}` : "My Trip"}</h3>
+                          {checkIn && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {new Date(checkIn + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              {checkOut && checkOut !== checkIn ? ` — ${new Date(checkOut + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                            </p>
+                          )}
+                        </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           <Badge variant={statusColor}>{session.status}</Badge>
                           <span className="text-sm font-medium">${totalDollars}</span>
