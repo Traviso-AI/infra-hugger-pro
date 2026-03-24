@@ -144,28 +144,43 @@ async function bookHotel(
 
   const signature = await generateHotelbedsSig();
 
-  const res = await fetch("https://api.test.hotelbeds.com/hotel-api/1.0/bookings", {
-    method: "POST",
-    headers: {
-      "Api-key": HOTELBEDS_API_KEY,
-      "X-Signature": signature,
-      "Accept": "application/json",
-      "Accept-Encoding": "gzip",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      holder,
-      clientReference: `TV-${Date.now().toString().slice(-10)}`,
-      rooms: [
-        {
-          rateKey,
-          paxes: [
-            { roomId: 1, type: "AD", name: holder.name, surname: holder.surname },
-          ],
-        },
-      ],
-    }),
-  });
+  const bookingAbortController = new AbortController();
+  const bookingTimeout = setTimeout(() => bookingAbortController.abort(), 60000);
+
+  let res: Response;
+  try {
+    res = await fetch("https://api.test.hotelbeds.com/hotel-api/1.0/bookings", {
+      method: "POST",
+      signal: bookingAbortController.signal,
+      headers: {
+        "Api-key": HOTELBEDS_API_KEY,
+        "X-Signature": signature,
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        holder,
+        clientReference: `TV-${Date.now().toString().slice(-10)}`,
+        rooms: [
+          {
+            rateKey,
+            paxes: [
+              { roomId: 1, type: "AD", name: holder.name, surname: holder.surname },
+            ],
+          },
+        ],
+      }),
+    });
+  } catch (e: any) {
+    clearTimeout(bookingTimeout);
+    if (e.name === "AbortError") {
+      console.error("[orchestrate] Hotelbeds booking timed out after 60s");
+      return { success: false, error: "booking_timeout" };
+    }
+    throw e;
+  }
+  clearTimeout(bookingTimeout);
 
   if (!res.ok) {
     const errBody = await res.text();
