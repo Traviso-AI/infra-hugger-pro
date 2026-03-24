@@ -50,7 +50,10 @@ export default function BookingSuccess() {
   const totalDollars = ((session?.total_amount_cents ?? 0) / 100).toFixed(2);
 
   const flightRef = bookingItems.find((b) => b.type === "flight" && b.status === "booked")?.provider_reference;
-  const hotelRef = bookingItems.find((b) => b.type === "hotel" && b.status === "booked")?.provider_reference;
+  const hotelBooking = bookingItems.find((b) => b.type === "hotel" && b.status === "booked");
+  const hotelRef = hotelBooking?.provider_reference;
+  const hotelProviderData = (hotelBooking as any)?.provider_response ?? {};
+  const holderName = [(session?.traveler_info as any)?.first_name, (session?.traveler_info as any)?.last_name].filter(Boolean).join(" ") || null;
 
   const destination = (session?.traveler_info as any)?.destination ??
     hotels[0]?.address?.split(",").pop()?.trim() ??
@@ -144,9 +147,40 @@ export default function BookingSuccess() {
                 </div>
               )}
               {hotelRef && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-muted-foreground"><Hotel className="h-4 w-4" />Hotel Reference</span>
-                  <span className="font-mono font-medium">{hotelRef}</span>
+                <div className="space-y-2 border-t pt-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-muted-foreground"><Hotel className="h-4 w-4" />Hotel Reference</span>
+                    <span className="font-mono font-medium">{hotelRef}</span>
+                  </div>
+                  {holderName && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Holder</span>
+                      <span className="font-medium">{holderName}</span>
+                    </div>
+                  )}
+                  {hotelProviderData.room_name && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Room</span>
+                      <span className="font-medium">{hotelProviderData.room_name}</span>
+                    </div>
+                  )}
+                  {hotelProviderData.board_name && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Board</span>
+                      <span className="font-medium">{hotelProviderData.board_name}</span>
+                    </div>
+                  )}
+                  {hotelProviderData.rate_comments && (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 mt-1">
+                      <p className="font-medium mb-1">Rate Notes</p>
+                      <p className="leading-relaxed">{hotelProviderData.rate_comments}</p>
+                    </div>
+                  )}
+                  {hotelProviderData.supplier_name && (
+                    <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3 mt-1 leading-relaxed">
+                      Payable through {hotelProviderData.supplier_name}, acting as agent for the service operating company, details of which can be provided upon request.{hotelProviderData.supplier_vat ? ` VAT: ${hotelProviderData.supplier_vat}` : ""} Reference: {hotelRef}
+                    </div>
+                  )}
                 </div>
               )}
               {hotels[0]?.check_in_date && (
