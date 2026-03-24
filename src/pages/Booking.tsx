@@ -51,6 +51,8 @@ export default function Booking() {
   const totalDollars = (totalCents / 100).toFixed(2);
 
   const hasFlights = flights.length > 0;
+  const hasHotels = hotels.length > 0;
+  const isNonRefundable = hasHotels && hotels[0]?.cancellation_policy === "non-refundable";
   const isInternational = flights.some((f: any) => {
     const origin = f.origin_country;
     const dest = f.destination_country;
@@ -123,12 +125,30 @@ export default function Booking() {
                 </div>
               ))}
               {hotels.map((h: any, i: number) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <Hotel className="h-4 w-4 text-muted-foreground" />
-                    {h.name ?? "Hotel"} — {h.stars ? `${h.stars}*` : ""}
-                  </span>
-                  <span className="font-medium">${(h.total_price_cents / 100).toFixed(0)}</span>
+                <div key={i} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2">
+                      <Hotel className="h-4 w-4 text-muted-foreground" />
+                      {h.name ?? "Hotel"} — {h.stars ? `${h.stars}*` : ""}
+                    </span>
+                    <span className="font-medium">${(h.total_price_cents / 100).toFixed(0)}</span>
+                  </div>
+                  {h.cancellation_policies?.length > 0 ? (
+                    <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">Cancellation Policy</p>
+                      {h.cancellation_policies.map((p: any, j: number) => (
+                        <p key={j} className="text-xs text-muted-foreground">
+                          From {p.from ? new Date(p.from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "now"}: ${parseFloat(p.amount ?? "0").toFixed(0)} fee
+                        </p>
+                      ))}
+                    </div>
+                  ) : h.cancellation_policy ? (
+                    <div className={`rounded-lg p-3 ${h.cancellation_policy === "non-refundable" ? "bg-red-500/5 border border-red-500/20" : "bg-green-500/5 border border-green-500/20"}`}>
+                      <p className={`text-xs font-medium ${h.cancellation_policy === "non-refundable" ? "text-red-600" : "text-green-600"}`}>
+                        {h.cancellation_policy === "non-refundable" ? "⚠️ Non-refundable — this booking cannot be cancelled" : `✓ ${h.cancellation_policy}`}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               ))}
               {activities.map((a: any, i: number) => (
