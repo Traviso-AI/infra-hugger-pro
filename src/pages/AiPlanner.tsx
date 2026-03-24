@@ -673,7 +673,7 @@ export default function AiPlanner() {
                   const date = dep.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   const flightNum = f.flight_number ? ` ${f.flight_number}` : "";
                   const stopsText = f.stops === 0 ? "nonstop" : `${f.stops} stop${f.stops > 1 ? "s" : ""}`;
-                  let msg = `I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip.`;
+                  let msg = `I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip. DO NOT search for flights again.`;
                   if (briefContext?.needs.includes("hotels")) {
                     const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
                     const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
@@ -682,7 +682,7 @@ export default function AiPlanner() {
                   sendDirectMessage(msg);
                   setSelectedFlight(f);
                   upsertTripSession({ selected_flights: [f], total_amount_cents: f.price_cents });
-                  checkAndShowSummary(f, selectedHotel, selectedActivities, selectedRestaurants, briefContext?.needs ?? []);
+                  checkAndShowSummary(f, selectedHotel, selectedActivities, selectedRestaurants, briefContext?.needs ?? ["flights"]);
                 }}
                 onSelectHotel={(h) => {
                   let msg = `I'd like to stay at ${h.name} ($${(h.price_per_night_cents / 100).toFixed(0)}/night). Please add it to my trip.`;
@@ -693,7 +693,7 @@ export default function AiPlanner() {
                   setSelectedHotel(h);
                   const flightCents = selectedFlight?.price_cents ?? 0;
                   upsertTripSession({ selected_hotels: [h], total_amount_cents: flightCents + h.total_price_cents });
-                  checkAndShowSummary(selectedFlight, h, selectedActivities, selectedRestaurants, briefContext?.needs ?? []);
+                  checkAndShowSummary(selectedFlight, h, selectedActivities, selectedRestaurants, briefContext?.needs ?? ["hotels"]);
                 }}
                 onSelectActivity={(a) => {
                   const msg = `I'd like to add "${a.title}" at $${(a.price_cents / 100).toFixed(0)}/person. Please add it to my trip.`;
@@ -708,7 +708,7 @@ export default function AiPlanner() {
                   const hotelCents = selectedHotel?.total_price_cents ?? 0;
                   const actCents = newActivities.reduce((s, x) => s + x.price_cents, 0);
                   upsertTripSession({ selected_activities: newActivities, total_amount_cents: flightCents + hotelCents + actCents });
-                  checkAndShowSummary(selectedFlight, selectedHotel, newActivities, selectedRestaurants, briefContext?.needs ?? []);
+                  checkAndShowSummary(selectedFlight, selectedHotel, newActivities, selectedRestaurants, briefContext?.needs ?? ["activities"]);
                 }}
                 onSelectRestaurant={(r) => {
                   sendDirectMessage(`I'd like to dine at ${r.name}. Please add it to my trip.`);
@@ -718,7 +718,7 @@ export default function AiPlanner() {
                   const hotelCents = selectedHotel?.total_price_cents ?? 0;
                   const actCents = selectedActivities.reduce((s, x) => s + x.price_cents, 0);
                   upsertTripSession({ selected_restaurants: newRestaurants, total_amount_cents: flightCents + hotelCents + actCents });
-                  checkAndShowSummary(selectedFlight, selectedHotel, selectedActivities, newRestaurants, briefContext?.needs ?? []);
+                  checkAndShowSummary(selectedFlight, selectedHotel, selectedActivities, newRestaurants, briefContext?.needs ?? ["restaurants"]);
                 }}
               />
             ))}

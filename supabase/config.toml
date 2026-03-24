@@ -21,3 +21,11 @@ project_id = "hmogswuliehwbmcyzfie"
     verify_jwt = false
   [functions.assign-cover-image]
     verify_jwt = false
+  [functions.search-flights]
+    verify_jwt = false
+  [functions.search-hotels]
+    verify_jwt = false
+  [functions.search-activities]
+    verify_jwt = false
+  [functions.search-restaurants]
+    verify_jwt = false
