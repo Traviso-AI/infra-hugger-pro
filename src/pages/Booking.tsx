@@ -111,7 +111,7 @@ export default function Booking() {
 
         <div className="space-y-5">
           <Card>
-            <CardHeader><CardTitle className="font-display text-lg">Package Summary</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="font-display text-lg">{hotels.length > 0 || activities.length > 0 ? "Package Summary" : "Booking Summary"}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {flights.map((f: any, i: number) => (
                 <div key={i} className="flex items-center justify-between text-sm">

@@ -302,6 +302,15 @@ Deno.serve(async (req) => {
         currency,
         cancellation_policy: cancellationPolicy,
         booking_token: cheapestRoom?.rateKey ?? null,
+        rate_type: cheapestRoom?.rateType ?? "BOOKABLE",
+        board_code: cheapestRoom?.boardCode ?? null,
+        board_name: cheapestRoom?.boardName ?? null,
+        room_code: hotel.rooms?.[0]?.code ?? null,
+        room_name: cheapestRoom?.roomName ?? null,
+        rate_comments_id: cheapestRoom?.rateCommentsId ?? null,
+        promotions: cheapestRoom?.promotions ?? [],
+        cancellation_policies: cheapestRoom?.cancellationPolicies ?? [],
+        packaging: cheapestRoom?.packaging ?? false,
       };
     });
 
