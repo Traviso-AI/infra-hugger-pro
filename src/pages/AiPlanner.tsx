@@ -666,6 +666,7 @@ export default function AiPlanner() {
               <SearchResultsBlock
                 key={`result-${i}`}
                 data={r}
+                hasFlightSelected={selectedFlight !== null}
                 onSelectFlight={(f) => {
                   const dep = new Date(f.departure_time);
                   const arr = new Date(f.arrival_time);

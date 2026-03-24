@@ -19,6 +19,7 @@ interface SearchResultsBlockProps {
   data: SearchResultsData;
   onSelectFlight?: (f: FlightData) => void;
   onSelectHotel?: (h: HotelData) => void;
+  hasFlightSelected?: boolean;
   onSelectActivity?: (a: ActivityData) => void;
   onSelectRestaurant?: (r: RestaurantData) => void;
 }
@@ -216,6 +217,7 @@ export function SearchResultsBlock({
   data,
   onSelectFlight,
   onSelectHotel,
+  hasFlightSelected,
   onSelectActivity,
   onSelectRestaurant,
 }: SearchResultsBlockProps) {
@@ -238,7 +240,7 @@ export function SearchResultsBlock({
         label="hotels"
         sortOptions={HOTEL_SORTS}
         sortFn={sortHotels}
-        renderItem={(h) => <HotelCard hotel={h} onSelect={onSelectHotel} />}
+        renderItem={(h) => <HotelCard hotel={h} onSelect={onSelectHotel} hasFlightSelected={hasFlightSelected} />}
       />
     );
   }

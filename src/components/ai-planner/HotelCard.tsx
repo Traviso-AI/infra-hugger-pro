@@ -14,14 +14,18 @@ export interface HotelData {
   currency: string;
   cancellation_policy: string;
   booking_token: string | null;
+  board_name?: string | null;
+  room_name?: string | null;
+  packaging?: boolean;
 }
 
 interface HotelCardProps {
   hotel: HotelData;
   onSelect?: (hotel: HotelData) => void;
+  hasFlightSelected?: boolean;
 }
 
-export function HotelCard({ hotel, onSelect }: HotelCardProps) {
+export function HotelCard({ hotel, onSelect, hasFlightSelected }: HotelCardProps) {
   const perNight = (hotel.price_per_night_cents / 100).toFixed(0);
   const total = (hotel.total_price_cents / 100).toFixed(0);
   const isFreeCancel = hotel.cancellation_policy?.startsWith("Free");
@@ -67,12 +71,29 @@ export function HotelCard({ hotel, onSelect }: HotelCardProps) {
               </p>
             )}
 
-            {isFreeCancel && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 mt-1.5 text-green-600 border-green-200">
-                <Shield className="h-2.5 w-2.5 mr-0.5" />
-                {hotel.cancellation_policy}
-              </Badge>
-            )}
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {hotel.packaging && hasFlightSelected && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-accent border-accent/30 bg-accent/5">
+                  🎁 Package Deal
+                </Badge>
+              )}
+              {isFreeCancel && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-green-600 border-green-200">
+                  <Shield className="h-2.5 w-2.5 mr-0.5" />
+                  Free cancellation
+                </Badge>
+              )}
+              {hotel.board_name && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                  {hotel.board_name}
+                </Badge>
+              )}
+              {hotel.room_name && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                  {hotel.room_name}
+                </Badge>
+              )}
+            </div>
           </div>
 
           <div className="flex items-end justify-between mt-2 gap-2">
