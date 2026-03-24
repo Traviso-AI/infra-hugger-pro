@@ -159,7 +159,45 @@ Deno.serve(async (req) => {
       if (bookerEmail) {
         recipientEmail = bookerEmail;
         subject = `✈️ Your Traviso booking is confirmed!`;
-        html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><div style="max-width:520px;margin:0 auto;padding:40px 24px;"><div style="text-align:center;margin-bottom:32px;"><img src="https://hmogswuliehwbmcyzfie.supabase.co/storage/v1/object/public/email-assets/traviso-logo-email.png" alt="Traviso" style="height:32px;" /></div><div style="background:#f8faf9;border-radius:16px;padding:32px 24px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">🎉</div><h1 style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 8px;">Your trip is confirmed!</h1><p style="font-size:15px;color:#666;margin:0 0 20px;line-height:1.5;">Hi ${bookerName}, your booking is all set. Total paid: <strong style="color:#1a1a1a;">$${totalDollars}</strong>.</p><p style="font-size:14px;color:#888;margin:0;">Check your Traviso dashboard for full booking details and references.</p></div><p style="text-align:center;font-size:12px;color:#aaa;margin-top:24px;">Questions? Reply to this email and we'll help.</p></div></body></html>`;
+
+        const flightRef = record.flight_reference as string | null;
+        const hotelRef = record.hotel_reference as string | null;
+        const hotelData = (record.selected_hotels as any[])?.[0] ?? {};
+        const flightData = (record.selected_flights as any[])?.[0] ?? {};
+        const holderName = bookerName;
+
+        const flightSection = flightRef ? `
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
+            <table width="100%"><tr>
+              <td style="font-size:13px;color:#888;">✈️ Flight Reference</td>
+              <td style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;font-family:monospace;">${flightRef}</td>
+            </tr></table>
+          </td></tr>` : "";
+
+        const hotelSection = hotelRef ? `
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
+            <table width="100%"><tr>
+              <td style="font-size:13px;color:#888;">🏨 Hotel</td>
+              <td style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;">${hotelData.name ?? "Hotel"}</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
+            <table width="100%"><tr>
+              <td style="font-size:13px;color:#888;">Hotel Reference</td>
+              <td style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;font-family:monospace;">${hotelRef}</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
+            <table width="100%"><tr>
+              <td style="font-size:13px;color:#888;">Holder</td>
+              <td style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;">${holderName}</td>
+            </tr></table>
+          </td></tr>
+          ${hotelData.room_name ? `<tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;"><table width="100%"><tr><td style="font-size:13px;color:#888;">Room</td><td style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;">${hotelData.room_name}</td></tr></table></td></tr>` : ""}
+          ${hotelData.board_name ? `<tr><td style="padding:8px 0;border-bottom:1px solid #f0f0f0;"><table width="100%"><tr><td style="font-size:13px;color:#888;">Board</td><td style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;">${hotelData.board_name}</td></tr></table></td></tr>` : ""}
+          ${hotelData.cancellation_policy ? `<tr><td style="padding:8px 0;"><table width="100%"><tr><td style="font-size:12px;color:#888;">Cancellation</td><td style="font-size:12px;color:#888;text-align:right;">${hotelData.cancellation_policy}</td></tr></table></td></tr>` : ""}` : "";
+
+        html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><div style="max-width:520px;margin:0 auto;padding:40px 24px;"><div style="text-align:center;margin-bottom:32px;"><img src="https://hmogswuliehwbmcyzfie.supabase.co/storage/v1/object/public/email-assets/traviso-logo-email.png" alt="Traviso" style="height:32px;" /></div><div style="background:#f8faf9;border-radius:16px;padding:32px 24px;text-align:center;margin-bottom:24px;"><div style="font-size:40px;margin-bottom:12px;">🎉</div><h1 style="font-size:22px;font-weight:700;color:#1a1a1a;margin:0 0 8px;">Your trip is confirmed!</h1><p style="font-size:15px;color:#666;margin:0;line-height:1.5;">Hi ${bookerName}, your booking is all set. Total paid: <strong style="color:#1a1a1a;">$${totalDollars}</strong>.</p></div><div style="background:#ffffff;border:1px solid #f0f0f0;border-radius:12px;padding:20px;margin-bottom:24px;"><table width="100%" cellpadding="0" cellspacing="0">${flightSection}${hotelSection}</table></div><p style="text-align:center;font-size:12px;color:#aaa;margin-top:24px;">Questions? Reply to this email and we'll help.</p></div></body></html>`;
       }
 
       const sourceTripId = record.source_trip_id as string;

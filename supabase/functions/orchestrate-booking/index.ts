@@ -332,6 +332,7 @@ Deno.serve(async (req) => {
     const selectedActivities = session.selected_activities as any[] | null;
 
     let flightOrderId: string | null = null;
+    let hotelOrderId: string | null = null;
 
     // --- Step 3: Book flights ---
     if (selectedFlights?.length) {
@@ -481,6 +482,7 @@ Deno.serve(async (req) => {
         },
       });
 
+      hotelOrderId = hotelResult.reference;
       await logEvent(trip_session_id, "hotel_confirmed", `Hotel confirmed: ${hotelResult.reference}`);
     }
 
@@ -603,6 +605,8 @@ Deno.serve(async (req) => {
             selected_flights: selectedFlights,
             selected_hotels: selectedHotels,
             selected_activities: selectedActivities,
+            flight_reference: flightOrderId ?? null,
+            hotel_reference: hotelOrderId ?? null,
           },
         }),
       }).catch((e) => console.error("[orchestrate] Email send failed:", e));
