@@ -165,6 +165,43 @@ async function cancelHotel(
 }
 
 // ---------------------------------------------------------------------------
+// Hotelbeds: CheckRate (required for rateType=RECHECK before booking)
+// ---------------------------------------------------------------------------
+async function checkRate(
+  rateKey: string,
+): Promise<{ success: boolean; rateKey?: string; error?: string }> {
+  const HOTELBEDS_API_KEY = Deno.env.get("HOTELBEDS_API_KEY");
+  if (!HOTELBEDS_API_KEY) return { success: false, error: "HOTELBEDS_API_KEY not configured" };
+
+  const signature = await generateHotelbedsSig();
+
+  const res = await fetch("https://api.test.hotelbeds.com/hotel-api/1.0/checkrates", {
+    method: "POST",
+    headers: {
+      "Api-key": HOTELBEDS_API_KEY,
+      "X-Signature": signature,
+      "Accept": "application/json",
+      "Accept-Encoding": "gzip",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      rooms: [{ rateKey }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.error("[orchestrate] CheckRate error:", res.status, errBody);
+    return { success: false, error: `CheckRate ${res.status}: ${errBody.slice(0, 200)}` };
+  }
+
+  const data = await res.json();
+  const updatedRateKey = data.hotel?.rooms?.[0]?.rates?.[0]?.rateKey ?? rateKey;
+  console.log(`[orchestrate] CheckRate complete, updatedRateKey: ${updatedRateKey.slice(0, 30)}...`);
+  return { success: true, rateKey: updatedRateKey };
+}
+
+// ---------------------------------------------------------------------------
 // Hotelbeds: confirm booking
 // ---------------------------------------------------------------------------
 async function bookHotel(
@@ -357,7 +394,21 @@ Deno.serve(async (req) => {
         surname: hotel.holder_name?.split(" ").slice(1).join(" ") ?? "Guest",
       };
 
-      const hotelResult = await bookHotel(hotel.booking_token, holder);
+      // CheckRate required for RECHECK rates before booking
+      let bookingRateKey = hotel.booking_token;
+      if (hotel.rate_type === "RECHECK") {
+        console.log(`[orchestrate] Rate type is RECHECK — running CheckRate first`);
+        const checkRateResult = await checkRate(hotel.booking_token);
+        if (!checkRateResult.success) {
+          await failAndRefund(trip_session_id, paymentIntentId, `Hotel rate check failed: ${checkRateResult.error} — full refund issued`);
+          return new Response(JSON.stringify({ status: "failed", reason: "checkrate_failed" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        bookingRateKey = checkRateResult.rateKey!;
+      }
+      const hotelResult = await bookHotel(bookingRateKey, holder);
 
       if (!hotelResult.success) {
         // --- Step 6: Hotel failed — cancel flight, full refund ---
