@@ -126,6 +126,7 @@ export default function MyTrips() {
     const result: CalendarEvent[] = [];
     (myBookings || []).forEach((b: any) => {
       const destination = (b.traveler_info as any)?.destination ?? "";
+      const hotels = b.selected_hotels ?? [];
       const { checkIn, checkOut } = getBookingDates(b);
       if (!checkIn) return;
       result.push({
