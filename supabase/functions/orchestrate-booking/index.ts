@@ -94,7 +94,12 @@ async function bookFlight(
   if (!res.ok) {
     const errBody = await res.text();
     console.error("[orchestrate] Duffel booking error:", res.status, errBody);
-    return { success: false, error: `Duffel ${res.status}: ${errBody.slice(0, 200)}` };
+    // Detect expired or unavailable offer specifically
+    const isExpired = errBody.includes("offer_expired") || errBody.includes("offer_no_longer_available");
+    return {
+      success: false,
+      error: isExpired ? "offer_expired" : `Duffel ${res.status}: ${errBody.slice(0, 200)}`
+    };
   }
 
   const data = await res.json();
@@ -285,13 +290,19 @@ Deno.serve(async (req) => {
           provider_response: { error: flightResult.error },
         });
 
+        const isExpired = flightResult.error === "offer_expired";
         await failAndRefund(
           trip_session_id,
           paymentIntentId,
-          `Flight booking failed: ${flightResult.error} — full refund issued`,
+          isExpired
+            ? "Flight offer expired — full refund issued. Please search for a new flight."
+            : `Flight booking failed: ${flightResult.error} — full refund issued`,
         );
 
-        return new Response(JSON.stringify({ status: "failed", reason: "flight_booking_failed" }), {
+        return new Response(JSON.stringify({
+          status: "failed",
+          reason: isExpired ? "offer_expired" : "flight_booking_failed"
+        }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         });

@@ -229,6 +229,7 @@ export default function BookingProgress() {
               <p className="text-xs text-muted-foreground mt-1">Your full refund will appear in 5-10 business days.</p>
             </div>
             <Button className="w-full" variant="outline" onClick={() => navigate("/dashboard")}>Return to Dashboard</Button>
+            <Button className="w-full" variant="outline" onClick={() => navigate("/ai-planner")}>Search Again</Button>
           </motion.div>
         )}
       </motion.div>
