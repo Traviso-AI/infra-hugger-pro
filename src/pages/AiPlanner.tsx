@@ -677,13 +677,11 @@ export default function AiPlanner() {
                   const stopsText = f.stops === 0 ? "nonstop" : `${f.stops} stop${f.stops > 1 ? "s" : ""}`;
                   // Only message Nala if we have brief context — in free-form mode, skip to avoid duplicate searches
                   if (briefContext) {
-                    let msg = `I'd like the ${f.airline_name}${flightNum} flight, departing ${depTime} arriving ${arrTime} on ${date}, ${f.cabin_class}, ${stopsText}, $${(f.price_cents / 100).toFixed(0)}. Please add it to my trip. DO NOT search for flights again.`;
                     if (briefContext.needs.includes("hotels")) {
                       const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
                       const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
-                      msg += ` Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults.`;
+                      sendDirectMessage(`Flight selected. Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults.`);
                     }
-                    sendDirectMessage(msg);
                   }
                   setSelectedFlight(f);
                   const passengerCount = f.passenger_ids?.length ?? 1;
