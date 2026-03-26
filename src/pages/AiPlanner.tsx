@@ -675,13 +675,11 @@ export default function AiPlanner() {
                   const date = dep.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   const flightNum = f.flight_number ? ` ${f.flight_number}` : "";
                   const stopsText = f.stops === 0 ? "nonstop" : `${f.stops} stop${f.stops > 1 ? "s" : ""}`;
-                  // Only message Nala if we have brief context — in free-form mode, skip to avoid duplicate searches
-                  if (briefContext) {
-                    if (briefContext.needs.includes("hotels")) {
-                      const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
-                      const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
-                      sendDirectMessage(`Flight selected. Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults.`);
-                    }
+                  // Trigger hotel search if brief needs it — minimal message to avoid re-triggering flight search
+                  if (briefContext?.needs.includes("hotels")) {
+                    const checkout = briefContext.returnDate !== "null" ? briefContext.returnDate : "";
+                    const checkoutPart = checkout ? ` to ${checkout}` : " for a few nights";
+                    sendDirectMessage(`Flight added. Now immediately search hotels in ${briefContext.destination} from ${briefContext.departure}${checkoutPart} for ${briefContext.travelers} adults. Do NOT search for flights.`);
                   }
                   setSelectedFlight(f);
                   const passengerCount = f.passenger_ids?.length ?? 1;
@@ -820,7 +818,23 @@ export default function AiPlanner() {
             )}
           </AnimatePresence>
 
-          {messages.map((msg, i) => (
+          {(() => {
+            const seenResultTypes = new Set<string>();
+            return messages.map((msg, i) => {
+              let content = msg.content;
+              if (msg.role === "assistant") {
+                // Remove traviso-results blocks for types already shown in earlier messages
+                content = content.replace(/```traviso-results\n([\s\S]*?)```/g, (match, json) => {
+                  try {
+                    const parsed = JSON.parse(json.trim());
+                    const type = parsed.type;
+                    if (seenResultTypes.has(type)) return ""; // already shown, strip this block
+                    seenResultTypes.add(type);
+                    return match; // first occurrence — keep it
+                  } catch { return match; }
+                });
+              }
+              return (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 10 }}
@@ -837,12 +851,14 @@ export default function AiPlanner() {
                 }`}
               >
                 {msg.role === "assistant"
-                  ? renderStructuredContent(msg.content)
-                  : <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  ? renderStructuredContent(content)
+                  : <p className="text-sm whitespace-pre-wrap">{content}</p>
                 }
               </div>
             </motion.div>
-          ))}
+              );
+            });
+          })()}
 
           {/* Loading state — premium card for search, dots for text */}
           <AnimatePresence>
